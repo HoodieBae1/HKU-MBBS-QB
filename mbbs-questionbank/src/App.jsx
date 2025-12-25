@@ -246,7 +246,7 @@ const App = () => {
           <div className="flex items-center gap-3">
             <Stethoscope className="w-7 h-7 text-teal-200" />
             <div>
-              <h1 className="text-lg font-bold">MBBS Finals</h1>
+              <h1 className="text-lg font-bold">HKU M26 MBBS Finals</h1>
               <p className="text-[10px] text-teal-200 uppercase tracking-wider">Question Bank</p>
             </div>
           </div>
