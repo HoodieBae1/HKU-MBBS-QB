@@ -141,14 +141,26 @@ const App = () => {
   if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
   if (error) return <div>{error}</div>;
 
+  // --- LISTS FOR DROPDOWNS ---
   const topics = [...new Set(questions.map(q => q.topic))].sort();
-  const subtopics = [...new Set(questions.filter(q => selectedTopic === 'All' || q.topic === selectedTopic).map(q => q.subtopic))].sort();
+  
+  // Numerical Sorting for Subtopics
+  const subtopics = [...new Set(questions.filter(q => selectedTopic === 'All' || q.topic === selectedTopic).map(q => q.subtopic))]
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+  // --- PROGRESS CALCULATION (FILTERED) ---
+  // 1. Total is the number of currently visible questions
+  const totalQuestionsCount = filteredQuestions.length;
+  // 2. Completed is how many of the VISIBLE questions are in the completed set
+  const completedCount = filteredQuestions.filter(q => completedIds.has(String(q.unique_id))).length;
+  
+  const progressPercentage = totalQuestionsCount > 0 ? Math.round((completedCount / totalQuestionsCount) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-20">
       
-      {/* HEADER */}
-      <header className="bg-teal-700 text-white shadow-md sticky top-0 z-20">
+      {/* HEADER - z-50 to stay on top */}
+      <header className="bg-teal-700 text-white shadow-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <Stethoscope className="w-7 h-7 text-teal-200" />
@@ -167,9 +179,24 @@ const App = () => {
         </div>
       </header>
 
-      {/* FILTERS */}
-      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-[60px] z-10">
-        <div className="max-w-6xl mx-auto px-4 py-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* FILTERS & PROGRESS BAR - z-40 to stay above cards */}
+      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-[60px] z-40">
+        
+        {/* Progress Bar Section (Filtered) */}
+        <div className="max-w-6xl mx-auto px-4 pt-4 pb-2">
+          <div className="flex justify-between text-xs font-semibold text-gray-600 mb-1">
+             <span>Progress</span>
+             <span>{completedCount} / {totalQuestionsCount} ({progressPercentage}%)</span>
+          </div>
+          <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+            <div 
+              className="bg-teal-500 h-2.5 rounded-full transition-all duration-500 ease-out" 
+              style={{ width: `${progressPercentage}%` }}
+            ></div>
+          </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto px-4 py-2 grid grid-cols-1 md:grid-cols-4 gap-4">
            {/* Dropdowns */}
            <div className="relative">
               <select value={selectedTopic} onChange={(e) => {setSelectedTopic(e.target.value); setSelectedSubtopic('All')}} className="w-full pl-3 py-2 border rounded-lg text-sm appearance-none"><option value="All">All Topics</option>{topics.map(t=><option key={t}>{t}</option>)}</select>
@@ -192,22 +219,19 @@ const App = () => {
         <div className="max-w-6xl mx-auto px-4 pb-2 pt-2 border-t flex justify-between text-xs text-gray-500">
           <span>Showing <strong>{filteredQuestions.length}</strong> questions</span>
           <span className="flex items-center gap-1 text-teal-700 font-bold">
-            <CheckSquare className="w-3 h-3"/> {completedIds.size} Completed
+            <CheckSquare className="w-3 h-3"/> Filtered View
           </span>
         </div>
       </div>
 
       {/* CARD LIST */}
-      <main className="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-6">
+      <main className="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-6 z-0">
         {filteredQuestions.map((q, index) => (
             <QuestionCard 
-              // USE unique_id AS KEY
               key={q.unique_id} 
               data={q} 
               index={index} 
-              // Check completion using unique_id
               isCompleted={completedIds.has(String(q.unique_id))} 
-              // Pass unique_id to handler
               onToggleComplete={() => handleToggleComplete(q.unique_id)} 
             />
         ))}
