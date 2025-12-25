@@ -1,72 +1,117 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Filter, BookOpen, Stethoscope, CheckCircle2, Loader2, ArrowUpDown } from 'lucide-react';
+import { Filter, BookOpen, Stethoscope, CheckCircle2, Loader2, ArrowUpDown, LogOut, CheckSquare } from 'lucide-react';
+import { supabase } from './supabase';
 import QuestionCard from './QuestionCard';
+import Auth from './Auth';
 
 const App = () => {
   // --- STATE ---
+  const [session, setSession] = useState(null);
   const [questions, setQuestions] = useState([]);
+  
+  // Stores Set of completed "unique_id"s
+  const [completedIds, setCompletedIds] = useState(new Set());
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Filter & Sort States
+  // Filters
   const [selectedTopic, setSelectedTopic] = useState('All');
   const [selectedSubtopic, setSelectedSubtopic] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
-  const [sortOrder, setSortOrder] = useState('Newest'); // Default to Newest
+  const [sortOrder, setSortOrder] = useState('Newest');
 
-  // --- 1. FETCH & NORMALIZE DATA ---
+  // --- 1. INITIALIZE ---
   useEffect(() => {
+    // A. Check Auth
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if(session) fetchUserProgress(session.user.id);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if(session) {
+        fetchUserProgress(session.user.id);
+      } else {
+        setCompletedIds(new Set());
+      }
+    });
+
+    // B. Fetch Data
     fetch('/questions.json')
-      .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
-        return response.json();
-      })
+      .then(res => res.json())
       .then(data => {
-        if (!Array.isArray(data)) throw new Error("Data is not an array");
-
-        const cleanData = data.map((q, index) => ({
+        // Validate Data
+        const cleanData = Array.isArray(data) ? data.map(q => ({
           ...q,
-          _uid: `uid-${index}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          // Ensure unique_id exists (critical)
+          unique_id: q.unique_id !== undefined ? q.unique_id : `missing-${Math.random()}`,
+          
+          // Display Fields
           id: q.id || `No ID`, 
-          topic: q.topic ? q.topic.trim() : 'Uncategorized', 
-          subtopic: q.subtopic ? q.subtopic.trim() : 'General', 
+          topic: q.topic?.trim() || 'Uncategorized', 
+          subtopic: q.subtopic?.trim() || 'General', 
           type: q.type || 'SAQ'
-        }));
-
+        })) : [];
+        
         setQuestions(cleanData);
         setLoading(false);
       })
       .catch(err => {
-        console.error("Fetch Error:", err);
-        setError("Could not load questions.json");
+        console.error(err);
+        setError("Failed to load questions.json");
         setLoading(false);
       });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // --- 2. DERIVED DROPDOWN OPTIONS ---
-  
-  const naturalSort = (a, b) => {
-    return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+  // --- DB HELPER ---
+  const fetchUserProgress = async (userId) => {
+    // We fetch the 'question_id' column which now stores your 'unique_id'
+    const { data, error } = await supabase
+      .from('user_progress')
+      .select('question_id')
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error fetching progress:', error);
+    } else {
+      // Convert DB strings back to numbers (if your unique_id is number) 
+      // or keep as string to match safely. Let's force String comparison.
+      const ids = new Set(data.map(row => String(row.question_id)));
+      setCompletedIds(ids);
+    }
   };
 
-  const topics = useMemo(() => {
-    const unique = [...new Set(questions.map(q => q.topic))];
-    return unique.sort(naturalSort);
-  }, [questions]);
+  // --- TOGGLE COMPLETE ---
+  const handleToggleComplete = async (uniqueId) => {
+    if (!session) return;
 
-  const subtopics = useMemo(() => {
-    let relevantQuestions = questions;
-    if (selectedTopic !== 'All') {
-      relevantQuestions = questions.filter(q => q.topic === selectedTopic);
+    // Convert to string for DB consistency
+    const idString = String(uniqueId); 
+
+    const newSet = new Set(completedIds);
+    const isCurrentlyCompleted = newSet.has(idString);
+
+    if (isCurrentlyCompleted) {
+      newSet.delete(idString);
+      await supabase.from('user_progress').delete().match({ user_id: session.user.id, question_id: idString });
+    } else {
+      newSet.add(idString);
+      await supabase.from('user_progress').insert({ user_id: session.user.id, question_id: idString });
     }
-    const unique = [...new Set(relevantQuestions.map(q => q.subtopic))];
-    return unique.sort(naturalSort);
-  }, [questions, selectedTopic]);
+    
+    setCompletedIds(newSet);
+  };
 
-  // --- 3. FILTERING & SORTING LOGIC ---
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  // --- FILTERING ---
   const filteredQuestions = useMemo(() => {
-    // A. Filter Step
-    // .filter() creates a new array, preserving the original index order
     let result = questions.filter(q => {
       if (selectedTopic !== 'All' && q.topic !== selectedTopic) return false;
       if (selectedSubtopic !== 'All' && q.subtopic !== selectedSubtopic) return false;
@@ -74,171 +119,100 @@ const App = () => {
       return true;
     });
 
-    // B. Sort Step
     if (sortOrder === 'Newest') {
-      // Sort by Year extracted from ID
       return result.sort((a, b) => {
-        const getYear = (idString) => {
-          if (!idString || typeof idString !== 'string' || idString.length < 3) return 0;
-          
-          // Extract 2nd and 3rd chars (e.g. "M25" -> "25")
-          const digits = idString.substring(1, 3);
-          const val = parseInt(digits, 10);
-          
-          if (isNaN(val)) return 0;
-
-          // Pivot: 00-50 = 2000s, 51-99 = 1900s
-          return val < 50 ? 2000 + val : 1900 + val;
+        // Sorting still uses the String ID (e.g. M02) for the Year logic
+        const getYear = (idStr) => {
+          if (!idStr || idStr.length < 3) return 0;
+          const val = parseInt(idStr.substring(1, 3), 10);
+          return isNaN(val) ? 0 : (val < 50 ? 2000 + val : 1900 + val);
         };
-
-        const yearA = getYear(a.id);
-        const yearB = getYear(b.id);
-
-        // Descending order (Newest first)
-        return yearB - yearA; 
+        return getYear(b.id) - getYear(a.id);
       });
     }
-
-    // If 'Original', simply return the filtered list (which is already in file order)
-    return result;
+    
+    // Default: Sort by unique_id (Original order)
+    return result.sort((a, b) => a.unique_id - b.unique_id);
 
   }, [questions, selectedTopic, selectedSubtopic, selectedType, sortOrder]);
 
 
-  // --- HANDLERS ---
-  const handleTopicChange = (e) => {
-    setSelectedTopic(e.target.value);
-    setSelectedSubtopic('All'); 
-  };
+  if (!session) return <Auth />;
+  if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
+  if (error) return <div>{error}</div>;
 
-  const handleReset = () => {
-    setSelectedTopic('All');
-    setSelectedSubtopic('All');
-    setSelectedType('All');
-    setSortOrder('Newest');
-  };
-
-  // --- RENDER ---
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <Loader2 className="w-10 h-10 animate-spin text-teal-600" />
-    </div>
-  );
-
-  if (error) return (
-    <div className="min-h-screen flex items-center justify-center text-red-600 font-bold">
-      {error}
-    </div>
-  );
+  const topics = [...new Set(questions.map(q => q.topic))].sort();
+  const subtopics = [...new Set(questions.filter(q => selectedTopic === 'All' || q.topic === selectedTopic).map(q => q.subtopic))].sort();
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-20">
       
       {/* HEADER */}
       <header className="bg-teal-700 text-white shadow-md sticky top-0 z-20">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center gap-3">
-          <Stethoscope className="w-8 h-8 text-teal-200" />
-          <div>
-            <h1 className="text-xl font-bold">HKU MBBS Finals</h1>
-            <p className="text-xs text-teal-200">Question Bank</p>
+        <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <Stethoscope className="w-7 h-7 text-teal-200" />
+            <div>
+              <h1 className="text-lg font-bold">MBBS Finals</h1>
+              <p className="text-[10px] text-teal-200 uppercase tracking-wider">Question Bank</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="hidden md:block text-right">
+              <p className="text-xs text-teal-100">Logged in as</p>
+              <p className="text-xs font-bold">{session.user.email}</p>
+            </div>
+            <button onClick={handleLogout} className="p-2 hover:bg-teal-600 rounded-full transition"><LogOut className="w-5 h-5" /></button>
           </div>
         </div>
       </header>
 
-      {/* FILTER PANEL */}
-      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-[72px] z-10">
+      {/* FILTERS */}
+      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-[60px] z-10">
         <div className="max-w-6xl mx-auto px-4 py-4 grid grid-cols-1 md:grid-cols-4 gap-4">
-          
-          {/* 1. TOPIC */}
-          <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Topic</label>
-            <div className="relative">
-              <select 
-                value={selectedTopic} 
-                onChange={handleTopicChange}
-                className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 outline-none cursor-pointer"
-              >
-                <option value="All">All Topics</option>
-                {topics.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-              <Filter className="w-4 h-4 text-gray-400 absolute right-3 top-2.5 pointer-events-none" />
-            </div>
-          </div>
-
-          {/* 2. SUBTOPIC */}
-          <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Subtopic</label>
-            <div className="relative">
-              <select 
-                value={selectedSubtopic} 
-                onChange={(e) => setSelectedSubtopic(e.target.value)}
-                disabled={subtopics.length === 0}
-                className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 outline-none disabled:bg-gray-100 disabled:text-gray-400 cursor-pointer"
-              >
-                <option value="All">All Subtopics</option>
-                {subtopics.map(st => <option key={st} value={st}>{st}</option>)}
-              </select>
-              <BookOpen className="w-4 h-4 text-gray-400 absolute right-3 top-2.5 pointer-events-none" />
-            </div>
-          </div>
-
-          {/* 3. TYPE */}
-          <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Type</label>
-            <div className="relative">
-              <select 
-                value={selectedType} 
-                onChange={(e) => setSelectedType(e.target.value)}
-                className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 outline-none cursor-pointer"
-              >
-                <option value="All">All Types</option>
-                <option value="MCQ">MCQ Only</option>
-                <option value="SAQ">SAQ Only</option>
-              </select>
-              <CheckCircle2 className="w-4 h-4 text-gray-400 absolute right-3 top-2.5 pointer-events-none" />
-            </div>
-          </div>
-
-          {/* 4. SORT ORDER (NEW) */}
-          <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Sort Order</label>
-            <div className="relative">
-              <select 
-                value={sortOrder} 
-                onChange={(e) => setSortOrder(e.target.value)}
-                className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 outline-none cursor-pointer"
-              >
-                <option value="Newest">Year (Newest First)</option>
-                <option value="Original">Original File Order</option>
-              </select>
-              <ArrowUpDown className="w-4 h-4 text-gray-400 absolute right-3 top-2.5 pointer-events-none" />
-            </div>
-          </div>
-
+           {/* Dropdowns */}
+           <div className="relative">
+              <select value={selectedTopic} onChange={(e) => {setSelectedTopic(e.target.value); setSelectedSubtopic('All')}} className="w-full pl-3 py-2 border rounded-lg text-sm appearance-none"><option value="All">All Topics</option>{topics.map(t=><option key={t}>{t}</option>)}</select>
+              <Filter className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
+           </div>
+           <div className="relative">
+              <select value={selectedSubtopic} onChange={(e) => setSelectedSubtopic(e.target.value)} className="w-full pl-3 py-2 border rounded-lg text-sm appearance-none"><option value="All">All Subtopics</option>{subtopics.map(t=><option key={t}>{t}</option>)}</select>
+              <BookOpen className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
+           </div>
+           <div className="relative">
+              <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="w-full pl-3 py-2 border rounded-lg text-sm appearance-none"><option value="All">All Types</option><option value="MCQ">MCQ</option><option value="SAQ">SAQ</option></select>
+           </div>
+           <div className="relative">
+              <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="w-full pl-3 py-2 border rounded-lg text-sm appearance-none"><option value="Newest">Newest First</option><option value="Original">Original Order</option></select>
+              <ArrowUpDown className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
+           </div>
         </div>
-
-        {/* STATUS */}
-        <div className="max-w-6xl mx-auto px-4 pb-2 text-xs flex justify-between items-center text-gray-500 border-t border-gray-100 mt-2 pt-2">
-          <span>Showing <strong>{filteredQuestions.length}</strong> results</span>
-          <button 
-            onClick={handleReset}
-            className="text-teal-600 hover:underline font-semibold"
-          >
-            Reset All
-          </button>
+        
+        {/* Stats */}
+        <div className="max-w-6xl mx-auto px-4 pb-2 pt-2 border-t flex justify-between text-xs text-gray-500">
+          <span>Showing <strong>{filteredQuestions.length}</strong> questions</span>
+          <span className="flex items-center gap-1 text-teal-700 font-bold">
+            <CheckSquare className="w-3 h-3"/> {completedIds.size} Completed
+          </span>
         </div>
       </div>
 
-      {/* QUESTIONS LIST */}
+      {/* CARD LIST */}
       <main className="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-6">
-        {filteredQuestions.length > 0 ? (
-          filteredQuestions.map((q, index) => (
-            <QuestionCard key={q._uid} data={q} index={index} />
-          ))
-        ) : (
-          <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300 mt-4">
-            <p className="text-gray-500">No questions found.</p>
-          </div>
+        {filteredQuestions.map((q, index) => (
+            <QuestionCard 
+              // USE unique_id AS KEY
+              key={q.unique_id} 
+              data={q} 
+              index={index} 
+              // Check completion using unique_id
+              isCompleted={completedIds.has(String(q.unique_id))} 
+              // Pass unique_id to handler
+              onToggleComplete={() => handleToggleComplete(q.unique_id)} 
+            />
+        ))}
+        {filteredQuestions.length === 0 && (
+          <div className="text-center py-12"><p className="text-gray-500">No questions found.</p></div>
         )}
       </main>
     </div>
