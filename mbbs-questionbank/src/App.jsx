@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Filter, BookOpen, Stethoscope, CheckCircle2, Loader2, ArrowUpDown, LogOut, CheckSquare } from 'lucide-react';
+import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, CheckSquare } from 'lucide-react';
 import { supabase } from './supabase';
 import QuestionCard from './QuestionCard';
+import CompletionModal from './CompletionModal';
 import Auth from './Auth';
 
 const App = () => {
@@ -9,8 +10,8 @@ const App = () => {
   const [session, setSession] = useState(null);
   const [questions, setQuestions] = useState([]);
   
-  // Stores Set of completed "unique_id"s
-  const [completedIds, setCompletedIds] = useState(new Set());
+  // Stores Dictionary of progress: { 'unique_id': { notes, score, selected_option, ... } }
+  const [userProgress, setUserProgress] = useState({});
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -21,9 +22,14 @@ const App = () => {
   const [selectedType, setSelectedType] = useState('All');
   const [sortOrder, setSortOrder] = useState('Newest');
 
+  // Modal State
+  const [modalOpen, setModalOpen] = useState(false);
+  const [pendingQuestion, setPendingQuestion] = useState(null);
+  const [pendingMCQSelection, setPendingMCQSelection] = useState(null);
+  const [modalInitialData, setModalInitialData] = useState(null); // For reviewing/editing
+
   // --- 1. INITIALIZE ---
   useEffect(() => {
-    // A. Check Auth
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if(session) fetchUserProgress(session.user.id);
@@ -34,27 +40,22 @@ const App = () => {
       if(session) {
         fetchUserProgress(session.user.id);
       } else {
-        setCompletedIds(new Set());
+        setUserProgress({});
       }
     });
 
-    // B. Fetch Data
     fetch('/questions.json')
       .then(res => res.json())
       .then(data => {
-        // Validate Data
         const cleanData = Array.isArray(data) ? data.map(q => ({
           ...q,
-          // Ensure unique_id exists (critical)
           unique_id: q.unique_id !== undefined ? q.unique_id : `missing-${Math.random()}`,
-          
-          // Display Fields
           id: q.id || `No ID`, 
           topic: q.topic?.trim() || 'Uncategorized', 
           subtopic: q.subtopic?.trim() || 'General', 
-          type: q.type || 'SAQ'
+          type: q.type || 'SAQ',
+          options: Array.isArray(q.options) ? q.options : []
         })) : [];
-        
         setQuestions(cleanData);
         setLoading(false);
       })
@@ -69,41 +70,106 @@ const App = () => {
 
   // --- DB HELPER ---
   const fetchUserProgress = async (userId) => {
-    // We fetch the 'question_id' column which now stores your 'unique_id'
+    // Fetch all columns needed
     const { data, error } = await supabase
       .from('user_progress')
-      .select('question_id')
+      .select('question_id, notes, score, selected_option')
       .eq('user_id', userId);
 
     if (error) {
       console.error('Error fetching progress:', error);
     } else {
-      // Convert DB strings back to numbers (if your unique_id is number) 
-      // or keep as string to match safely. Let's force String comparison.
-      const ids = new Set(data.map(row => String(row.question_id)));
-      setCompletedIds(ids);
+      // Create a dictionary for easy lookup
+      const progressMap = {};
+      data.forEach(row => {
+        progressMap[String(row.question_id)] = row;
+      });
+      setUserProgress(progressMap);
     }
   };
 
-  // --- TOGGLE COMPLETE ---
-  const handleToggleComplete = async (uniqueId) => {
+  // --- ACTIONS ---
+
+  // 1. Mark Done (New) OR Toggle Off
+  const handleInitiateCompletion = async (questionData, mcqSelection) => {
     if (!session) return;
+    const idString = String(questionData.unique_id);
 
-    // Convert to string for DB consistency
-    const idString = String(uniqueId); 
-
-    const newSet = new Set(completedIds);
-    const isCurrentlyCompleted = newSet.has(idString);
-
-    if (isCurrentlyCompleted) {
-      newSet.delete(idString);
+    // If already complete, remove it
+    if (userProgress[idString]) {
+      const newProgress = { ...userProgress };
+      delete newProgress[idString];
+      setUserProgress(newProgress);
       await supabase.from('user_progress').delete().match({ user_id: session.user.id, question_id: idString });
-    } else {
-      newSet.add(idString);
-      await supabase.from('user_progress').insert({ user_id: session.user.id, question_id: idString });
+      return;
     }
+
+    // If new, open modal
+    setPendingQuestion(questionData);
+    setPendingMCQSelection(mcqSelection);
+    setModalInitialData(null); // No initial data for new entry
+    setModalOpen(true);
+  };
+
+  // 2. Review Notes (Existing)
+  const handleReviewNotes = (questionData) => {
+    const idString = String(questionData.unique_id);
+    const existingData = userProgress[idString];
     
-    setCompletedIds(newSet);
+    if (existingData) {
+      setPendingQuestion(questionData);
+      setModalInitialData(existingData); // Pass existing notes/score
+      setModalOpen(true);
+    }
+  };
+
+  // 3. Save (Confirm Modal)
+  const handleConfirmCompletion = async (modalData) => {
+    if (!session || !pendingQuestion) return;
+
+    const idString = String(pendingQuestion.unique_id);
+    
+    // AUTOMATIC SCORING LOGIC FOR MCQ
+    let finalScore = modalData.score; // Use input from modal (SAQ) by default
+    
+    if (pendingQuestion.type === 'MCQ') {
+        // If reviewing existing, keep old selection if not changed (implied complex logic), 
+        // but simple version: we are either saving new or updating notes.
+        // For new MCQ save:
+        if (pendingMCQSelection !== null) {
+            const isCorrect = pendingMCQSelection === pendingQuestion.correctAnswerIndex;
+            finalScore = isCorrect ? 1 : 0;
+        } else if (modalInitialData) {
+            // Preserving old score if just editing notes
+            finalScore = modalInitialData.score;
+        }
+    }
+
+    const payload = {
+      user_id: session.user.id,
+      question_id: idString,
+      notes: modalData.notes,
+      score: finalScore,
+      selected_option: pendingQuestion.type === 'MCQ' ? (pendingMCQSelection ?? modalInitialData?.selected_option) : null
+    };
+
+    // Optimistic Update
+    setUserProgress(prev => ({
+        ...prev,
+        [idString]: payload
+    }));
+
+    setModalOpen(false);
+    setPendingQuestion(null);
+
+    // Upsert handles both Insert (New) and Update (Edit Notes)
+    const { error } = await supabase.from('user_progress').upsert(payload);
+    
+    if (error) {
+      console.error("Error saving progress:", error);
+      alert("Failed to save progress.");
+      fetchUserProgress(session.user.id); // Revert on error
+    }
   };
 
   const handleLogout = async () => {
@@ -121,7 +187,6 @@ const App = () => {
 
     if (sortOrder === 'Newest') {
       return result.sort((a, b) => {
-        // Sorting still uses the String ID (e.g. M02) for the Year logic
         const getYear = (idStr) => {
           if (!idStr || idStr.length < 3) return 0;
           const val = parseInt(idStr.substring(1, 3), 10);
@@ -130,36 +195,34 @@ const App = () => {
         return getYear(b.id) - getYear(a.id);
       });
     }
-    
-    // Default: Sort by unique_id (Original order)
     return result.sort((a, b) => a.unique_id - b.unique_id);
-
   }, [questions, selectedTopic, selectedSubtopic, selectedType, sortOrder]);
-
 
   if (!session) return <Auth />;
   if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
   if (error) return <div>{error}</div>;
 
-  // --- LISTS FOR DROPDOWNS ---
   const topics = [...new Set(questions.map(q => q.topic))].sort();
-  
-  // Numerical Sorting for Subtopics
   const subtopics = [...new Set(questions.filter(q => selectedTopic === 'All' || q.topic === selectedTopic).map(q => q.subtopic))]
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
-  // --- PROGRESS CALCULATION (FILTERED) ---
-  // 1. Total is the number of currently visible questions
   const totalQuestionsCount = filteredQuestions.length;
-  // 2. Completed is how many of the VISIBLE questions are in the completed set
-  const completedCount = filteredQuestions.filter(q => completedIds.has(String(q.unique_id))).length;
-  
+  // Count using Object keys check
+  const completedCount = filteredQuestions.filter(q => userProgress[String(q.unique_id)]).length;
   const progressPercentage = totalQuestionsCount > 0 ? Math.round((completedCount / totalQuestionsCount) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-20">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-20 relative">
       
-      {/* HEADER - z-50 to stay on top */}
+      <CompletionModal 
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleConfirmCompletion}
+        question={pendingQuestion}
+        type={pendingQuestion?.type}
+        initialData={modalInitialData} // Pass existing data here
+      />
+
       <header className="bg-teal-700 text-white shadow-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center gap-3">
@@ -179,25 +242,18 @@ const App = () => {
         </div>
       </header>
 
-      {/* FILTERS & PROGRESS BAR - z-40 to stay above cards */}
       <div className="bg-white border-b border-gray-200 shadow-sm sticky top-[60px] z-40">
-        
-        {/* Progress Bar Section (Filtered) */}
         <div className="max-w-6xl mx-auto px-4 pt-4 pb-2">
           <div className="flex justify-between text-xs font-semibold text-gray-600 mb-1">
              <span>Progress</span>
              <span>{completedCount} / {totalQuestionsCount} ({progressPercentage}%)</span>
           </div>
           <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-            <div 
-              className="bg-teal-500 h-2.5 rounded-full transition-all duration-500 ease-out" 
-              style={{ width: `${progressPercentage}%` }}
-            ></div>
+            <div className="bg-teal-500 h-2.5 rounded-full transition-all duration-500 ease-out" style={{ width: `${progressPercentage}%` }}></div>
           </div>
         </div>
 
         <div className="max-w-6xl mx-auto px-4 py-2 grid grid-cols-1 md:grid-cols-4 gap-4">
-           {/* Dropdowns */}
            <div className="relative">
               <select value={selectedTopic} onChange={(e) => {setSelectedTopic(e.target.value); setSelectedSubtopic('All')}} className="w-full pl-3 py-2 border rounded-lg text-sm appearance-none"><option value="All">All Topics</option>{topics.map(t=><option key={t}>{t}</option>)}</select>
               <Filter className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
@@ -215,7 +271,6 @@ const App = () => {
            </div>
         </div>
         
-        {/* Stats */}
         <div className="max-w-6xl mx-auto px-4 pb-2 pt-2 border-t flex justify-between text-xs text-gray-500">
           <span>Showing <strong>{filteredQuestions.length}</strong> questions</span>
           <span className="flex items-center gap-1 text-teal-700 font-bold">
@@ -224,15 +279,17 @@ const App = () => {
         </div>
       </div>
 
-      {/* CARD LIST */}
       <main className="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-6 z-0">
         {filteredQuestions.map((q, index) => (
             <QuestionCard 
               key={q.unique_id} 
               data={q} 
               index={index} 
-              isCompleted={completedIds.has(String(q.unique_id))} 
-              onToggleComplete={() => handleToggleComplete(q.unique_id)} 
+              // Pass boolean based on object existence
+              isCompleted={!!userProgress[String(q.unique_id)]} 
+              onToggleComplete={(mcqSelection) => handleInitiateCompletion(q, mcqSelection)} 
+              // Pass handler for reviewing
+              onReviewNotes={() => handleReviewNotes(q)}
             />
         ))}
         {filteredQuestions.length === 0 && (
