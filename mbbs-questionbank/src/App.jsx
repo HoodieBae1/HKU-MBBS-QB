@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, CheckSquare } from 'lucide-react';
-import { Virtuoso } from 'react-virtuoso'; // <--- NEW IMPORT
+import { Virtuoso } from 'react-virtuoso';
 import { supabase } from './supabase';
 import QuestionCard from './QuestionCard';
 import CompletionModal from './CompletionModal';
@@ -46,7 +46,7 @@ const App = () => {
       }
     });
 
-    // B. Fetch Data (Still fetching JSON for now, but rendering will be optimized)
+    // B. Fetch Data
     fetch('/questions.json')
       .then(res => res.json())
       .then(data => {
@@ -171,7 +171,7 @@ const App = () => {
     await supabase.auth.signOut();
   };
 
-  // --- FILTERING ---
+  // --- FILTERING & SORTING ---
   const filteredQuestions = useMemo(() => {
     let result = questions.filter(q => {
       if (selectedTopic !== 'All' && q.topic !== selectedTopic) return false;
@@ -180,20 +180,38 @@ const App = () => {
       return true;
     });
 
-    if (sortOrder === 'Newest') {
-      return result.sort((a, b) => {
+    return result.sort((a, b) => {
+      // 1. Logic for "Completed" and "Unfinished" sorting
+      if (sortOrder === 'Completed' || sortOrder === 'Unfinished') {
+        const isADone = !!userProgress[String(a.unique_id)];
+        const isBDone = !!userProgress[String(b.unique_id)];
+
+        if (isADone !== isBDone) {
+          if (sortOrder === 'Completed') return isADone ? -1 : 1;
+          if (sortOrder === 'Unfinished') return isADone ? 1 : -1;
+        }
+        // If completion status is same, fallback to ID sorting for stability
+        return a.unique_id - b.unique_id;
+      }
+
+      // 2. Logic for "Newest" sorting
+      if (sortOrder === 'Newest') {
         const getYear = (idStr) => {
           if (!idStr || idStr.length < 3) return 0;
           const val = parseInt(idStr.substring(1, 3), 10);
           return isNaN(val) ? 0 : (val < 50 ? 2000 + val : 1900 + val);
         };
-        return getYear(b.id) - getYear(a.id);
-      });
-    }
-    
-    return result.sort((a, b) => a.unique_id - b.unique_id);
+        const yearDiff = getYear(b.id) - getYear(a.id);
+        if (yearDiff !== 0) return yearDiff;
+        // fallback
+        return a.unique_id - b.unique_id;
+      }
+      
+      // 3. Default (Original Order)
+      return a.unique_id - b.unique_id;
+    });
 
-  }, [questions, selectedTopic, selectedSubtopic, selectedType, sortOrder]);
+  }, [questions, selectedTopic, selectedSubtopic, selectedType, sortOrder, userProgress]); // <--- userProgress added to dependencies
 
 
   if (!session) return <Auth />;
@@ -272,8 +290,15 @@ const App = () => {
            <div className="relative">
               <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="w-full pl-3 py-2 border rounded-lg text-sm appearance-none"><option value="All">All Types</option><option value="MCQ">MCQ</option><option value="SAQ">SAQ</option></select>
            </div>
+           
+           {/* Sorting Dropdown */}
            <div className="relative">
-              <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="w-full pl-3 py-2 border rounded-lg text-sm appearance-none"><option value="Newest">Newest First</option><option value="Original">Original Order</option></select>
+              <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="w-full pl-3 py-2 border rounded-lg text-sm appearance-none">
+                <option value="Newest">Newest First</option>
+                <option value="Completed">Completed First</option>
+                <option value="Unfinished">Unfinished First</option>
+                <option value="Original">Original Order</option>
+              </select>
               <ArrowUpDown className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
            </div>
         </div>
@@ -292,11 +317,6 @@ const App = () => {
         {filteredQuestions.length === 0 ? (
           <div className="text-center py-12"><p className="text-gray-500">No questions found.</p></div>
         ) : (
-          /* 
-             Virtuoso handles rendering only the visible items.
-             useWindowScroll allows the main browser scrollbar to control the list 
-             (compatible with your Sticky headers).
-          */
           <Virtuoso
             useWindowScroll
             data={filteredQuestions}
@@ -306,10 +326,6 @@ const App = () => {
                 const progress = userProgress[String(q.unique_id)];
 
                 return (
-                    /* 
-                       We add padding-bottom here to replace the 'gap-6' 
-                       that was previously in the flex container 
-                    */
                     <div className="pb-6">
                         <QuestionCard 
                           key={q.unique_id} 
