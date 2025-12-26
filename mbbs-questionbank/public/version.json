@@ -1,0 +1,25 @@
+{
+  "currentVersion": "1.0.1",
+  "history": [
+    {
+      "version": "1.0.1",
+      "date": "2025-12-26",
+      "title": "Version History & Auto-Update",
+      "changes": [
+        "Added Version History page to track app changes.",
+        "Implemented Auto-Update system to force reload on new deployments.",
+        "Allow for note taking on questions, record scores achieved for each question."
+      ]
+    },
+    {
+      "version": "1.0.0",
+      "date": "2025-12-25",
+      "title": "Initial Release",
+      "changes": [
+        "Launched Question Bank with MCQ and SAQ support.",
+        "Added all questions from Matthew Cheung superpass",
+        "Added filter by Topic and Subtopic, login features to save progress."
+      ]
+    }
+  ]
+}

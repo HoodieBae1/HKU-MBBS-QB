@@ -1,10 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, CheckSquare } from 'lucide-react';
+import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, CheckSquare, GitCommit } from 'lucide-react';
 import { Virtuoso } from 'react-virtuoso';
 import { supabase } from './supabase';
 import QuestionCard from './QuestionCard';
 import CompletionModal from './CompletionModal';
 import Auth from './Auth';
+
+// --- NEW IMPORTS ---
+import VersionHistory from './VersionHistory';
+import UpdateManager from './UpdateManager';
+import { APP_VERSION } from './appVersion';
 
 const App = () => {
   // --- STATE ---
@@ -28,6 +33,9 @@ const App = () => {
   const [pendingQuestion, setPendingQuestion] = useState(null);
   const [pendingMCQSelection, setPendingMCQSelection] = useState(null);
   const [modalInitialData, setModalInitialData] = useState(null); 
+
+  // --- NEW: HISTORY VIEW STATE ---
+  const [showHistory, setShowHistory] = useState(false);
 
   // --- 1. INITIALIZE ---
   useEffect(() => {
@@ -211,12 +219,19 @@ const App = () => {
       return a.unique_id - b.unique_id;
     });
 
-  }, [questions, selectedTopic, selectedSubtopic, selectedType, sortOrder, userProgress]); // <--- userProgress added to dependencies
+  }, [questions, selectedTopic, selectedSubtopic, selectedType, sortOrder, userProgress]);
 
+
+  // --- RENDERING ---
 
   if (!session) return <Auth />;
   if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
   if (error) return <div>{error}</div>;
+
+  // --- NEW: SHOW HISTORY VIEW IF TOGGLED ---
+  if (showHistory) {
+    return <VersionHistory onClose={() => setShowHistory(false)} />;
+  }
 
   // --- DROPDOWN DATA ---
   const topics = [...new Set(questions.map(q => q.topic))].sort();
@@ -230,6 +245,9 @@ const App = () => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-20 relative">
       
+      {/* NEW: UPDATE MANAGER (Hidden until update found) */}
+      <UpdateManager />
+
       {/* MODAL */}
       <CompletionModal 
         isOpen={modalOpen}
@@ -247,15 +265,33 @@ const App = () => {
             <Stethoscope className="w-7 h-7 text-teal-200" />
             <div>
               <h1 className="text-lg font-bold">HKU M26 MBBS Finals</h1>
-              <p className="text-[10px] text-teal-200 uppercase tracking-wider">Question Bank</p>
+              <div className="flex items-center gap-2 text-[10px] text-teal-200 uppercase tracking-wider">
+                <span>Question Bank</span>
+                {/* NEW: Version Badge */}
+                <span className="px-1.5 py-0.5 bg-teal-800 rounded text-teal-100 opacity-80 font-mono">v{APP_VERSION}</span>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden md:block text-right">
+          
+          <div className="flex items-center gap-2">
+            
+            {/* NEW: Version History Button */}
+            <button 
+              onClick={() => setShowHistory(true)}
+              className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white"
+              title="View Version History"
+            >
+              <GitCommit className="w-5 h-5" />
+            </button>
+
+            <div className="hidden md:block text-right border-l border-teal-600 pl-4 ml-2">
               <p className="text-xs text-teal-100">Logged in as</p>
               <p className="text-xs font-bold">{session.user.email}</p>
             </div>
-            <button onClick={handleLogout} className="p-2 hover:bg-teal-600 rounded-full transition"><LogOut className="w-5 h-5" /></button>
+            
+            <button onClick={handleLogout} className="p-2 hover:bg-teal-600 rounded-full transition ml-1">
+               <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </header>
