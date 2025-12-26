@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit } from 'lucide-react';
+import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy } from 'lucide-react';
 import { Virtuoso } from 'react-virtuoso';
 import { supabase } from './supabase';
 import QuestionCard from './QuestionCard';
@@ -7,6 +7,7 @@ import CompletionModal from './CompletionModal';
 import Auth from './Auth';
 import VersionHistory from './VersionHistory';
 import UpdateManager from './UpdateManager';
+import AdminDashboard from './AdminDashboard';
 import { APP_VERSION } from './appVersion';
 
 // --- HELPER HOOK: Persist state to LocalStorage ---
@@ -43,6 +44,10 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // --- ADMIN STATE ---
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+
   // --- FILTERS & UI (Now Persistent) ---
   const [filtersOpen, setFiltersOpen] = useStickyState(true, 'app_filtersOpen');
   const [searchQuery, setSearchQuery] = useStickyState('', 'app_searchQuery');
@@ -70,15 +75,20 @@ const App = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if(session) fetchUserProgress(session.user.id);
+      if(session) {
+        fetchUserProgress(session.user.id);
+        checkAdminStatus(session.user.id);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if(session) {
         fetchUserProgress(session.user.id);
+        checkAdminStatus(session.user.id);
       } else {
         setUserProgress({});
+        setIsAdmin(false);
       }
     });
 
@@ -122,6 +132,22 @@ const App = () => {
         progressMap[String(row.question_id)] = row;
       });
       setUserProgress(progressMap);
+    }
+  };
+
+  const checkAdminStatus = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+      
+      if (!error && data?.role === 'admin') {
+        setIsAdmin(true);
+      }
+    } catch (e) {
+      console.error("Admin check failed", e);
     }
   };
 
@@ -351,6 +377,7 @@ const App = () => {
   if (!session) return <Auth />;
   if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
   if (error) return <div>{error}</div>;
+  if (showDashboard) return <AdminDashboard onClose={() => setShowDashboard(false)} />;
   if (showHistory) return <VersionHistory onClose={() => setShowHistory(false)} />;
 
   return (
@@ -379,6 +406,18 @@ const App = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            
+            {/* ADMIN DASHBOARD BUTTON */}
+            {isAdmin && (
+              <button 
+                onClick={() => setShowDashboard(true)} 
+                className="p-2 bg-indigo-800 hover:bg-indigo-900 text-white rounded-full transition shadow-sm border border-indigo-500 mr-2"
+                title="Admin Dashboard"
+              >
+                <Trophy className="w-5 h-5 text-yellow-300" />
+              </button>
+            )}
+
             <button onClick={() => setShowHistory(true)} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white">
               <GitCommit className="w-5 h-5" />
             </button>
