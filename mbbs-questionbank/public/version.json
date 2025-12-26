@@ -1,14 +1,22 @@
 {
-  "currentVersion": "1.0.3",
+  "currentVersion": "1.0.4",
   "history": [
+    {
+      "version": "1.0.4",
+      "date": "2025-12-26",
+      "title": "Questions fix",
+      "changes": [
+        "Questions: Minor fix to questions with incorrectly labeled question type (ie. MCQ vs SAQ)",
+        "Announcement: Some questions have no answer. Maybe people remembered the MCQ options incorrectly so no correct answer."
+      ]
+    },
     {
       "version": "1.0.3",
       "date": "2025-12-26",
       "title": "Added search feature and improved UI",
       "changes": [
         "Feature: Added search function to quickly find a question by specific words",
-        "Refactor: Improved UI - collapsable filter menu, show question count in each filter, store filter selections and scroll position",
-        "Questions: Minor fix to questions with incorrectly labeled question type (ie. MCQ vs SAQ)"
+        "Refactor: Improved UI - collapsable filter menu, show question count in each filter, store filter selections and scroll position"
       ]
     },
     {
