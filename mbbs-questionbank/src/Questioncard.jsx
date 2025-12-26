@@ -128,7 +128,7 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, onToggleComplete, o
             <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2 text-emerald-800 font-bold text-sm uppercase tracking-wide">
                 <CheckCircle2 className="w-4 h-4" />
-                Official Answer
+                Goddisk Answer
               </div>
               <p className="text-emerald-900 whitespace-pre-line leading-relaxed">
                 {data.official_answer}
