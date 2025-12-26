@@ -1,6 +1,14 @@
 {
-  "currentVersion": "2.0.0",
+  "currentVersion": "2.0.1",
   "history": [
+      {
+      "version": "2.0.1",
+      "date": "2025-12-27",
+      "title": "Minor AI Fix",
+      "changes": [
+        "Bugfix: Fixed minor issue with AI analysis not returning results in some cases"
+      ]
+    },
     {
       "version": "2.0.0",
       "date": "2025-12-26",
