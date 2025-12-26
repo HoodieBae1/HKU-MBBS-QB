@@ -2,9 +2,18 @@
   "currentVersion": "1.0.2",
   "history": [
     {
+      "version": "1.0.3",
+      "date": "2025-12-26",
+      "title": "Added search feature and improved UI",
+      "changes": [
+        "Feature: Added search function to quickly find a question by specific words",
+        "Refactor: Improved UI by allowing collapsable filter menu, show question count in each filter"
+      ]
+    },
+    {
       "version": "1.0.2",
       "date": "2025-12-26",
-      "title": "Update notes bug fix and flag",
+      "title": "Update notes, bug fix, and flag",
       "changes": [
         "Bugfix: on unable to update notes",
         "Feature: Added flag to questions for review later",
