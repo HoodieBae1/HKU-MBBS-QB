@@ -81,9 +81,10 @@ const App = () => {
 
   // --- DB HELPER ---
   const fetchUserProgress = async (userId) => {
+    // Added 'is_flagged' to selection
     const { data, error } = await supabase
       .from('user_progress')
-      .select('id, question_id, notes, score, selected_option')
+      .select('id, question_id, notes, score, selected_option, is_flagged')
       .eq('user_id', userId);
 
     if (error) {
@@ -98,25 +99,97 @@ const App = () => {
   };
 
   // --- ACTIONS ---
+  
+  // Toggle Flag Status
+  const handleToggleFlag = async (questionData) => {
+    if (!session) return;
+    const idString = String(questionData.unique_id);
+    const currentProgress = userProgress[idString] || {};
+    const newFlagStatus = !currentProgress.is_flagged;
+
+    // 1. Prepare Payload
+    const payload = {
+      ...currentProgress,
+      user_id: session.user.id,
+      question_id: idString,
+      is_flagged: newFlagStatus
+    };
+
+    // If it was a purely virtual row (empty), ensure we have keys
+    if (!payload.score && payload.score !== 0) payload.score = null;
+    if (!payload.selected_option && payload.selected_option !== 0) payload.selected_option = null;
+    if (!payload.notes) payload.notes = null;
+
+    // 2. Update UI Optimistically
+    // If unflagging AND not completed (no score/notes/selection), we effectively remove the row from logic view
+    // But to keep it simple, we just update the 'is_flagged' key.
+    // If we unflag and it has no other data, we should ideally delete it, but upserting false is safer for now.
+    
+    // However, if we unflag and it's NOT completed, we might want to clean up.
+    // Let's stick to Upsert for simplicity.
+    
+    setUserProgress(prev => ({
+      ...prev,
+      [idString]: { ...payload }
+    }));
+
+    // 3. Database Upsert
+    const { data, error } = await supabase
+      .from('user_progress')
+      .upsert(payload, { onConflict: 'user_id,question_id' })
+      .select();
+
+    if (error) {
+      console.error("Error flagging:", error);
+      fetchUserProgress(session.user.id); // Revert on error
+    } else if (data && data.length > 0) {
+      // If we unflagged and it's basically empty, we could delete it, but for now we leave it.
+      setUserProgress(prev => ({
+        ...prev,
+        [idString]: data[0]
+      }));
+    }
+  };
+
   const handleInitiateCompletion = async (questionData, mcqSelection) => {
     if (!session) return;
     const idString = String(questionData.unique_id);
+    const existingEntry = userProgress[idString];
 
-    // If already complete, remove it (Toggle OFF)
-    if (userProgress[idString]) {
-      const newProgress = { ...userProgress };
-      delete newProgress[idString];
-      setUserProgress(newProgress); // Optimistic UI update
+    // Determine if it is currently "Completed"
+    // We consider it completed if we have recorded data
+    const isCurrentlyCompleted = existingEntry && (existingEntry.score !== null || existingEntry.selected_option !== null || existingEntry.notes);
+
+    // If already complete, we are "Uncompleting" it (Toggle OFF)
+    if (isCurrentlyCompleted) {
       
-      // We delete using question_id match
-      await supabase.from('user_progress').delete().match({ user_id: session.user.id, question_id: idString });
+      // If it is FLAGGED, we cannot delete the row. We must just nullify completion data.
+      if (existingEntry.is_flagged) {
+        const payload = {
+           ...existingEntry,
+           score: null,
+           selected_option: null,
+           notes: null
+        };
+
+        setUserProgress(prev => ({ ...prev, [idString]: payload })); // Optimistic
+        await supabase.from('user_progress').upsert(payload, { onConflict: 'user_id,question_id' });
+      } 
+      // If NOT flagged, we can delete the row entirely
+      else {
+        const newProgress = { ...userProgress };
+        delete newProgress[idString];
+        setUserProgress(newProgress); // Optimistic UI update
+        
+        await supabase.from('user_progress').delete().match({ user_id: session.user.id, question_id: idString });
+      }
       return;
     }
 
-    // If new, open modal
+    // If new (or just flagged but not done), open modal
     setPendingQuestion(questionData);
     setPendingMCQSelection(mcqSelection);
-    setModalInitialData(null);
+    setModalInitialData(null); // Force new entry mode in modal
     setModalOpen(true);
   };
 
@@ -137,17 +210,16 @@ const App = () => {
 
     // 1. Identify the Question ID
     const idString = String(pendingQuestion.unique_id);
-    
+    const currentProgress = userProgress[idString] || {};
+
     // 2. Prepare Score & Selection
     let finalScore = modalData.score;
     
     if (pendingQuestion.type === 'MCQ') {
-        // If user just clicked an option, calculate score
         if (pendingMCQSelection !== null) {
             const isCorrect = pendingMCQSelection === pendingQuestion.correctAnswerIndex;
             finalScore = isCorrect ? 1 : 0;
         } 
-        // If user is just editing notes (no new selection), preserve old score
         else if (modalInitialData) {
             finalScore = modalInitialData.score;
         }
@@ -157,13 +229,14 @@ const App = () => {
         ? (pendingMCQSelection ?? modalInitialData?.selected_option) 
         : null;
 
-    // 3. Prepare Payload
+    // 3. Prepare Payload (Preserve existing flag status!)
     const payload = {
       user_id: session.user.id,
-      question_id: idString, // <-- We match against this
+      question_id: idString, 
       notes: modalData.notes,
       score: finalScore,
-      selected_option: finalSelection
+      selected_option: finalSelection,
+      is_flagged: currentProgress.is_flagged || false // Preserve flag
     };
 
     // 4. Update UI Optimistically
@@ -171,16 +244,13 @@ const App = () => {
     setPendingQuestion(null);
     setPendingMCQSelection(null);
 
-    // Preserve the old PK ID if we have it, just for local state consistency
-    const optimisticId = userProgress[idString]?.id; 
+    const optimisticId = currentProgress.id; 
     setUserProgress(prev => ({
         ...prev,
         [idString]: { ...payload, id: optimisticId }
     }));
 
     // 5. UPSERT to Database
-    // "onConflict: 'user_id, question_id'" tells Supabase:
-    // "Find the row where user_id AND question_id match. Update it. If none, Insert."
     const { data, error } = await supabase
         .from('user_progress')
         .upsert(payload, { onConflict: 'user_id,question_id' })
@@ -190,9 +260,8 @@ const App = () => {
     if (error) {
         console.error("Error saving progress:", error);
         alert(`Error saving: ${error.message}`);
-        fetchUserProgress(session.user.id); // Re-sync data if save failed
+        fetchUserProgress(session.user.id); 
     } else if (data && data.length > 0) {
-        // Update state with the official DB return (this ensures we have the correct ID for next time)
         setUserProgress(prev => ({
             ...prev,
             [idString]: data[0]
@@ -204,6 +273,20 @@ const App = () => {
     await supabase.auth.signOut();
   };
 
+  // --- CHECK COMPLETION STATUS HELPER ---
+  // A question is "Done" if it has specific data recorded, not just if the row exists (because row might just be a flag)
+  const checkIsCompleted = (id) => {
+    const p = userProgress[String(id)];
+    if (!p) return false;
+    // It is completed if there is a score, a selection, or notes. 
+    // Note: checking for non-null because score can be 0.
+    return p.score !== null || p.selected_option !== null || (p.notes && p.notes.length > 0);
+  };
+
+  const checkIsFlagged = (id) => {
+    return userProgress[String(id)]?.is_flagged === true;
+  }
+
   // --- FILTERING & SORTING ---
   const filteredQuestions = useMemo(() => {
     let result = questions.filter(q => {
@@ -214,9 +297,17 @@ const App = () => {
     });
 
     return result.sort((a, b) => {
+      // New Sort: Flagged
+      if (sortOrder === 'Flagged') {
+        const isAFlagged = checkIsFlagged(a.unique_id);
+        const isBFlagged = checkIsFlagged(b.unique_id);
+        if (isAFlagged !== isBFlagged) return isAFlagged ? -1 : 1;
+        return a.unique_id - b.unique_id;
+      }
+
       if (sortOrder === 'Completed' || sortOrder === 'Unfinished') {
-        const isADone = !!userProgress[String(a.unique_id)];
-        const isBDone = !!userProgress[String(b.unique_id)];
+        const isADone = checkIsCompleted(a.unique_id);
+        const isBDone = checkIsCompleted(b.unique_id);
 
         if (isADone !== isBDone) {
           if (sortOrder === 'Completed') return isADone ? -1 : 1;
@@ -239,7 +330,7 @@ const App = () => {
       return a.unique_id - b.unique_id;
     });
 
-  }, [questions, selectedTopic, selectedSubtopic, selectedType, sortOrder, userProgress]);
+  }, [questions, selectedTopic, selectedSubtopic, selectedType, sortOrder, userProgress]); // Added userProgress dependency for sort
 
 
   // --- RENDERING ---
@@ -248,27 +339,24 @@ const App = () => {
   if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
   if (error) return <div>{error}</div>;
 
-  // --- NEW: SHOW HISTORY VIEW IF TOGGLED ---
   if (showHistory) {
     return <VersionHistory onClose={() => setShowHistory(false)} />;
   }
 
-  // --- DROPDOWN DATA ---
   const topics = [...new Set(questions.map(q => q.topic))].sort();
   const subtopics = [...new Set(questions.filter(q => selectedTopic === 'All' || q.topic === selectedTopic).map(q => q.subtopic))]
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
   const totalQuestionsCount = filteredQuestions.length;
-  const completedCount = filteredQuestions.filter(q => userProgress[String(q.unique_id)]).length;
+  // Update counter to use specific check logic
+  const completedCount = filteredQuestions.filter(q => checkIsCompleted(q.unique_id)).length;
   const progressPercentage = totalQuestionsCount > 0 ? Math.round((completedCount / totalQuestionsCount) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-20 relative">
       
-      {/* NEW: UPDATE MANAGER (Hidden until update found) */}
       <UpdateManager />
 
-      {/* MODAL */}
       <CompletionModal 
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -287,7 +375,6 @@ const App = () => {
               <h1 className="text-lg font-bold">HKU M26 MBBS Finals</h1>
               <div className="flex items-center gap-2 text-[10px] text-teal-200 uppercase tracking-wider">
                 <span>Question Bank</span>
-                {/* NEW: Version Badge */}
                 <span className="px-1.5 py-0.5 bg-teal-800 rounded text-teal-100 opacity-80 font-mono">v{APP_VERSION}</span>
               </div>
             </div>
@@ -295,7 +382,6 @@ const App = () => {
           
           <div className="flex items-center gap-2">
             
-            {/* NEW: Version History Button */}
             <button 
               onClick={() => setShowHistory(true)}
               className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white"
@@ -319,7 +405,6 @@ const App = () => {
       {/* FILTERS & PROGRESS BAR */}
       <div className="bg-white border-b border-gray-200 shadow-sm sticky top-[60px] z-40">
         
-        {/* Progress Bar Section */}
         <div className="max-w-6xl mx-auto px-4 pt-4 pb-2">
           <div className="flex justify-between text-xs font-semibold text-gray-600 mb-1">
              <span>Progress (Filtered)</span>
@@ -353,6 +438,7 @@ const App = () => {
                 <option value="Newest">Newest First</option>
                 <option value="Completed">Completed First</option>
                 <option value="Unfinished">Unfinished First</option>
+                <option value="Flagged">Flagged First</option>
                 <option value="Original">Original Order</option>
               </select>
               <ArrowUpDown className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
@@ -378,7 +464,8 @@ const App = () => {
             data={filteredQuestions}
             totalCount={filteredQuestions.length}
             itemContent={(index, q) => {
-                // Determine progress for this specific card
+                const isCompleted = checkIsCompleted(q.unique_id);
+                const isFlagged = checkIsFlagged(q.unique_id);
                 const progress = userProgress[String(q.unique_id)];
 
                 return (
@@ -387,9 +474,11 @@ const App = () => {
                           key={q.unique_id} 
                           data={q} 
                           index={index} 
-                          isCompleted={!!progress} 
+                          isCompleted={isCompleted} 
+                          isFlagged={isFlagged}
                           initialSelection={progress ? progress.selected_option : null}
                           onToggleComplete={(mcqSelection) => handleInitiateCompletion(q, mcqSelection)} 
+                          onToggleFlag={() => handleToggleFlag(q)}
                           onReviewNotes={() => handleReviewNotes(q)}
                         />
                     </div>

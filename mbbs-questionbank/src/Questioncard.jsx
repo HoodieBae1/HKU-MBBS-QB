@@ -1,30 +1,25 @@
-import React, { useState, useEffect } from 'react'; // <--- Import useEffect
-import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, Square, StickyNote } from 'lucide-react';
+import React, { useState, useEffect } from 'react'; 
+import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, Square, StickyNote, Flag } from 'lucide-react';
 
-// Add 'initialSelection' to props
-const QuestionCard = ({ data, index, isCompleted, onToggleComplete, onReviewNotes, initialSelection }) => {
+const QuestionCard = ({ data, index, isCompleted, isFlagged, onToggleComplete, onToggleFlag, onReviewNotes, initialSelection }) => {
   const [isRevealed, setIsRevealed] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
 
   const isMCQ = data.type === 'MCQ';
 
-  // --- NEW: SYNC WITH DB ---
+  // --- SYNC WITH DB ---
   useEffect(() => {
-    // Check explicitly for null/undefined because index 0 is falsy
     if (initialSelection !== undefined && initialSelection !== null) {
       setSelectedOption(initialSelection);
       setIsRevealed(true);
     } else if (!isCompleted) {
-      // Optional: If you uncheck "Done", reset the card visuals
       setSelectedOption(null);
       setIsRevealed(false);
     }
   }, [initialSelection, isCompleted]);
-  // -------------------------
 
   // --- HANDLERS ---
   const handleMCQSelect = (idx) => {
-    // Prevent changing answer if already loaded from DB or selected
     if (selectedOption !== null) return; 
     setSelectedOption(idx);
     setIsRevealed(true); 
@@ -34,9 +29,6 @@ const QuestionCard = ({ data, index, isCompleted, onToggleComplete, onReviewNote
     onToggleComplete(selectedOption);
   };
   
-  // ... rest of the component remains exactly the same ...
-  // (getOptionStyle, return statement, etc.)
-  
   const getOptionStyle = (idx) => {
     if (selectedOption === null) return 'hover:bg-slate-50 cursor-pointer border-gray-200';
     if (idx === data.correctAnswerIndex) return 'bg-emerald-100 border-emerald-500 text-emerald-800 font-medium';
@@ -45,12 +37,9 @@ const QuestionCard = ({ data, index, isCompleted, onToggleComplete, onReviewNote
   };
 
   return (
-    <div className={`rounded-xl shadow-sm border overflow-hidden transition-all duration-300 ${isCompleted ? 'bg-green-50/50 border-green-200 opacity-75' : 'bg-white border-gray-200'}`}>
-       {/* ... existing JSX ... */}
-       {/* (No other changes needed in JSX) */}
+    <div className={`rounded-xl shadow-sm border overflow-hidden transition-all duration-300 ${isCompleted ? 'bg-green-50/50 border-green-200 opacity-75' : 'bg-white border-gray-200'} ${isFlagged ? 'ring-2 ring-orange-300 ring-offset-2' : ''}`}>
        
        <div className="bg-slate-50/50 px-5 py-3 border-b border-gray-100 flex justify-between items-center">
-        {/* ... Header Content ... */}
          <div className="flex gap-2 text-xs font-semibold">
           <span className="px-2 py-1 bg-teal-100 text-teal-700 rounded border border-teal-200">
             {data.topic}
@@ -62,6 +51,19 @@ const QuestionCard = ({ data, index, isCompleted, onToggleComplete, onReviewNote
         
         <div className="flex items-center gap-3">
           
+          {/* NEW: FLAG BUTTON */}
+          <button
+            onClick={onToggleFlag}
+            className={`flex items-center justify-center p-1.5 rounded transition-colors ${
+              isFlagged 
+                ? 'bg-orange-100 text-orange-600 border border-orange-200' 
+                : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50'
+            }`}
+            title={isFlagged ? "Remove Flag" : "Flag for Review"}
+          >
+            <Flag className={`w-4 h-4 ${isFlagged ? 'fill-current' : ''}`} />
+          </button>
+
           {/* REVIEW NOTES BUTTON */}
           {isCompleted && (
             <button
