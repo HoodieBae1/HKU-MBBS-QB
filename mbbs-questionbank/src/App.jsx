@@ -9,6 +9,29 @@ import VersionHistory from './VersionHistory';
 import UpdateManager from './UpdateManager';
 import { APP_VERSION } from './appVersion';
 
+// --- HELPER HOOK: Persist state to LocalStorage ---
+function useStickyState(defaultValue, key) {
+  const [value, setValue] = useState(() => {
+    try {
+      const stickyValue = window.localStorage.getItem(key);
+      return stickyValue !== null ? JSON.parse(stickyValue) : defaultValue;
+    } catch (error) {
+      console.warn(`Error reading localStorage key "${key}":`, error);
+      return defaultValue;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.warn(`Error setting localStorage key "${key}":`, error);
+    }
+  }, [key, value]);
+
+  return [value, setValue];
+}
+
 const App = () => {
   // --- STATE ---
   const [session, setSession] = useState(null);
@@ -20,13 +43,20 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Filters & UI
-  const [filtersOpen, setFiltersOpen] = useState(true); // <--- NEW: Collapse State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTopic, setSelectedTopic] = useState('All');
-  const [selectedSubtopic, setSelectedSubtopic] = useState('All');
-  const [selectedType, setSelectedType] = useState('All');
-  const [sortOrder, setSortOrder] = useState('Newest');
+  // --- FILTERS & UI (Now Persistent) ---
+  const [filtersOpen, setFiltersOpen] = useStickyState(true, 'app_filtersOpen');
+  const [searchQuery, setSearchQuery] = useStickyState('', 'app_searchQuery');
+  const [selectedTopic, setSelectedTopic] = useStickyState('All', 'app_selectedTopic');
+  const [selectedSubtopic, setSelectedSubtopic] = useStickyState('All', 'app_selectedSubtopic');
+  const [selectedType, setSelectedType] = useStickyState('All', 'app_selectedType');
+  const [sortOrder, setSortOrder] = useStickyState('Newest', 'app_sortOrder');
+
+  // --- SCROLL POSITION STATE ---
+  // We only need to read this once on mount to pass to Virtuoso
+  const initialScrollIndex = useMemo(() => {
+    const saved = window.localStorage.getItem('app_scrollIndex');
+    return saved ? parseInt(saved, 10) : 0;
+  }, []);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -203,6 +233,7 @@ const App = () => {
   };
 
   const handleLogout = async () => {
+    // Clear local preferences on logout if desired, but keeping them is usually better UX
     await supabase.auth.signOut();
   };
 
@@ -216,9 +247,6 @@ const App = () => {
   const checkIsFlagged = (id) => userProgress[String(id)]?.is_flagged === true;
 
   // --- FILTER LOGIC & COUNTS ---
-  
-  // 1. Calculate Counts (Memoized)
-  // We calculate counts based on the 'Type' and 'Search' filter, but NOT 'Topic' (so you can see other topic counts)
   const filterCounts = useMemo(() => {
     const qLower = searchQuery.toLowerCase().trim();
     
@@ -239,7 +267,7 @@ const App = () => {
     const tCounts = {};
     baseSet.forEach(q => { tCounts[q.topic] = (tCounts[q.topic] || 0) + 1; });
 
-    // Subtopic Counts (Need to respect Selected Topic)
+    // Subtopic Counts
     const sCounts = {};
     baseSet.forEach(q => {
         if (selectedTopic === 'All' || q.topic === selectedTopic) {
@@ -311,7 +339,6 @@ const App = () => {
 
   // --- PREPARE DROPDOWN LISTS ---
   const topicsList = Object.keys(filterCounts.tCounts).sort();
-  // Filter subtopics based on current selection to keep dropdown clean
   const subtopicsList = Object.keys(filterCounts.sCounts)
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
@@ -483,7 +510,12 @@ const App = () => {
           <Virtuoso
             useWindowScroll
             data={filteredQuestions}
-            totalCount={filteredQuestions.length}
+            // Restore scroll position
+            initialTopMostItemIndex={initialScrollIndex}
+            // Save scroll position as user scrolls
+            rangeChanged={({ startIndex }) => {
+               window.localStorage.setItem('app_scrollIndex', startIndex);
+            }}
             itemContent={(index, q) => {
                 const isCompleted = checkIsCompleted(q.unique_id);
                 const isFlagged = checkIsFlagged(q.unique_id);

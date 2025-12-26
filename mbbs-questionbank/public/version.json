@@ -7,7 +7,8 @@
       "title": "Added search feature and improved UI",
       "changes": [
         "Feature: Added search function to quickly find a question by specific words",
-        "Refactor: Improved UI by allowing collapsable filter menu, show question count in each filter"
+        "Refactor: Improved UI - collapsable filter menu, show question count in each filter, store filter selections and scroll position",
+        "Questions: Minor fix to questions with incorrectly labeled question type (ie. MCQ vs SAQ)"
       ]
     },
     {
