@@ -11,8 +11,15 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     
-    // We'll use Magic Link (Passwordless) for simplicity
-    const { error } = await supabase.auth.signInWithOtp({ email });
+    // We'll use Magic Link (Passwordless)
+    const { error } = await supabase.auth.signInWithOtp({ 
+      email,
+      options: {
+        // This dynamically grabs the current URL (localhost or vercel)
+        // Ensure this URL is whitelisted in Supabase Dashboard > Auth > URL Configuration
+        emailRedirectTo: window.location.origin 
+      }
+    });
 
     if (error) {
       setMessage(`Error: ${error.message}`);

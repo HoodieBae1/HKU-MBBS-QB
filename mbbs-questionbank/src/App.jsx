@@ -5,8 +5,6 @@ import { supabase } from './supabase';
 import QuestionCard from './QuestionCard';
 import CompletionModal from './CompletionModal';
 import Auth from './Auth';
-
-// --- NEW IMPORTS ---
 import VersionHistory from './VersionHistory';
 import UpdateManager from './UpdateManager';
 import { APP_VERSION } from './appVersion';
@@ -16,7 +14,7 @@ const App = () => {
   const [session, setSession] = useState(null);
   const [questions, setQuestions] = useState([]);
   
-  // Stores Dictionary of progress: { 'unique_id': { notes, score, selected_option, ... } }
+  // Stores Dictionary of progress
   const [userProgress, setUserProgress] = useState({});
   
   const [loading, setLoading] = useState(true);
@@ -85,7 +83,7 @@ const App = () => {
   const fetchUserProgress = async (userId) => {
     const { data, error } = await supabase
       .from('user_progress')
-      .select('question_id, notes, score, selected_option')
+      .select('id, question_id, notes, score, selected_option')
       .eq('user_id', userId);
 
     if (error) {
@@ -110,6 +108,7 @@ const App = () => {
       delete newProgress[idString];
       setUserProgress(newProgress); // Optimistic UI update
       
+      // We delete using question_id match
       await supabase.from('user_progress').delete().match({ user_id: session.user.id, question_id: idString });
       return;
     }
@@ -128,6 +127,7 @@ const App = () => {
     if (existingData) {
       setPendingQuestion(questionData);
       setModalInitialData(existingData);
+      setPendingMCQSelection(null); 
       setModalOpen(true);
     }
   };
@@ -135,43 +135,68 @@ const App = () => {
   const handleConfirmCompletion = async (modalData) => {
     if (!session || !pendingQuestion) return;
 
+    // 1. Identify the Question ID
     const idString = String(pendingQuestion.unique_id);
     
+    // 2. Prepare Score & Selection
     let finalScore = modalData.score;
     
     if (pendingQuestion.type === 'MCQ') {
+        // If user just clicked an option, calculate score
         if (pendingMCQSelection !== null) {
             const isCorrect = pendingMCQSelection === pendingQuestion.correctAnswerIndex;
             finalScore = isCorrect ? 1 : 0;
         } 
+        // If user is just editing notes (no new selection), preserve old score
         else if (modalInitialData) {
             finalScore = modalInitialData.score;
         }
     }
 
+    const finalSelection = pendingQuestion.type === 'MCQ' 
+        ? (pendingMCQSelection ?? modalInitialData?.selected_option) 
+        : null;
+
+    // 3. Prepare Payload
     const payload = {
       user_id: session.user.id,
-      question_id: idString,
+      question_id: idString, // <-- We match against this
       notes: modalData.notes,
       score: finalScore,
-      selected_option: pendingQuestion.type === 'MCQ' ? (pendingMCQSelection ?? modalInitialData?.selected_option) : null
+      selected_option: finalSelection
     };
 
-    // Optimistic Update
-    setUserProgress(prev => ({
-        ...prev,
-        [idString]: payload
-    }));
-
+    // 4. Update UI Optimistically
     setModalOpen(false);
     setPendingQuestion(null);
+    setPendingMCQSelection(null);
 
-    const { error } = await supabase.from('user_progress').upsert(payload);
-    
+    // Preserve the old PK ID if we have it, just for local state consistency
+    const optimisticId = userProgress[idString]?.id; 
+    setUserProgress(prev => ({
+        ...prev,
+        [idString]: { ...payload, id: optimisticId }
+    }));
+
+    // 5. UPSERT to Database
+    // "onConflict: 'user_id, question_id'" tells Supabase:
+    // "Find the row where user_id AND question_id match. Update it. If none, Insert."
+    const { data, error } = await supabase
+        .from('user_progress')
+        .upsert(payload, { onConflict: 'user_id,question_id' })
+        .select();
+
+    // 6. Handle Response
     if (error) {
-      console.error("Error saving progress:", error);
-      alert("Failed to save progress. Please try again.");
-      fetchUserProgress(session.user.id);
+        console.error("Error saving progress:", error);
+        alert(`Error saving: ${error.message}`);
+        fetchUserProgress(session.user.id); // Re-sync data if save failed
+    } else if (data && data.length > 0) {
+        // Update state with the official DB return (this ensures we have the correct ID for next time)
+        setUserProgress(prev => ({
+            ...prev,
+            [idString]: data[0]
+        }));
     }
   };
 
@@ -189,7 +214,6 @@ const App = () => {
     });
 
     return result.sort((a, b) => {
-      // 1. Logic for "Completed" and "Unfinished" sorting
       if (sortOrder === 'Completed' || sortOrder === 'Unfinished') {
         const isADone = !!userProgress[String(a.unique_id)];
         const isBDone = !!userProgress[String(b.unique_id)];
@@ -198,11 +222,9 @@ const App = () => {
           if (sortOrder === 'Completed') return isADone ? -1 : 1;
           if (sortOrder === 'Unfinished') return isADone ? 1 : -1;
         }
-        // If completion status is same, fallback to ID sorting for stability
         return a.unique_id - b.unique_id;
       }
 
-      // 2. Logic for "Newest" sorting
       if (sortOrder === 'Newest') {
         const getYear = (idStr) => {
           if (!idStr || idStr.length < 3) return 0;
@@ -211,11 +233,9 @@ const App = () => {
         };
         const yearDiff = getYear(b.id) - getYear(a.id);
         if (yearDiff !== 0) return yearDiff;
-        // fallback
         return a.unique_id - b.unique_id;
       }
       
-      // 3. Default (Original Order)
       return a.unique_id - b.unique_id;
     });
 
