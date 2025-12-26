@@ -47,27 +47,51 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, onToggleComplete, o
     setAnalysisError(null);
 
     try {
-      const { data: responseData, error } = await supabase.functions.invoke('gemini-tutor', {
-        body: { 
-          // --- UPDATED HERE: Passing the ID for caching ---
+      // 1. Manually get the session
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      // Debugging: Log this to browser console to prove you have a token
+      console.log("My Auth Token:", token ? "Found token!" : "No token found");
+
+      if (!token) {
+        throw new Error("Please refresh the page, you appear to be logged out.");
+      }
+
+      // 2. Use raw FETCH instead of supabase.functions.invoke
+      // I used your specific Project ID here:
+      const response = await fetch('https://qzoreybelgjynenkwobi.supabase.co/functions/v1/gemini-tutor', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // <--- FORCED HEADER
+        },
+        body: JSON.stringify({ 
           question_id: data.unique_id, 
           question: data.question,
           official_answer: data.official_answer,
           options: data.options,
           type: data.type
-        }
+        })
       });
 
-      if (error) throw error;
-      setAnalysisData(responseData.analysis);
-      
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData.error || "Server error");
+      }
+
+      // 3. Success
+      setAnalysisData(responseData.analysis); // Make sure your backend returns { analysis: ... }
+        
     } catch (err) {
       console.error(err);
-      setAnalysisError("Unable to reach the AI Professor. Please try again.");
+      setAnalysisError(err.message || "Unable to reach the AI Professor.");
     } finally {
       setIsAnalyzing(false);
     }
   };
+
 
 
   const getOptionStyle = (idx) => {
