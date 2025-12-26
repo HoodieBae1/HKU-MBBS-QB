@@ -6,8 +6,10 @@
       "date": "2025-12-26",
       "title": "Update notes bug fix and flag",
       "changes": [
-        "Bug fix on unable to update notes",
-        "Added feature to flag questions for review later"
+        "Bugfix: on unable to update notes",
+        "Feature: Added flag to questions for review later",
+        "Feature: Added search function to quickly find a question by specific words",
+        "Questions: Added all questions from M25 Superpass. Removed duplicates"
       ]
     },
     {
