@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react'; 
-import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, Square, StickyNote, Flag } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, Square, StickyNote, Flag, Sparkles, Loader2, AlertCircle } from 'lucide-react';
+import { supabase } from './supabase'; 
+import ReactMarkdown from 'react-markdown'; // <--- 1. IMPORT THIS
 
 const QuestionCard = ({ data, index, isCompleted, isFlagged, onToggleComplete, onToggleFlag, onReviewNotes, initialSelection }) => {
   const [isRevealed, setIsRevealed] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
+
+  // --- NEW: AI Analysis State ---
+  const [analysisData, setAnalysisData] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState(null);
 
   const isMCQ = data.type === 'MCQ';
 
@@ -15,6 +22,9 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, onToggleComplete, o
     } else if (!isCompleted) {
       setSelectedOption(null);
       setIsRevealed(false);
+      // Reset AI when question resets
+      setAnalysisData(null); 
+      setAnalysisError(null);
     }
   }, [initialSelection, isCompleted]);
 
@@ -29,6 +39,37 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, onToggleComplete, o
     onToggleComplete(selectedOption);
   };
   
+  // --- FUNCTION: CALL SUPABASE EDGE FUNCTION ---
+  const handleRequestAI = async () => {
+    if (analysisData) return; 
+
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+
+    try {
+      const { data: responseData, error } = await supabase.functions.invoke('gemini-tutor', {
+        body: { 
+          // --- UPDATED HERE: Passing the ID for caching ---
+          question_id: data.unique_id, 
+          question: data.question,
+          official_answer: data.official_answer,
+          options: data.options,
+          type: data.type
+        }
+      });
+
+      if (error) throw error;
+      setAnalysisData(responseData.analysis);
+      
+    } catch (err) {
+      console.error(err);
+      setAnalysisError("Unable to reach the AI Professor. Please try again.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+
   const getOptionStyle = (idx) => {
     if (selectedOption === null) return 'hover:bg-slate-50 cursor-pointer border-gray-200';
     if (idx === data.correctAnswerIndex) return 'bg-emerald-100 border-emerald-500 text-emerald-800 font-medium';
@@ -50,8 +91,6 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, onToggleComplete, o
         </div>
         
         <div className="flex items-center gap-3">
-          
-          {/* NEW: FLAG BUTTON */}
           <button
             onClick={onToggleFlag}
             className={`flex items-center justify-center p-1.5 rounded transition-colors ${
@@ -59,24 +98,20 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, onToggleComplete, o
                 ? 'bg-orange-100 text-orange-600 border border-orange-200' 
                 : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50'
             }`}
-            title={isFlagged ? "Remove Flag" : "Flag for Review"}
           >
             <Flag className={`w-4 h-4 ${isFlagged ? 'fill-current' : ''}`} />
           </button>
 
-          {/* REVIEW NOTES BUTTON */}
           {isCompleted && (
             <button
               onClick={onReviewNotes}
               className="flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded bg-white text-gray-500 border border-gray-200 hover:text-teal-600 hover:border-teal-300 transition-colors"
-              title="Review Notes"
             >
               <StickyNote className="w-4 h-4" />
               Notes
             </button>
           )}
 
-          {/* COMPLETED TOGGLE BUTTON */}
           <button 
             onClick={handleMarkDoneClick}
             className={`flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded transition-colors ${
@@ -89,21 +124,18 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, onToggleComplete, o
             {isCompleted ? 'Done' : 'Mark Done'}
           </button>
           
-          {/* ID Badge */}
           <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
             {data.id}
           </span>
         </div>
       </div>
 
-      {/* --- BODY --- */}
       <div className="p-5">
         <h3 className="text-lg text-gray-800 font-medium leading-relaxed whitespace-pre-line mb-6">
           <span className="font-bold text-gray-400 mr-2">Q{index + 1}.</span>
           {data.question}
         </h3>
 
-        {/* INTERACTION: MCQ OPTIONS */}
         {isMCQ && data.options && (
           <div className="flex flex-col gap-3">
             {data.options.map((opt, i) => (
@@ -122,9 +154,10 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, onToggleComplete, o
           </div>
         )}
 
-        {/* --- REVEALED SOLUTIONS --- */}
+        {/* --- SOLUTIONS AREA --- */}
         {isRevealed && (
           <div className="mt-6 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
+            
             <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2 text-emerald-800 font-bold text-sm uppercase tracking-wide">
                 <CheckCircle2 className="w-4 h-4" />
@@ -135,13 +168,14 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, onToggleComplete, o
               </p>
             </div>
 
+            {/* PRE-COMPUTED AI SUMMARY */}
             {data.ai_answer && (
               <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 relative overflow-hidden">
                 <BrainCircuit className="absolute -right-4 -bottom-4 w-24 h-24 text-indigo-100/50 pointer-events-none" />
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-2 text-indigo-700 font-bold text-sm uppercase tracking-wide">
                     <Bot className="w-4 h-4" />
-                    AI Analysis
+                    AI Summary
                   </div>
                   <div className="flex items-start gap-3">
                     <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded uppercase mt-0.5 border ${data.ai_answer.agreement === 'Agree' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
@@ -152,6 +186,74 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, onToggleComplete, o
                 </div>
               </div>
             )}
+
+            {/* NEW: DETAILED AI ANALYSIS SECTION */}
+            <div className="border border-violet-100 rounded-lg overflow-hidden bg-white shadow-sm">
+                
+                {/* 1. The Result (if loaded) */}
+                {analysisData && (
+                  <div className="p-5 bg-gradient-to-br from-white to-violet-50/30">
+                     <div className="flex items-center gap-2 mb-3 pb-3 border-b border-violet-100">
+                        <Sparkles className="w-4 h-4 text-violet-600" />
+                        <span className="font-bold text-sm text-violet-900 uppercase tracking-wide">AI Professor's Detailed Analysis (Gemini 2.5 Flash)</span>
+                     </div>
+                     
+                     {/* --- 2. UPDATED MARKDOWN RENDERER --- */}
+                     <div className="text-slate-700 font-serif text-sm leading-relaxed">
+                       <ReactMarkdown
+                          components={{
+                            // Custom styles for Markdown elements
+                            h1: ({node, ...props}) => <h1 className="text-lg font-bold text-violet-900 mt-4 mb-2" {...props} />,
+                            h2: ({node, ...props}) => <h2 className="text-base font-bold text-violet-800 mt-4 mb-2 uppercase tracking-wide" {...props} />,
+                            h3: ({node, ...props}) => <h3 className="text-sm font-bold text-violet-700 mt-3 mb-1" {...props} />,
+                            p: ({node, ...props}) => <p className="mb-3" {...props} />,
+                            ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
+                            ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
+                            li: ({node, ...props}) => <li className="pl-1" {...props} />,
+                            strong: ({node, ...props}) => <strong className="font-bold text-violet-950" {...props} />,
+                            em: ({node, ...props}) => <em className="italic text-slate-600" {...props} />,
+                          }}
+                       >
+                         {analysisData}
+                       </ReactMarkdown>
+                     </div>
+
+                  </div>
+                )}
+
+                {/* 2. The Button */}
+                {!analysisData && !isAnalyzing && (
+                  <button 
+                    onClick={handleRequestAI}
+                    className="w-full p-4 bg-violet-50 hover:bg-violet-100 transition-colors flex items-center justify-center gap-2 group text-violet-700 font-medium"
+                  >
+                    <div className="p-1 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform">
+                      <Sparkles className="w-4 h-4 text-violet-600" />
+                    </div>
+                    Detailed Explanation (Using Gemini 2.5 Flash)
+                  </button>
+                )}
+
+                {/* 3. Loading Spinner */}
+                {isAnalyzing && (
+                  <div className="p-8 flex flex-col items-center justify-center text-center bg-violet-50/50">
+                    <Loader2 className="w-6 h-6 text-violet-600 animate-spin mb-2" />
+                    <p className="text-xs text-violet-600 font-bold uppercase tracking-wider animate-pulse">Consulting Professor AI...</p>
+                  </div>
+                )}
+
+                {/* 4. Error Message */}
+                {analysisError && (
+                  <div className="p-3 bg-red-50 flex items-center justify-between text-xs text-red-600">
+                    <div className="flex items-center gap-2">
+                       <AlertCircle className="w-4 h-4" />
+                       <span>{analysisError}</span>
+                    </div>
+                    <button onClick={() => setAnalysisError(null)} className="underline hover:text-red-800">Dismiss</button>
+                  </div>
+                )}
+            </div>
+
           </div>
         )}
       </div>
