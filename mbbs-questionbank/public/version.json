@@ -1,6 +1,14 @@
 {
-  "currentVersion": "2.0.2",
+  "currentVersion": "2.0.3",
   "history": [
+    {
+      "version": "2.0.3",
+      "date": "2025-12-27",
+      "title": "Add feature to see all notes taken",
+      "changes": [
+        "Feature: Added Notes panel to see all notes taken in one place, filter by topic and subtopic, as well as expanding card to see original question"
+      ]
+    },
     {
       "version": "2.0.2",
       "date": "2025-12-27",
