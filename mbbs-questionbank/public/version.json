@@ -1,6 +1,18 @@
 {
-  "currentVersion": "2.0.3",
+  "currentVersion": "2.1.0",
   "history": [
+    {
+      "version": "2.1.0",
+      "date": "2025-12-28",
+      "title": "SAQ Improvements & Progress Panel",
+      "changes": [
+        "Feature: Added progress panel to see progress over all topics at a glance",
+        "Feature: Added text input box for Short Answer Questions (SAQ) that saves to DB",
+        "Feature: Implemented SAQ point scoring and score tracking",
+        "Cosmetics: Question cards now show total marks scored for completed questions",
+        "UX: Removed intrusive notes popup for MCQ; Notes button now changes color to indicate if notes exist"
+      ]
+    },
     {
       "version": "2.0.3",
       "date": "2025-12-27",
