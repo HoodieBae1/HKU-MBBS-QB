@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, S
 import { supabase } from './supabase'; 
 import ReactMarkdown from 'react-markdown'; // <--- 1. IMPORT THIS
 
-const QuestionCard = ({ data, index, isCompleted, isFlagged, onToggleComplete, onToggleFlag, onReviewNotes, initialSelection }) => {
+const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, onToggleComplete, onToggleFlag, onReviewNotes, initialSelection }) => {
   const [isRevealed, setIsRevealed] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
 
@@ -129,10 +129,15 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, onToggleComplete, o
           {isCompleted && (
             <button
               onClick={onReviewNotes}
-              className="flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded bg-white text-gray-500 border border-gray-200 hover:text-teal-600 hover:border-teal-300 transition-colors"
+              className={`flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded transition-colors ${
+                  hasNotes 
+                  ? 'bg-yellow-100 text-yellow-700 border border-yellow-200 hover:bg-yellow-200' 
+                  : 'bg-white text-gray-500 border border-gray-200 hover:text-teal-600 hover:border-teal-300'
+              }`}
             >
-              <StickyNote className="w-4 h-4" />
-              Notes
+              {/* If notes exist, fill the icon and make it yellow-ish */}
+              <StickyNote className={`w-4 h-4 ${hasNotes ? 'fill-yellow-500 text-yellow-600' : ''}`} />
+              {hasNotes ? 'View Notes' : 'Notes'}
             </button>
           )}
 

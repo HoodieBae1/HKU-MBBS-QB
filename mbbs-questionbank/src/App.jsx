@@ -190,6 +190,7 @@ const App = () => {
     const existingEntry = userProgress[idString];
     const isCurrentlyCompleted = existingEntry && (existingEntry.score !== null || existingEntry.selected_option !== null || existingEntry.notes);
 
+    // 1. If currently marked done, this acts as an "Unmark" / "Toggle Off"
     if (isCurrentlyCompleted) {
       if (existingEntry.is_flagged) {
         const payload = { ...existingEntry, score: null, selected_option: null, notes: null };
@@ -204,6 +205,39 @@ const App = () => {
       return;
     }
 
+    // 2. NEW LOGIC: If MCQ, save immediately (Skip Modal)
+    if (questionData.type === 'MCQ') {
+       const isCorrect = mcqSelection === questionData.correctAnswerIndex;
+       const score = isCorrect ? 1 : 0;
+
+       // Use existing notes if they existed (unlikely on fresh complete, but safe), otherwise null
+       const notes = existingEntry?.notes || null; 
+       
+       const payload = {
+         user_id: session.user.id,
+         question_id: idString,
+         notes: notes,
+         score: score,
+         selected_option: mcqSelection,
+         is_flagged: existingEntry?.is_flagged || false
+       };
+
+       // Optimistic UI update
+       setUserProgress(prev => ({ ...prev, [idString]: { ...payload, id: existingEntry?.id } }));
+
+       // DB Save
+       const { data, error } = await supabase.from('user_progress').upsert(payload, { onConflict: 'user_id,question_id' }).select();
+       
+       if (error) {
+           console.error("Auto-save failed", error);
+           fetchUserProgress(session.user.id); // Revert on error
+       } else if (data && data.length > 0) {
+           setUserProgress(prev => ({ ...prev, [idString]: data[0] }));
+       }
+       return; // Done for MCQ
+    }
+
+    // 3. For SAQ, open the modal to ask for score/notes
     setPendingQuestion(questionData);
     setPendingMCQSelection(mcqSelection);
     setModalInitialData(null);
@@ -370,8 +404,6 @@ const App = () => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-20 relative">
       <UpdateManager />
-      
-      {/* --- OVERLAYS --- */}
       <CompletionModal 
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -380,10 +412,7 @@ const App = () => {
         type={pendingQuestion?.type}
         initialData={modalInitialData}
       />
-      {showDashboard && <AdminDashboard onClose={() => setShowDashboard(false)} questions={questions} />}
-      {showHistory && <VersionHistory onClose={() => setShowHistory(false)} />}
-      {showNotesPanel && <NotesPanel onClose={() => setShowNotesPanel(false)} questions={questions} userProgress={userProgress} />}
-      
+
       {/* --- UNIFIED STICKY HEADER & CONTROL BAR --- */}
       <div className="sticky top-0 z-50">
         
@@ -543,6 +572,8 @@ const App = () => {
                 const isCompleted = checkIsCompleted(q.unique_id);
                 const isFlagged = checkIsFlagged(q.unique_id);
                 const progress = userProgress[String(q.unique_id)];
+                // Check if notes exist for this question
+                const hasNotes = progress?.notes && progress.notes.trim().length > 0;
 
                 return (
                     <div className="pb-6">
@@ -552,6 +583,7 @@ const App = () => {
                           index={index} 
                           isCompleted={isCompleted} 
                           isFlagged={isFlagged}
+                          hasNotes={hasNotes}
                           initialSelection={progress ? progress.selected_option : null}
                           onToggleComplete={(mcqSelection) => handleInitiateCompletion(q, mcqSelection)} 
                           onToggleFlag={() => handleToggleFlag(q)}
