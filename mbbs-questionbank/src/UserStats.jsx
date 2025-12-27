@@ -5,7 +5,8 @@ const UserStats = ({ questions, userProgress, onFilterSelect }) => {
   
   const stats = useMemo(() => {
     const hierarchy = {}; 
-    let totalCorrect = 0;
+    let totalScore = 0;
+    let totalMaxScore = 0;
     let totalAnswered = 0;
 
     const metaMap = new Map();
@@ -17,6 +18,7 @@ const UserStats = ({ questions, userProgress, onFilterSelect }) => {
     });
 
     Object.values(userProgress).forEach(entry => {
+      // Filter out entries that are just flags or placeholders
       if (entry.score === null && entry.selected_option === null) return;
 
       const meta = metaMap.get(String(entry.question_id));
@@ -24,38 +26,49 @@ const UserStats = ({ questions, userProgress, onFilterSelect }) => {
 
       const { topic, subtopic } = meta;
 
-      if (!hierarchy[topic]) hierarchy[topic] = { correct: 0, total: 0, subtopics: {} };
-      if (!hierarchy[topic].subtopics[subtopic]) hierarchy[topic].subtopics[subtopic] = { correct: 0, total: 0 };
+      // Initialize structure
+      if (!hierarchy[topic]) hierarchy[topic] = { score: 0, maxScore: 0, count: 0, subtopics: {} };
+      if (!hierarchy[topic].subtopics[subtopic]) hierarchy[topic].subtopics[subtopic] = { score: 0, maxScore: 0, count: 0 };
 
-      const isCorrect = entry.score && entry.score >= 1;
-
-      hierarchy[topic].total += 1;
-      hierarchy[topic].subtopics[subtopic].total += 1;
-      totalAnswered++;
-
-      if (isCorrect) {
-        hierarchy[topic].correct += 1;
-        hierarchy[topic].subtopics[subtopic].correct += 1;
-        totalCorrect++;
+      // Determine Max Score (Backwards compatibility: If missing/null, assume 1 unless score > 1)
+      // Safety: If an SAQ has score 3 but no max_score (legacy), default to score (100%) to avoid >100% bug.
+      let currentMax = entry.max_score;
+      if (!currentMax || currentMax === 0) {
+          currentMax = entry.score > 1 ? entry.score : 1; 
       }
+      
+      const currentScore = entry.score || 0;
+
+      // Aggregations
+      hierarchy[topic].count += 1;
+      hierarchy[topic].score += currentScore;
+      hierarchy[topic].maxScore += currentMax;
+
+      hierarchy[topic].subtopics[subtopic].count += 1;
+      hierarchy[topic].subtopics[subtopic].score += currentScore;
+      hierarchy[topic].subtopics[subtopic].maxScore += currentMax;
+
+      totalAnswered++;
+      totalScore += currentScore;
+      totalMaxScore += currentMax;
     });
 
     const structuredStats = Object.entries(hierarchy).map(([tName, tData]) => {
       const subList = Object.entries(tData.subtopics).map(([sName, sData]) => ({
         name: sName,
-        total: sData.total,
-        accuracy: Math.round((sData.correct / sData.total) * 100)
+        total: sData.count,
+        accuracy: sData.maxScore > 0 ? Math.round((sData.score / sData.maxScore) * 100) : 0
       })).sort((a, b) => b.accuracy - a.accuracy);
 
       return {
         name: tName,
-        total: tData.total,
-        accuracy: Math.round((tData.correct / tData.total) * 100),
+        total: tData.count,
+        accuracy: tData.maxScore > 0 ? Math.round((tData.score / tData.maxScore) * 100) : 0,
         subtopics: subList
       };
     }).sort((a, b) => b.accuracy - a.accuracy);
 
-    const overallAccuracy = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
+    const overallAccuracy = totalMaxScore > 0 ? Math.round((totalScore / totalMaxScore) * 100) : 0;
 
     return { structuredStats, overallAccuracy, totalAnswered };
   }, [questions, userProgress]);
@@ -106,7 +119,7 @@ const UserStats = ({ questions, userProgress, onFilterSelect }) => {
         <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-6 flex items-start gap-3 text-sm text-blue-800 shadow-sm">
             <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
             <div>
-              For MCQs, your answer is only saved to statistics when you click the <span className="inline-block px-1.5 py-0.5 bg-white border border-blue-200 rounded font-bold text-xs mx-1 shadow-sm">Mark Done</span> button after selecting an option.
+              Your answer is only saved to statistics when you click the <span className="inline-block px-1.5 py-0.5 bg-white border border-blue-200 rounded font-bold text-xs mx-1 shadow-sm">Mark Done</span> button after selecting an option for MCQ or filling in scores for SAQ.
             </div>
         </div>
 

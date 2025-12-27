@@ -1,25 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, MessageSquare, Award, StickyNote } from 'lucide-react';
+import { X, Save, MessageSquare, Award, StickyNote, Divide } from 'lucide-react';
 
 const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData }) => {
   if (!isOpen || !question) return null;
 
   const [notes, setNotes] = useState('');
   const [score, setScore] = useState('');
+  const [maxScore, setMaxScore] = useState('');
 
   // Reset or Pre-fill data when modal opens
   useEffect(() => {
     if (isOpen) {
       setNotes(initialData?.notes || '');
+      // If editing existing data, use that. Otherwise empty.
       setScore(initialData?.score !== undefined && initialData?.score !== null ? initialData.score : '');
+      // If editing, use existing max_score. If new SAQ, default empty. If new MCQ (shouldn't be here via modal usually), 1.
+      setMaxScore(initialData?.max_score || ''); 
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, type]);
 
   const handleSave = () => {
+    // Basic validation
+    if (type === 'SAQ') {
+        const s = parseFloat(score);
+        const m = parseFloat(maxScore);
+        if (isNaN(s) || isNaN(m)) {
+            alert("Please enter valid numbers for score.");
+            return;
+        }
+        if (s > m) {
+            alert("Score cannot be higher than the total marks.");
+            return;
+        }
+    }
+
     onSave({
       notes,
-      // Only pass score back if it's SAQ. MCQ score is handled by parent.
-      score: type === 'SAQ' ? score : null
+      score: type === 'SAQ' ? parseFloat(score) : null,
+      max_score: type === 'SAQ' ? parseFloat(maxScore) : 1
     });
   };
 
@@ -41,22 +59,41 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
         {/* Body */}
         <div className="p-6 space-y-5">
           
-          {/* SAQ Score Input (Hidden for MCQ) */}
+          {/* SAQ Score Inputs */}
           {type === 'SAQ' && (
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                <Award className="w-4 h-4 text-orange-500" />
-                Score Obtained
+            <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
+              <label className="block text-sm font-bold text-orange-800 mb-3 flex items-center gap-2">
+                <Award className="w-4 h-4" />
+                Self Evaluation
               </label>
-              <input
-                type="number"
-                placeholder="e.g. 5"
-                value={score}
-                onChange={(e) => setScore(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-shadow"
-                autoFocus={!initialData} // Only autofocus if new
-              />
-              <p className="text-xs text-gray-400 mt-1">Enter the marks you scored for this answer.</p>
+              
+              <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">Marks Scored</label>
+                      <input
+                        type="number"
+                        placeholder="e.g. 3"
+                        value={score}
+                        onChange={(e) => setScore(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none font-mono text-center font-bold text-lg"
+                        autoFocus={!initialData} 
+                      />
+                  </div>
+                  <div className="text-gray-400 mt-5">/</div>
+                  <div className="flex-1">
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">Total Marks</label>
+                      <input
+                        type="number"
+                        placeholder="e.g. 5"
+                        value={maxScore}
+                        onChange={(e) => setMaxScore(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none font-mono text-center font-bold text-lg bg-white"
+                      />
+                  </div>
+              </div>
+              <p className="text-[10px] text-orange-600/70 mt-2 text-center">
+                  Enter your score and what the question is out of for accurate statistics tracking.
+              </p>
             </div>
           )}
 
@@ -99,7 +136,7 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
             className="px-4 py-2 text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-lg shadow-sm flex items-center gap-2 transition-all"
           >
             <Save className="w-4 h-4" />
-            {initialData ? 'Update Notes' : 'Save & Mark Done'}
+            {initialData ? 'Update Entry' : 'Save & Mark Done'}
           </button>
         </div>
       </div>

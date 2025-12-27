@@ -121,9 +121,10 @@ const App = () => {
 
   // --- DB HELPER ---
   const fetchUserProgress = async (userId) => {
+    // UPDATED: Added max_score to selection
     const { data, error } = await supabase
       .from('user_progress')
-      .select('id, question_id, notes, score, selected_option, is_flagged')
+      .select('id, question_id, notes, score, max_score, selected_option, is_flagged')
       .eq('user_id', userId);
 
     if (error) {
@@ -169,6 +170,7 @@ const App = () => {
       question_id: idString,
       is_flagged: newFlagStatus
     };
+    // Ensure we don't accidentally send nulls if data exists
     if (!payload.score && payload.score !== 0) payload.score = null;
     if (!payload.selected_option && payload.selected_option !== 0) payload.selected_option = null;
     if (!payload.notes) payload.notes = null;
@@ -193,10 +195,12 @@ const App = () => {
     // 1. If currently marked done, this acts as an "Unmark" / "Toggle Off"
     if (isCurrentlyCompleted) {
       if (existingEntry.is_flagged) {
-        const payload = { ...existingEntry, score: null, selected_option: null, notes: null };
+        // Keep flagged status, clear data
+        const payload = { ...existingEntry, score: null, max_score: null, selected_option: null, notes: null };
         setUserProgress(prev => ({ ...prev, [idString]: payload }));
         await supabase.from('user_progress').upsert(payload, { onConflict: 'user_id,question_id' });
       } else {
+        // Delete completely
         const newProgress = { ...userProgress };
         delete newProgress[idString];
         setUserProgress(newProgress);
@@ -209,15 +213,13 @@ const App = () => {
     if (questionData.type === 'MCQ') {
        const isCorrect = mcqSelection === questionData.correctAnswerIndex;
        const score = isCorrect ? 1 : 0;
-
-       // Use existing notes if they existed (unlikely on fresh complete, but safe), otherwise null
-       const notes = existingEntry?.notes || null; 
        
        const payload = {
          user_id: session.user.id,
          question_id: idString,
-         notes: notes,
+         notes: existingEntry?.notes || null, // Preserve notes if they existed (edge case)
          score: score,
+         max_score: 1, // MCQ is always out of 1
          selected_option: mcqSelection,
          is_flagged: existingEntry?.is_flagged || false
        };
@@ -230,14 +232,14 @@ const App = () => {
        
        if (error) {
            console.error("Auto-save failed", error);
-           fetchUserProgress(session.user.id); // Revert on error
+           fetchUserProgress(session.user.id); 
        } else if (data && data.length > 0) {
            setUserProgress(prev => ({ ...prev, [idString]: data[0] }));
        }
        return; // Done for MCQ
     }
 
-    // 3. For SAQ, open the modal to ask for score/notes
+    // 3. For SAQ, open the modal to ask for score/notes/max_score
     setPendingQuestion(questionData);
     setPendingMCQSelection(mcqSelection);
     setModalInitialData(null);
@@ -261,6 +263,7 @@ const App = () => {
     const currentProgress = userProgress[idString] || {};
 
     let finalScore = modalData.score;
+    // Fallback logic for MCQ if modal was somehow opened for it
     if (pendingQuestion.type === 'MCQ') {
         if (pendingMCQSelection !== null) {
             const isCorrect = pendingMCQSelection === pendingQuestion.correctAnswerIndex;
@@ -271,11 +274,13 @@ const App = () => {
     }
 
     const finalSelection = pendingQuestion.type === 'MCQ' ? (pendingMCQSelection ?? modalInitialData?.selected_option) : null;
+    
     const payload = {
       user_id: session.user.id,
       question_id: idString, 
       notes: modalData.notes,
       score: finalScore,
+      max_score: modalData.max_score, // Save the denominator
       selected_option: finalSelection,
       is_flagged: currentProgress.is_flagged || false
     };
@@ -404,6 +409,8 @@ const App = () => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-20 relative">
       <UpdateManager />
+      
+      {/* --- OVERLAYS --- */}
       <CompletionModal 
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -412,7 +419,10 @@ const App = () => {
         type={pendingQuestion?.type}
         initialData={modalInitialData}
       />
-
+      {showDashboard && <AdminDashboard onClose={() => setShowDashboard(false)} questions={questions} />}
+      {showHistory && <VersionHistory onClose={() => setShowHistory(false)} />}
+      {showNotesPanel && <NotesPanel onClose={() => setShowNotesPanel(false)} questions={questions} userProgress={userProgress} />}
+      
       {/* --- UNIFIED STICKY HEADER & CONTROL BAR --- */}
       <div className="sticky top-0 z-50">
         

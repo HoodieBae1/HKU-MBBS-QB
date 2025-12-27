@@ -31,7 +31,8 @@ const AdminDashboard = ({ onClose, questions }) => {
       // Fetch Data
       const { data: profiles, error: pErr } = await supabase.from('profiles').select('id, email');
       if (pErr) throw pErr;
-      const { data: progress, error: prErr } = await supabase.from('user_progress').select('user_id, score, question_id');
+      // Added max_score to selection
+      const { data: progress, error: prErr } = await supabase.from('user_progress').select('user_id, score, max_score, question_id');
       if (prErr) throw prErr;
       const { data: aiLogs, error: aiErr } = await supabase.from('ai_usage_logs').select('user_id');
       if (aiErr) throw aiErr;
@@ -42,11 +43,25 @@ const AdminDashboard = ({ onClose, questions }) => {
         const userAiCalls = aiLogs.filter(l => l.user_id === user.id);
 
         const totalAnswered = userAnswers.length;
-        const correctAnswers = userAnswers.filter(a => a.score && a.score >= 1).length;
-        const accuracy = totalAnswered > 0 ? Math.round((correctAnswers / totalAnswered) * 100) : 0;
+        
+        // Sum based calculation
+        let sumScore = 0;
+        let sumMaxScore = 0;
+        
+        userAnswers.forEach(a => {
+            const score = a.score || 0;
+            // Backwards compatibility logic
+            let max = a.max_score;
+            if (!max || max === 0) max = score > 1 ? score : 1; 
+            
+            sumScore += score;
+            sumMaxScore += max;
+        });
+
+        const accuracy = sumMaxScore > 0 ? Math.round((sumScore / sumMaxScore) * 100) : 0;
 
         // --- NEW: Hierarchical Aggregation (Topic -> Subtopics) ---
-        const hierarchy = {}; // { "Cardiology": { correct: 10, total: 20, subtopics: { "Arrhythmias": {...} } } }
+        const hierarchy = {}; 
 
         userAnswers.forEach(ans => {
           const meta = questionMetaMap.get(String(ans.question_id)) || { topic: 'Unknown', subtopic: 'Unknown' };
@@ -54,22 +69,26 @@ const AdminDashboard = ({ onClose, questions }) => {
 
           // Init Topic
           if (!hierarchy[topic]) {
-            hierarchy[topic] = { correct: 0, total: 0, subtopics: {} };
+            hierarchy[topic] = { score: 0, maxScore: 0, count: 0, subtopics: {} };
           }
           
           // Init Subtopic
           if (!hierarchy[topic].subtopics[subtopic]) {
-            hierarchy[topic].subtopics[subtopic] = { correct: 0, total: 0 };
+            hierarchy[topic].subtopics[subtopic] = { score: 0, maxScore: 0, count: 0 };
           }
+
+          const score = ans.score || 0;
+          let max = ans.max_score;
+          if (!max || max === 0) max = score > 1 ? score : 1;
 
           // Increment Counts
-          hierarchy[topic].total += 1;
-          hierarchy[topic].subtopics[subtopic].total += 1;
+          hierarchy[topic].count += 1;
+          hierarchy[topic].score += score;
+          hierarchy[topic].maxScore += max;
 
-          if (ans.score && ans.score >= 1) {
-            hierarchy[topic].correct += 1;
-            hierarchy[topic].subtopics[subtopic].correct += 1;
-          }
+          hierarchy[topic].subtopics[subtopic].count += 1;
+          hierarchy[topic].subtopics[subtopic].score += score;
+          hierarchy[topic].subtopics[subtopic].maxScore += max;
         });
 
         // Flatten Hierarchy for Rendering
@@ -77,17 +96,17 @@ const AdminDashboard = ({ onClose, questions }) => {
           // Flatten Subtopics
           const subList = Object.entries(tData.subtopics).map(([sName, sData]) => ({
             name: sName,
-            total: sData.total,
-            accuracy: Math.round((sData.correct / sData.total) * 100)
-          })).sort((a, b) => b.accuracy - a.accuracy); // Sort subtopics by accuracy
+            total: sData.count,
+            accuracy: sData.maxScore > 0 ? Math.round((sData.score / sData.maxScore) * 100) : 0
+          })).sort((a, b) => b.accuracy - a.accuracy); 
 
           return {
             name: tName,
-            total: tData.total,
-            accuracy: Math.round((tData.correct / tData.total) * 100),
+            total: tData.count,
+            accuracy: tData.maxScore > 0 ? Math.round((tData.score / tData.maxScore) * 100) : 0,
             subtopics: subList
           };
-        }).sort((a, b) => b.accuracy - a.accuracy); // Sort Topics by accuracy
+        }).sort((a, b) => b.accuracy - a.accuracy); 
         // ---------------------------------------------------------
 
         return {
