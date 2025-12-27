@@ -1,7 +1,16 @@
 {
-  "currentVersion": "2.0.1",
+  "currentVersion": "2.0.2",
   "history": [
-      {
+    {
+      "version": "2.0.2",
+      "date": "2025-12-27",
+      "title": "Add feature to see performance by topic",
+      "changes": [
+        "Feature: Added stats button to see performance by topic and subtopic",
+        "Bugfix: Minor fix to improve progress bar vsuals at the top of the screen"
+      ]
+    },
+    {
       "version": "2.0.1",
       "date": "2025-12-27",
       "title": "Minor AI Fix",

@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
-import { Folder, FileText, PieChart, Filter } from 'lucide-react';
+import { Folder, FileText, PieChart, Filter, AlertCircle } from 'lucide-react';
 
-// Added onFilterSelect prop
 const UserStats = ({ questions, userProgress, onFilterSelect }) => {
   
   const stats = useMemo(() => {
@@ -74,12 +73,11 @@ const UserStats = ({ questions, userProgress, onFilterSelect }) => {
   };
 
   return (
-    // Removed the outer margin/animation classes here as they are now handled by the parent wrapper
     <div className="bg-slate-100 border-b border-gray-200 shadow-inner">
       <div className="max-w-6xl mx-auto px-4 py-6">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
+        <div className="flex flex-col md:flex-row items-center justify-between mb-4 gap-4">
             <div className="flex items-center gap-3">
                 <div className="p-2 bg-white rounded-lg shadow-sm text-teal-700 border border-teal-100">
                     <PieChart className="w-5 h-5" />
@@ -101,6 +99,14 @@ const UserStats = ({ questions, userProgress, onFilterSelect }) => {
                         {stats.overallAccuracy}%
                     </span>
                 </div>
+            </div>
+        </div>
+
+        {/* --- NEW: REMINDER BOX --- */}
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-6 flex items-start gap-3 text-sm text-blue-800 shadow-sm">
+            <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+            <div>
+              For MCQs, your answer is only saved to statistics when you click the <span className="inline-block px-1.5 py-0.5 bg-white border border-blue-200 rounded font-bold text-xs mx-1 shadow-sm">Mark Done</span> button after selecting an option.
             </div>
         </div>
 
@@ -134,12 +140,11 @@ const UserStats = ({ questions, userProgress, onFilterSelect }) => {
                   {topic.subtopics.map((sub, j) => (
                     <button 
                       key={j} 
-                      onClick={() => onFilterSelect(topic.name, sub.name)} // <--- TRIGGER FILTER
+                      onClick={() => onFilterSelect(topic.name, sub.name)} 
                       className="w-full flex items-center justify-between text-xs group p-1.5 rounded hover:bg-teal-50 transition-colors cursor-pointer text-left"
                       title="Click to filter questions by this subtopic"
                     >
                       <div className="flex items-center gap-2 text-gray-600 overflow-hidden">
-                        {/* Icon changes color on hover to indicate action */}
                         <Filter className="w-3 h-3 text-gray-300 shrink-0 group-hover:text-teal-600 transition-colors" />
                         <span className="truncate max-w-[140px] font-medium group-hover:text-teal-700">{sub.name}</span>
                       </div>
