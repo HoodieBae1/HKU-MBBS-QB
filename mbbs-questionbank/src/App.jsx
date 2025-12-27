@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy } from 'lucide-react';
+import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy, BarChart3, PieChart } from 'lucide-react';
 import { Virtuoso } from 'react-virtuoso';
 import { supabase } from './supabase';
 import QuestionCard from './QuestionCard';
@@ -8,6 +8,7 @@ import Auth from './Auth';
 import VersionHistory from './VersionHistory';
 import UpdateManager from './UpdateManager';
 import AdminDashboard from './AdminDashboard';
+import UserStats from './UserStats';
 import { APP_VERSION } from './appVersion';
 
 // --- HELPER HOOK: Persist state to LocalStorage ---
@@ -37,16 +38,16 @@ const App = () => {
   // --- STATE ---
   const [session, setSession] = useState(null);
   const [questions, setQuestions] = useState([]);
-  
-  // Stores Dictionary of progress
   const [userProgress, setUserProgress] = useState({});
-  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // --- ADMIN STATE ---
   const [isAdmin, setIsAdmin] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
+  
+  // --- USER STATS TOGGLE ---
+  const [showUserStats, setShowUserStats] = useState(false);
 
   // --- FILTERS & UI (Now Persistent) ---
   const [filtersOpen, setFiltersOpen] = useStickyState(true, 'app_filtersOpen');
@@ -57,7 +58,6 @@ const App = () => {
   const [sortOrder, setSortOrder] = useStickyState('Newest', 'app_sortOrder');
 
   // --- SCROLL POSITION STATE ---
-  // We only need to read this once on mount to pass to Virtuoso
   const initialScrollIndex = useMemo(() => {
     const saved = window.localStorage.getItem('app_scrollIndex');
     return saved ? parseInt(saved, 10) : 0;
@@ -142,16 +142,23 @@ const App = () => {
         .select('role')
         .eq('id', userId)
         .single();
-      
-      if (!error && data?.role === 'admin') {
-        setIsAdmin(true);
-      }
+      if (!error && data?.role === 'admin') setIsAdmin(true);
     } catch (e) {
       console.error("Admin check failed", e);
     }
   };
 
   // --- ACTIONS ---
+  
+  // NEW: Handle clicking a subtopic inside UserStats
+  const handleQuickFilter = (topic, subtopic) => {
+    setSelectedTopic(topic);
+    setSelectedSubtopic(subtopic);
+    setFiltersOpen(true); // Ensure filters are visible so user sees what happened
+    // Optional: Close stats after selection? 
+    // setShowUserStats(false); 
+  };
+
   const handleToggleFlag = async (questionData) => {
     if (!session) return;
     const idString = String(questionData.unique_id);
@@ -164,7 +171,6 @@ const App = () => {
       question_id: idString,
       is_flagged: newFlagStatus
     };
-
     if (!payload.score && payload.score !== 0) payload.score = null;
     if (!payload.selected_option && payload.selected_option !== 0) payload.selected_option = null;
     if (!payload.notes) payload.notes = null;
@@ -259,7 +265,6 @@ const App = () => {
   };
 
   const handleLogout = async () => {
-    // Clear local preferences on logout if desired, but keeping them is usually better UX
     await supabase.auth.signOut();
   };
 
@@ -275,8 +280,6 @@ const App = () => {
   // --- FILTER LOGIC & COUNTS ---
   const filterCounts = useMemo(() => {
     const qLower = searchQuery.toLowerCase().trim();
-    
-    // Base set: Filtered ONLY by Search and Type (to populate Topic dropdown)
     const baseSet = questions.filter(q => {
        if (selectedType !== 'All' && q.type !== selectedType) return false;
        if (!qLower) return true;
@@ -289,11 +292,9 @@ const App = () => {
        );
     });
 
-    // Topic Counts
     const tCounts = {};
     baseSet.forEach(q => { tCounts[q.topic] = (tCounts[q.topic] || 0) + 1; });
 
-    // Subtopic Counts
     const sCounts = {};
     baseSet.forEach(q => {
         if (selectedTopic === 'All' || q.topic === selectedTopic) {
@@ -301,25 +302,17 @@ const App = () => {
         }
     });
 
-    return { 
-        tCounts, 
-        sCounts, 
-        totalMatchingSearch: baseSet.length 
-    };
+    return { tCounts, sCounts, totalMatchingSearch: baseSet.length };
   }, [questions, searchQuery, selectedType, selectedTopic]);
 
-
-  // 2. Final Filtered List for Display
   const filteredQuestions = useMemo(() => {
     const qLower = searchQuery.toLowerCase().trim();
 
     let result = questions.filter(q => {
-      // Topic & Subtopic
       if (selectedTopic !== 'All' && q.topic !== selectedTopic) return false;
       if (selectedSubtopic !== 'All' && q.subtopic !== selectedSubtopic) return false;
       if (selectedType !== 'All' && q.type !== selectedType) return false;
 
-      // Search
       if (qLower) {
         const match = 
           q.question?.toLowerCase().includes(qLower) ||
@@ -332,7 +325,6 @@ const App = () => {
       return true;
     });
 
-    // Sort
     return result.sort((a, b) => {
       if (sortOrder === 'Flagged') {
         const isAFlagged = checkIsFlagged(a.unique_id);
@@ -363,7 +355,7 @@ const App = () => {
     });
   }, [questions, selectedTopic, selectedSubtopic, selectedType, sortOrder, userProgress, searchQuery]);
 
-  // --- PREPARE DROPDOWN LISTS ---
+  // --- CONSTANTS ---
   const topicsList = Object.keys(filterCounts.tCounts).sort();
   const subtopicsList = Object.keys(filterCounts.sCounts)
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
@@ -373,7 +365,6 @@ const App = () => {
   const progressPercentage = totalQuestionsCount > 0 ? Math.round((completedCount / totalQuestionsCount) * 100) : 0;
 
   // --- RENDERING ---
-
   if (!session) return <Auth />;
   if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
   if (error) return <div>{error}</div>;
@@ -406,8 +397,6 @@ const App = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            
-            {/* ADMIN DASHBOARD BUTTON */}
             {isAdmin && (
               <button 
                 onClick={() => setShowDashboard(true)} 
@@ -417,38 +406,42 @@ const App = () => {
                 <Trophy className="w-5 h-5 text-yellow-300" />
               </button>
             )}
-
-            <button onClick={() => setShowHistory(true)} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white">
-              <GitCommit className="w-5 h-5" />
-            </button>
+            <button onClick={() => setShowHistory(true)} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white"><GitCommit className="w-5 h-5" /></button>
             <div className="hidden md:block text-right border-l border-teal-600 pl-4 ml-2">
               <p className="text-xs text-teal-100">Logged in as</p>
               <p className="text-xs font-bold">{session.user.email}</p>
             </div>
-            <button onClick={handleLogout} className="p-2 hover:bg-teal-600 rounded-full transition ml-1">
-               <LogOut className="w-5 h-5" />
-            </button>
+            <button onClick={handleLogout} className="p-2 hover:bg-teal-600 rounded-full transition ml-1"><LogOut className="w-5 h-5" /></button>
           </div>
         </div>
       </header>
 
-      {/* STICKY CONTROL BAR (Progress + Toggle) */}
+      {/* STICKY CONTROL BAR */}
       <div className="bg-white border-b border-gray-200 shadow-sm sticky top-[60px] z-40">
         <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-4">
             
-            {/* Progress Bar Area */}
-            <div className="flex-grow flex flex-col justify-center">
-               <div className="flex justify-between text-xs font-bold text-gray-500 mb-1">
-                 <span>Progress</span>
-                 <span className="text-teal-600">{completedCount} / {totalQuestionsCount} ({progressPercentage}%)</span>
+            <div className="flex-grow flex items-center gap-3">
+               <div className="flex-grow flex flex-col justify-center">
+                  <div className="flex justify-between text-xs font-bold text-gray-500 mb-1">
+                    <span>Progress</span>
+                    <span className="text-teal-600">{completedCount} / {totalQuestionsCount} ({progressPercentage}%)</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                      <div className="bg-teal-500 h-2 rounded-full transition-all duration-500 ease-out" style={{ width: `${progressPercentage}%` }}></div>
+                  </div>
                </div>
-               <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                  <div className="bg-teal-500 h-2 rounded-full transition-all duration-500 ease-out" style={{ width: `${progressPercentage}%` }}></div>
-               </div>
+
+               {/* Toggle Stats Button */}
+               <button 
+                  onClick={() => setShowUserStats(!showUserStats)}
+                  className={`p-2 rounded-lg border transition-all duration-200 ${showUserStats ? 'bg-teal-100 border-teal-300 text-teal-800' : 'bg-teal-50 hover:bg-teal-100 border-teal-200 text-teal-600'}`}
+                  title="Toggle Statistics Card"
+               >
+                 <BarChart3 className="w-5 h-5" />
+               </button>
             </div>
 
-            {/* Collapse Toggle Button */}
             <button 
               onClick={() => setFiltersOpen(!filtersOpen)}
               className={`p-2 rounded-lg border transition-all duration-200 flex items-center gap-2 text-sm font-semibold ${filtersOpen ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
@@ -459,10 +452,9 @@ const App = () => {
             </button>
           </div>
 
-          {/* COLLAPSIBLE FILTER AREA */}
+          {/* FILTER AREA (Collapsible) */}
           <div className={`grid transition-all duration-300 ease-in-out overflow-hidden ${filtersOpen ? 'grid-rows-[1fr] opacity-100 mt-4 pb-2' : 'grid-rows-[0fr] opacity-0 mt-0 pb-0'}`}>
             <div className="min-h-0 flex flex-col gap-3">
-               
                {/* Search */}
                <div className="relative w-full">
                   <input 
@@ -474,15 +466,12 @@ const App = () => {
                   />
                   <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
                   {searchQuery && (
-                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
-                      <X className="w-4 h-4" />
-                    </button>
+                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
                   )}
                </div>
 
                {/* Dropdowns */}
                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  {/* Topic Dropdown */}
                   <div className="relative">
                       <select 
                         value={selectedTopic} 
@@ -497,7 +486,6 @@ const App = () => {
                       <Filter className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
                   </div>
                   
-                  {/* Subtopic Dropdown */}
                   <div className="relative">
                       <select 
                         value={selectedSubtopic} 
@@ -536,6 +524,17 @@ const App = () => {
         </div>
       </div>
 
+      {/* --- NEW: USER STATS (Collapsible with smooth transition) --- */}
+      <div className={`grid transition-all duration-500 ease-in-out ${showUserStats ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+         <div className="min-h-0 overflow-hidden">
+            <UserStats 
+              questions={questions} 
+              userProgress={userProgress} 
+              onFilterSelect={handleQuickFilter} // <--- Pass the new handler
+            />
+         </div>
+      </div>
+
       {/* --- VIRTUALIZED CARD LIST --- */}
       <main className="max-w-6xl mx-auto px-4 py-6 z-0">
         {filteredQuestions.length === 0 ? (
@@ -549,9 +548,7 @@ const App = () => {
           <Virtuoso
             useWindowScroll
             data={filteredQuestions}
-            // Restore scroll position
             initialTopMostItemIndex={initialScrollIndex}
-            // Save scroll position as user scrolls
             rangeChanged={({ startIndex }) => {
                window.localStorage.setItem('app_scrollIndex', startIndex);
             }}
