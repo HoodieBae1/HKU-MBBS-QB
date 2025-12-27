@@ -12,7 +12,7 @@ const VersionHistory = ({ onClose }) => {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-50 overflow-y-auto animate-in slide-in-from-right duration-300">
+    <div className="fixed inset-0 z-[100] bg-slate-50 overflow-y-auto animate-in slide-in-from-right duration-300">
       {/* Header */}
       <div className="sticky top-0 bg-white border-b border-gray-200 shadow-sm px-6 py-4 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
