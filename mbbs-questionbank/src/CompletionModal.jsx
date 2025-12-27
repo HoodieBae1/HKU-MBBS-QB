@@ -1,51 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, MessageSquare, Award, StickyNote, Calculator } from 'lucide-react';
+import { X, Save, MessageSquare, Award, StickyNote } from 'lucide-react';
 
 const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData }) => {
   if (!isOpen || !question) return null;
 
   const [notes, setNotes] = useState('');
-  
-  // SAQ Specific States
-  const [achieved, setAchieved] = useState('');
-  const [total, setTotal] = useState('');
+  const [score, setScore] = useState('');
 
   // Reset or Pre-fill data when modal opens
   useEffect(() => {
     if (isOpen) {
       setNotes(initialData?.notes || '');
-      
-      // If editing an existing SAQ, we try to infer, but usually we just reset 
-      // because we only store the final percentage in the DB.
-      // If you stored "7/10" in notes, we leave it to the user to re-enter if they are updating.
-      setAchieved(''); 
-      setTotal('');
+      setScore(initialData?.score !== undefined && initialData?.score !== null ? initialData.score : '');
     }
   }, [isOpen, initialData]);
 
   const handleSave = () => {
-    // Validation for SAQ
-    if (type === 'SAQ') {
-      if (!achieved || !total) {
-        alert("Please enter both your score and the total possible marks.");
-        return;
-      }
-      if (parseFloat(total) === 0) {
-        alert("Total score cannot be zero.");
-        return;
-      }
-    }
-
     onSave({
       notes,
-      achieved: type === 'SAQ' ? parseFloat(achieved) : null,
-      total: type === 'SAQ' ? parseFloat(total) : null
+      // Only pass score back if it's SAQ. MCQ score is handled by parent.
+      score: type === 'SAQ' ? score : null
     });
   };
-
-  const calculatedPercentage = (achieved && total && total > 0) 
-    ? Math.round((parseFloat(achieved) / parseFloat(total)) * 100) 
-    : 0;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
@@ -65,45 +41,22 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
         {/* Body */}
         <div className="p-6 space-y-5">
           
-          {/* SAQ Score Inputs */}
+          {/* SAQ Score Input (Hidden for MCQ) */}
           {type === 'SAQ' && (
-            <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
-              <label className="block text-sm font-bold text-orange-800 mb-3 flex items-center gap-2">
-                <Award className="w-4 h-4" />
-                Self Grading
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                <Award className="w-4 h-4 text-orange-500" />
+                Score Obtained
               </label>
-              
-              <div className="flex items-end gap-3">
-                <div className="flex-1">
-                  <span className="text-xs font-semibold text-gray-500 uppercase">You Scored</span>
-                  <input
-                    type="number"
-                    placeholder="e.g. 3"
-                    value={achieved}
-                    onChange={(e) => setAchieved(e.target.value)}
-                    className="w-full mt-1 px-3 py-2 bg-white border border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none font-mono text-lg"
-                    autoFocus={!initialData}
-                  />
-                </div>
-                <div className="pb-3 text-gray-400 font-bold">/</div>
-                <div className="flex-1">
-                  <span className="text-xs font-semibold text-gray-500 uppercase">Out Of</span>
-                  <input
-                    type="number"
-                    placeholder="e.g. 5"
-                    value={total}
-                    onChange={(e) => setTotal(e.target.value)}
-                    className="w-full mt-1 px-3 py-2 bg-white border border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none font-mono text-lg"
-                  />
-                </div>
-              </div>
-
-              {achieved && total && (
-                 <div className="mt-3 flex items-center gap-2 text-xs font-bold text-orange-700 justify-end">
-                    <Calculator className="w-3 h-3" />
-                    Calculated Accuracy: {calculatedPercentage}%
-                 </div>
-              )}
+              <input
+                type="number"
+                placeholder="e.g. 5"
+                value={score}
+                onChange={(e) => setScore(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-shadow"
+                autoFocus={!initialData} // Only autofocus if new
+              />
+              <p className="text-xs text-gray-400 mt-1">Enter the marks you scored for this answer.</p>
             </div>
           )}
 
