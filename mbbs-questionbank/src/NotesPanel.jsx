@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, Search, BookOpen, Filter, StickyNote, ChevronDown, ChevronUp, ArrowRight, MessageSquare } from 'lucide-react';
+import { X, Search, BookOpen, Filter, StickyNote, ChevronDown, ChevronUp, ArrowRight, MessageSquare, PenTool } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 const NotesPanel = ({ onClose, questions, userProgress }) => {
@@ -18,8 +18,9 @@ const NotesPanel = ({ onClose, questions, userProgress }) => {
       .map(q => ({
         ...q,
         userNote: userProgress[String(q.unique_id)].notes,
+        userResponse: userProgress[String(q.unique_id)].user_response, // Get the response too
         userScore: userProgress[String(q.unique_id)].score,
-        updatedAt: userProgress[String(q.unique_id)].updated_at // If available in DB
+        updatedAt: userProgress[String(q.unique_id)].updated_at 
       }));
   }, [questions, userProgress]);
 
@@ -41,6 +42,7 @@ const NotesPanel = ({ onClose, questions, userProgress }) => {
       const qLower = searchQuery.toLowerCase();
       const matchSearch = !searchQuery || 
         item.userNote.toLowerCase().includes(qLower) ||
+        (item.userResponse && item.userResponse.toLowerCase().includes(qLower)) ||
         item.question.toLowerCase().includes(qLower) ||
         item.topic.toLowerCase().includes(qLower);
 
@@ -84,7 +86,7 @@ const NotesPanel = ({ onClose, questions, userProgress }) => {
             <div className="md:col-span-4 relative">
                <input 
                  type="text" 
-                 placeholder="Search inside notes or questions..." 
+                 placeholder="Search inside notes, answers or questions..." 
                  value={searchQuery}
                  onChange={(e) => setSearchQuery(e.target.value)}
                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-400 outline-none"
@@ -157,6 +159,18 @@ const NotesPanel = ({ onClose, questions, userProgress }) => {
                           {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                        </div>
                     </div>
+
+                    {/* Show Typed Response if available */}
+                    {item.userResponse && (
+                        <div className="mb-4 bg-indigo-50/50 p-3 rounded-lg border border-indigo-100/50">
+                            <div className="text-[10px] font-bold text-indigo-400 uppercase mb-1 flex items-center gap-1">
+                                <PenTool className="w-3 h-3" /> Your Answer
+                            </div>
+                            <p className="text-indigo-900/80 text-sm font-medium italic">
+                                "{item.userResponse}"
+                            </p>
+                        </div>
+                    )}
 
                     <div className="flex items-start gap-3">
                        <MessageSquare className="w-5 h-5 text-amber-500 mt-1 shrink-0" />

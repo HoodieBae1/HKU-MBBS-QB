@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react'; 
 import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, Square, StickyNote, Flag, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from './supabase'; 
-import ReactMarkdown from 'react-markdown'; // <--- 1. IMPORT THIS
+import ReactMarkdown from 'react-markdown'; 
 
-const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, onToggleComplete, onToggleFlag, onReviewNotes, initialSelection }) => {
+const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingResponse, onToggleComplete, onToggleFlag, onReviewNotes, initialSelection }) => {
   const [isRevealed, setIsRevealed] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
+  
+  // New State for SAQ Input
+  const [saqInput, setSaqInput] = useState('');
 
   // --- NEW: AI Analysis State ---
   const [analysisData, setAnalysisData] = useState(null);
@@ -22,11 +25,18 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, onToggleC
     } else if (!isCompleted) {
       setSelectedOption(null);
       setIsRevealed(false);
-      // Reset AI when question resets
       setAnalysisData(null); 
       setAnalysisError(null);
     }
-  }, [initialSelection, isCompleted]);
+    
+    // Sync SAQ text: If exists, load it. If not completed, it might be partial typing? 
+    // We only reset if NOT completed and NO existing response to clear "stale" state from recycling virtual components
+    if (existingResponse) {
+        setSaqInput(existingResponse);
+    } else if (!isCompleted) {
+        setSaqInput('');
+    }
+  }, [initialSelection, isCompleted, existingResponse]);
 
   // --- HANDLERS ---
   const handleMCQSelect = (idx) => {
@@ -36,7 +46,8 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, onToggleC
   };
 
   const handleMarkDoneClick = () => {
-    onToggleComplete(selectedOption);
+    // Pass saqInput back to parent so it can be saved
+    onToggleComplete(selectedOption, saqInput);
   };
   
   // --- FUNCTION: CALL SUPABASE EDGE FUNCTION ---
@@ -47,24 +58,18 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, onToggleC
     setAnalysisError(null);
 
     try {
-      // 1. Manually get the session
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
-
-      // Debugging: Log this to browser console to prove you have a token
-      console.log("My Auth Token:", token ? "Found token!" : "No token found");
 
       if (!token) {
         throw new Error("Please refresh the page, you appear to be logged out.");
       }
 
-      // 2. Use raw FETCH instead of supabase.functions.invoke
-      // I used your specific Project ID here:
       const response = await fetch('https://qzoreybelgjynenkwobi.supabase.co/functions/v1/gemini-tutor', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // <--- FORCED HEADER
+          'Authorization': `Bearer ${token}` 
         },
         body: JSON.stringify({ 
           question_id: data.unique_id, 
@@ -81,8 +86,7 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, onToggleC
         throw new Error(responseData.error || "Server error");
       }
 
-      // 3. Success
-      setAnalysisData(responseData.analysis); // Make sure your backend returns { analysis: ... }
+      setAnalysisData(responseData.analysis); 
         
     } catch (err) {
       console.error(err);
@@ -91,8 +95,6 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, onToggleC
       setIsAnalyzing(false);
     }
   };
-
-
 
   const getOptionStyle = (idx) => {
     if (selectedOption === null) return 'hover:bg-slate-50 cursor-pointer border-gray-200';
@@ -135,7 +137,6 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, onToggleC
                   : 'bg-white text-gray-500 border border-gray-200 hover:text-teal-600 hover:border-teal-300'
               }`}
             >
-              {/* If notes exist, fill the icon and make it yellow-ish */}
               <StickyNote className={`w-4 h-4 ${hasNotes ? 'fill-yellow-500 text-yellow-600' : ''}`} />
               {hasNotes ? 'View Notes' : 'Notes'}
             </button>
@@ -165,6 +166,7 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, onToggleC
           {data.question}
         </h3>
 
+        {/* MCQ OPTIONS */}
         {isMCQ && data.options && (
           <div className="flex flex-col gap-3">
             {data.options.map((opt, i) => (
@@ -181,6 +183,29 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, onToggleC
               </button>
             ))}
           </div>
+        )}
+
+        {/* SAQ INPUT AREA (Always visible if !isMCQ) */}
+        {!isMCQ && (
+            <div className="mb-4">
+                {isCompleted && (
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                        Your Response
+                    </div>
+                )}
+                <textarea 
+                    value={saqInput}
+                    onChange={(e) => setSaqInput(e.target.value)}
+                    placeholder="Type your answer here before checking solutions..."
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-y transition-shadow text-sm text-slate-800 ${
+                        isCompleted 
+                        ? 'bg-gray-50 border-gray-200 text-gray-600 cursor-not-allowed' 
+                        : 'bg-indigo-50/20 border-gray-300'
+                    }`}
+                    rows={4}
+                    disabled={isCompleted} // Read-only if completed
+                />
+            </div>
         )}
 
         {/* --- SOLUTIONS AREA --- */}

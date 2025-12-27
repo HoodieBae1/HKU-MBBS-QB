@@ -121,10 +121,10 @@ const App = () => {
 
   // --- DB HELPER ---
   const fetchUserProgress = async (userId) => {
-    // UPDATED: Added max_score to selection
+    // Select user_response
     const { data, error } = await supabase
       .from('user_progress')
-      .select('id, question_id, notes, score, max_score, selected_option, is_flagged')
+      .select('id, question_id, notes, user_response, score, max_score, selected_option, is_flagged')
       .eq('user_id', userId);
 
     if (error) {
@@ -155,7 +155,7 @@ const App = () => {
   const handleQuickFilter = (topic, subtopic) => {
     setSelectedTopic(topic);
     setSelectedSubtopic(subtopic);
-    setShowUserStats(false); // <--- AUTO CLOSE STATS
+    setShowUserStats(false);
   };
 
   const handleToggleFlag = async (questionData) => {
@@ -170,7 +170,6 @@ const App = () => {
       question_id: idString,
       is_flagged: newFlagStatus
     };
-    // Ensure we don't accidentally send nulls if data exists
     if (!payload.score && payload.score !== 0) payload.score = null;
     if (!payload.selected_option && payload.selected_option !== 0) payload.selected_option = null;
     if (!payload.notes) payload.notes = null;
@@ -186,7 +185,7 @@ const App = () => {
     else if (data && data.length > 0) setUserProgress(prev => ({ ...prev, [idString]: data[0] }));
   };
 
-  const handleInitiateCompletion = async (questionData, mcqSelection) => {
+  const handleInitiateCompletion = async (questionData, mcqSelection, saqResponse) => {
     if (!session) return;
     const idString = String(questionData.unique_id);
     const existingEntry = userProgress[idString];
@@ -195,12 +194,17 @@ const App = () => {
     // 1. If currently marked done, this acts as an "Unmark" / "Toggle Off"
     if (isCurrentlyCompleted) {
       if (existingEntry.is_flagged) {
-        // Keep flagged status, clear data
-        const payload = { ...existingEntry, score: null, max_score: null, selected_option: null, notes: null };
+        const payload = { 
+            ...existingEntry, 
+            score: null, 
+            max_score: null, 
+            selected_option: null, 
+            notes: null,
+            user_response: null
+        };
         setUserProgress(prev => ({ ...prev, [idString]: payload }));
         await supabase.from('user_progress').upsert(payload, { onConflict: 'user_id,question_id' });
       } else {
-        // Delete completely
         const newProgress = { ...userProgress };
         delete newProgress[idString];
         setUserProgress(newProgress);
@@ -209,7 +213,7 @@ const App = () => {
       return;
     }
 
-    // 2. NEW LOGIC: If MCQ, save immediately (Skip Modal)
+    // 2. MCQ Logic (Auto-save)
     if (questionData.type === 'MCQ') {
        const isCorrect = mcqSelection === questionData.correctAnswerIndex;
        const score = isCorrect ? 1 : 0;
@@ -217,17 +221,16 @@ const App = () => {
        const payload = {
          user_id: session.user.id,
          question_id: idString,
-         notes: existingEntry?.notes || null, // Preserve notes if they existed (edge case)
+         notes: existingEntry?.notes || null,
+         user_response: null, 
          score: score,
-         max_score: 1, // MCQ is always out of 1
+         max_score: 1, 
          selected_option: mcqSelection,
          is_flagged: existingEntry?.is_flagged || false
        };
 
-       // Optimistic UI update
        setUserProgress(prev => ({ ...prev, [idString]: { ...payload, id: existingEntry?.id } }));
 
-       // DB Save
        const { data, error } = await supabase.from('user_progress').upsert(payload, { onConflict: 'user_id,question_id' }).select();
        
        if (error) {
@@ -236,13 +239,16 @@ const App = () => {
        } else if (data && data.length > 0) {
            setUserProgress(prev => ({ ...prev, [idString]: data[0] }));
        }
-       return; // Done for MCQ
+       return; 
     }
 
-    // 3. For SAQ, open the modal to ask for score/notes/max_score
+    // 3. SAQ Logic: Open Modal with typed answer
     setPendingQuestion(questionData);
     setPendingMCQSelection(mcqSelection);
-    setModalInitialData(null);
+    // Explicitly pass the text typed in the card to the modal's initial data
+    setModalInitialData({ 
+        user_response: saqResponse || '' // Ensure not undefined
+    });
     setModalOpen(true);
   };
 
@@ -263,7 +269,6 @@ const App = () => {
     const currentProgress = userProgress[idString] || {};
 
     let finalScore = modalData.score;
-    // Fallback logic for MCQ if modal was somehow opened for it
     if (pendingQuestion.type === 'MCQ') {
         if (pendingMCQSelection !== null) {
             const isCorrect = pendingMCQSelection === pendingQuestion.correctAnswerIndex;
@@ -275,12 +280,14 @@ const App = () => {
 
     const finalSelection = pendingQuestion.type === 'MCQ' ? (pendingMCQSelection ?? modalInitialData?.selected_option) : null;
     
+    // IMPORTANT: Grab user_response from modalData
     const payload = {
       user_id: session.user.id,
       question_id: idString, 
       notes: modalData.notes,
+      user_response: modalData.user_response, // This saves the text
       score: finalScore,
-      max_score: modalData.max_score, // Save the denominator
+      max_score: modalData.max_score, 
       selected_option: finalSelection,
       is_flagged: currentProgress.is_flagged || false
     };
@@ -294,7 +301,7 @@ const App = () => {
 
     const { data, error } = await supabase.from('user_progress').upsert(payload, { onConflict: 'user_id,question_id' }).select();
     if (error) {
-        alert(`Error: ${error.message}`);
+        alert(`Error saving: ${error.message}`);
         fetchUserProgress(session.user.id); 
     } else if (data && data.length > 0) {
         setUserProgress(prev => ({ ...prev, [idString]: data[0] }));
@@ -309,7 +316,7 @@ const App = () => {
   const checkIsCompleted = (id) => {
     const p = userProgress[String(id)];
     if (!p) return false;
-    return p.score !== null || p.selected_option !== null || (p.notes && p.notes.length > 0);
+    return p.score !== null || p.selected_option !== null || (p.notes && p.notes.length > 0) || (p.user_response && p.user_response.length > 0);
   };
 
   const checkIsFlagged = (id) => userProgress[String(id)]?.is_flagged === true;
@@ -582,8 +589,9 @@ const App = () => {
                 const isCompleted = checkIsCompleted(q.unique_id);
                 const isFlagged = checkIsFlagged(q.unique_id);
                 const progress = userProgress[String(q.unique_id)];
-                // Check if notes exist for this question
                 const hasNotes = progress?.notes && progress.notes.trim().length > 0;
+                // Grab existing response so QuestionCard knows to fill the box
+                const existingResponse = progress?.user_response || '';
 
                 return (
                     <div className="pb-6">
@@ -594,8 +602,9 @@ const App = () => {
                           isCompleted={isCompleted} 
                           isFlagged={isFlagged}
                           hasNotes={hasNotes}
+                          existingResponse={existingResponse} // Pass existing response
                           initialSelection={progress ? progress.selected_option : null}
-                          onToggleComplete={(mcqSelection) => handleInitiateCompletion(q, mcqSelection)} 
+                          onToggleComplete={(mcqSelection, saqResponse) => handleInitiateCompletion(q, mcqSelection, saqResponse)} 
                           onToggleFlag={() => handleToggleFlag(q)}
                           onReviewNotes={() => handleReviewNotes(q)}
                         />
