@@ -1,191 +1,283 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from './supabase';
-import { Trophy, Users, BrainCircuit, X, Loader2, Target } from 'lucide-react';
+import { Trophy, Users, BrainCircuit, X, Loader2, Target, ChevronDown, ChevronUp, BarChart3, Folder, FileText } from 'lucide-react';
 
-const AdminDashboard = ({ onClose }) => {
+const AdminDashboard = ({ onClose, questions }) => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState([]);
   const [summary, setSummary] = useState({ totalUsers: 0, totalAnswers: 0, totalAiCalls: 0 });
+  const [expandedUserId, setExpandedUserId] = useState(null);
+
+  // 1. Create a fast Lookup Map: unique_id -> { topic, subtopic }
+  const questionMetaMap = useMemo(() => {
+    const map = new Map();
+    questions.forEach(q => {
+      map.set(String(q.unique_id), {
+        topic: q.topic || 'Uncategorized',
+        subtopic: q.subtopic || 'General'
+      });
+    });
+    return map;
+  }, [questions]);
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [questionMetaMap]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
 
-      // 1. Fetch all profiles (to get emails)
-      const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, email');
-      if (profileError) throw profileError;
+      // Fetch Data
+      const { data: profiles, error: pErr } = await supabase.from('profiles').select('id, email');
+      if (pErr) throw pErr;
+      const { data: progress, error: prErr } = await supabase.from('user_progress').select('user_id, score, question_id');
+      if (prErr) throw prErr;
+      const { data: aiLogs, error: aiErr } = await supabase.from('ai_usage_logs').select('user_id');
+      if (aiErr) throw aiErr;
 
-      // 2. Fetch all progress (to calc scores)
-      const { data: progress, error: progressError } = await supabase
-        .from('user_progress')
-        .select('user_id, score');
-      if (progressError) throw progressError;
-
-      // 3. Fetch all AI logs
-      const { data: aiLogs, error: aiError } = await supabase
-        .from('ai_usage_logs')
-        .select('user_id');
-      if (aiError) throw aiError;
-
-      // 4. Calculate Stats per User
+      // Process Data per User
       const userStats = profiles.map(user => {
         const userAnswers = progress.filter(p => p.user_id === user.id);
         const userAiCalls = aiLogs.filter(l => l.user_id === user.id);
 
         const totalAnswered = userAnswers.length;
-        
-        // Calculate Accuracy:
-        // Assuming Score 1 = Correct. If you use SAQ scores (e.g., 5/10), logic needs adjustment.
-        // Here we count any score > 0 as "Correct" or partially correct for SAQ, 
-        // OR strictly equal to 1 for MCQ. Let's use score >= 1.
         const correctAnswers = userAnswers.filter(a => a.score && a.score >= 1).length;
-        
-        const accuracy = totalAnswered > 0 
-          ? Math.round((correctAnswers / totalAnswered) * 100) 
-          : 0;
+        const accuracy = totalAnswered > 0 ? Math.round((correctAnswers / totalAnswered) * 100) : 0;
+
+        // --- NEW: Hierarchical Aggregation (Topic -> Subtopics) ---
+        const hierarchy = {}; // { "Cardiology": { correct: 10, total: 20, subtopics: { "Arrhythmias": {...} } } }
+
+        userAnswers.forEach(ans => {
+          const meta = questionMetaMap.get(String(ans.question_id)) || { topic: 'Unknown', subtopic: 'Unknown' };
+          const { topic, subtopic } = meta;
+
+          // Init Topic
+          if (!hierarchy[topic]) {
+            hierarchy[topic] = { correct: 0, total: 0, subtopics: {} };
+          }
+          
+          // Init Subtopic
+          if (!hierarchy[topic].subtopics[subtopic]) {
+            hierarchy[topic].subtopics[subtopic] = { correct: 0, total: 0 };
+          }
+
+          // Increment Counts
+          hierarchy[topic].total += 1;
+          hierarchy[topic].subtopics[subtopic].total += 1;
+
+          if (ans.score && ans.score >= 1) {
+            hierarchy[topic].correct += 1;
+            hierarchy[topic].subtopics[subtopic].correct += 1;
+          }
+        });
+
+        // Flatten Hierarchy for Rendering
+        const structuredStats = Object.entries(hierarchy).map(([tName, tData]) => {
+          // Flatten Subtopics
+          const subList = Object.entries(tData.subtopics).map(([sName, sData]) => ({
+            name: sName,
+            total: sData.total,
+            accuracy: Math.round((sData.correct / sData.total) * 100)
+          })).sort((a, b) => b.accuracy - a.accuracy); // Sort subtopics by accuracy
+
+          return {
+            name: tName,
+            total: tData.total,
+            accuracy: Math.round((tData.correct / tData.total) * 100),
+            subtopics: subList
+          };
+        }).sort((a, b) => b.accuracy - a.accuracy); // Sort Topics by accuracy
+        // ---------------------------------------------------------
 
         return {
           id: user.id,
           email: user.email,
           totalAnswered,
-          correctAnswers,
           accuracy,
-          aiUsageCount: userAiCalls.length
+          aiUsageCount: userAiCalls.length,
+          structuredStats
         };
       });
 
-      // Sort: Highest Accuracy -> Most Answered
-      userStats.sort((a, b) => {
-        if (b.accuracy !== a.accuracy) return b.accuracy - a.accuracy;
-        return b.totalAnswered - a.totalAnswered;
-      });
+      // Sort Users
+      userStats.sort((a, b) => b.accuracy - a.accuracy || b.totalAnswered - a.totalAnswered);
 
       setStats(userStats);
-      setSummary({
-        totalUsers: profiles.length,
-        totalAnswers: progress.length,
-        totalAiCalls: aiLogs.length
-      });
+      setSummary({ totalUsers: profiles.length, totalAnswers: progress.length, totalAiCalls: aiLogs.length });
 
     } catch (error) {
       console.error("Dashboard Error:", error);
-      alert("Error loading data. Ensure you have 'admin' role in 'profiles' table.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) return <div className="fixed inset-0 z-[60] flex items-center justify-center bg-white/80"><Loader2 className="animate-spin w-8 h-8 text-indigo-600"/></div>;
+  const toggleRow = (userId) => setExpandedUserId(expandedUserId === userId ? null : userId);
+
+  // Helper for color coding accuracy
+  const getScoreColor = (score) => {
+    if (score >= 70) return 'text-green-700 bg-green-100 border-green-200';
+    if (score >= 40) return 'text-yellow-700 bg-yellow-100 border-yellow-200';
+    return 'text-red-700 bg-red-100 border-red-200';
+  };
+
+  const getBarColor = (score) => {
+    if (score >= 70) return 'bg-green-500';
+    if (score >= 40) return 'bg-yellow-400';
+    return 'bg-red-400';
+  };
+
+  if (loading) return <div className="fixed inset-0 z-[60] flex items-center justify-center bg-white/90"><Loader2 className="animate-spin w-8 h-8 text-indigo-600"/></div>;
 
   return (
     <div className="fixed inset-0 z-[60] bg-slate-100 overflow-auto animate-in slide-in-from-bottom duration-300">
       
-      {/* Navbar */}
+      {/* Header */}
       <div className="bg-indigo-900 text-white sticky top-0 z-10 px-6 py-4 flex justify-between items-center shadow-lg">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-800 rounded-lg">
-            <Trophy className="w-6 h-6 text-yellow-400" />
-          </div>
+          <div className="p-2 bg-indigo-800 rounded-lg"><Trophy className="w-6 h-6 text-yellow-400" /></div>
           <div>
             <h1 className="text-xl font-bold">Admin Dashboard</h1>
-            <p className="text-xs text-indigo-300">Live User Analytics</p>
+            <p className="text-xs text-indigo-300">Topic & Subtopic Analytics</p>
           </div>
         </div>
-        <button onClick={onClose} className="p-2 hover:bg-indigo-800 rounded-full transition-colors">
-          <X className="w-6 h-6" />
-        </button>
+        <button onClick={onClose} className="p-2 hover:bg-indigo-800 rounded-full transition-colors"><X className="w-6 h-6" /></button>
       </div>
 
       <div className="max-w-7xl mx-auto p-6">
         
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm">
-            <div className="flex items-center gap-3 text-gray-500 mb-2">
-              <Users className="w-5 h-5" />
-              <span className="text-xs font-bold uppercase tracking-wider">Total Users</span>
-            </div>
-            <p className="text-3xl font-bold text-gray-800">{summary.totalUsers}</p>
+          <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center">
+             <div className="flex items-center gap-2 text-gray-500 mb-1"><Users className="w-4 h-4" /><span className="text-xs font-bold uppercase">Total Users</span></div>
+             <p className="text-3xl font-bold text-gray-800">{summary.totalUsers}</p>
           </div>
-          
-          <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm">
-            <div className="flex items-center gap-3 text-gray-500 mb-2">
-              <Target className="w-5 h-5" />
-              <span className="text-xs font-bold uppercase tracking-wider">Total Questions Answered</span>
-            </div>
-            <p className="text-3xl font-bold text-teal-600">{summary.totalAnswers}</p>
+          <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center">
+             <div className="flex items-center gap-2 text-gray-500 mb-1"><Target className="w-4 h-4" /><span className="text-xs font-bold uppercase">Answers Logged</span></div>
+             <p className="text-3xl font-bold text-teal-600">{summary.totalAnswers}</p>
           </div>
-
-          <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm">
-            <div className="flex items-center gap-3 text-gray-500 mb-2">
-              <BrainCircuit className="w-5 h-5" />
-              <span className="text-xs font-bold uppercase tracking-wider">Total AI Consultations</span>
-            </div>
-            <p className="text-3xl font-bold text-violet-600">{summary.totalAiCalls}</p>
+          <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center">
+             <div className="flex items-center gap-2 text-gray-500 mb-1"><BrainCircuit className="w-4 h-4" /><span className="text-xs font-bold uppercase">AI Consultations</span></div>
+             <p className="text-3xl font-bold text-violet-600">{summary.totalAiCalls}</p>
           </div>
         </div>
 
-        {/* Leaderboard */}
+        {/* User Table */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-            <h2 className="font-bold text-gray-800">Leaderboard</h2>
-            <span className="text-xs text-gray-400">Sorted by Accuracy</span>
+            <h2 className="font-bold text-gray-800">User Performance</h2>
+            <span className="text-xs text-gray-400">Sorted by Overall Accuracy</span>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="text-xs font-bold text-gray-500 uppercase bg-gray-50/50 border-b border-gray-100">
-                  <th className="px-6 py-3">Rank</th>
-                  <th className="px-6 py-3">User</th>
-                  <th className="px-6 py-3 text-center">Questions Answered</th>
-                  <th className="px-6 py-3 text-center">Accuracy</th>
-                  <th className="px-6 py-3 text-center text-violet-600">AI Usage</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {stats.map((user, index) => (
-                  <tr key={user.id} className="hover:bg-indigo-50/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm
-                        ${index === 0 ? 'bg-yellow-100 text-yellow-700' : 
-                          index === 1 ? 'bg-gray-200 text-gray-600' : 
-                          index === 2 ? 'bg-orange-100 text-orange-700' : 'text-gray-400 bg-gray-50'}`}>
-                        {index + 1}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-gray-900">{user.email}</div>
-                      <div className="text-[10px] text-gray-400 font-mono">{user.id}</div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-block px-3 py-1 bg-gray-100 rounded-full text-sm font-semibold text-gray-700">
-                        {user.totalAnswered}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                       <div className="flex items-center justify-center gap-2">
-                         <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-                           <div className={`h-full rounded-full ${user.accuracy > 70 ? 'bg-green-500' : user.accuracy > 40 ? 'bg-yellow-400' : 'bg-red-400'}`} style={{width: `${user.accuracy}%`}}></div>
-                         </div>
-                         <span className="text-sm font-bold text-gray-700">{user.accuracy}%</span>
-                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="font-mono font-bold text-violet-600 bg-violet-50 px-3 py-1 rounded border border-violet-100">
-                        {user.aiUsageCount}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="text-xs font-bold text-gray-500 uppercase bg-gray-50/50 border-b border-gray-100">
+                <th className="px-6 py-3 w-16">Rank</th>
+                <th className="px-6 py-3">User</th>
+                <th className="px-6 py-3 text-center">Questions</th>
+                <th className="px-6 py-3 text-center">Overall Accuracy</th>
+                <th className="px-6 py-3 text-center text-violet-600">AI Usage</th>
+                <th className="px-6 py-3 text-right">Breakdown</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {stats.map((user, index) => {
+                const isExpanded = expandedUserId === user.id;
+                
+                return (
+                  <React.Fragment key={user.id}>
+                    {/* User Row */}
+                    <tr onClick={() => toggleRow(user.id)} className={`cursor-pointer transition-colors ${isExpanded ? 'bg-indigo-50/50' : 'hover:bg-slate-50'}`}>
+                      <td className="px-6 py-4">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${index === 0 ? 'bg-yellow-100 text-yellow-700' : index === 1 ? 'bg-gray-200 text-gray-600' : index === 2 ? 'bg-orange-100 text-orange-700' : 'text-gray-400 bg-gray-100'}`}>{index + 1}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-medium text-gray-900">{user.email}</div>
+                        <div className="text-[10px] text-gray-400 font-mono">{user.id.slice(0, 8)}...</div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="inline-block px-3 py-1 bg-gray-100 rounded-full text-sm font-semibold text-gray-700">{user.totalAnswered}</span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                           <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                             <div className={`h-full rounded-full ${getBarColor(user.accuracy)}`} style={{width: `${user.accuracy}%`}}></div>
+                           </div>
+                           <span className="text-sm font-bold text-gray-700">{user.accuracy}%</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center"><span className="font-mono font-bold text-violet-600">{user.aiUsageCount}</span></td>
+                      <td className="px-6 py-4 text-right">
+                        <button className="text-gray-400 hover:text-indigo-600 transition-colors">
+                          {isExpanded ? <ChevronUp className="w-5 h-5"/> : <ChevronDown className="w-5 h-5"/>}
+                        </button>
+                      </td>
+                    </tr>
+
+                    {/* Expanded Details Row */}
+                    {isExpanded && (
+                      <tr className="bg-indigo-50/30 animate-in fade-in duration-200">
+                        <td colSpan="6" className="px-6 py-6">
+                          <div className="bg-white rounded-lg border border-indigo-100 p-6 shadow-sm">
+                            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
+                              <BarChart3 className="w-4 h-4 text-indigo-500" />
+                              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Detailed Breakdown</h3>
+                            </div>
+
+                            {user.structuredStats.length === 0 ? (
+                              <p className="text-gray-400 text-sm italic">No data available yet.</p>
+                            ) : (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {user.structuredStats.map((topic, i) => (
+                                  <div key={i} className="border border-gray-200 rounded-lg overflow-hidden bg-slate-50">
+                                    
+                                    {/* Topic Header */}
+                                    <div className="bg-white p-3 border-b border-gray-200 flex justify-between items-center">
+                                      <div className="flex items-center gap-2">
+                                        <Folder className="w-4 h-4 text-indigo-400" />
+                                        <span className="font-bold text-gray-800 text-sm">{topic.name}</span>
+                                      </div>
+                                      <div className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${getScoreColor(topic.accuracy)}`}>
+                                        {topic.accuracy}%
+                                      </div>
+                                    </div>
+                                    
+                                    {/* Topic Score Bar */}
+                                    <div className="w-full h-1 bg-gray-100">
+                                       <div className={`h-full ${getBarColor(topic.accuracy)}`} style={{width: `${topic.accuracy}%`}}></div>
+                                    </div>
+
+                                    {/* Subtopics List */}
+                                    <div className="p-3 space-y-2">
+                                      {topic.subtopics.map((sub, j) => (
+                                        <div key={j} className="flex items-center justify-between text-xs">
+                                          <div className="flex items-center gap-2 text-gray-600 truncate">
+                                            <FileText className="w-3 h-3 text-gray-300" />
+                                            <span title={sub.name} className="truncate max-w-[150px]">{sub.name}</span>
+                                          </div>
+                                          <div className="flex items-center gap-3">
+                                            <span className="text-gray-400">{sub.total} q's</span>
+                                            <span className={`font-mono font-bold w-8 text-right ${sub.accuracy >= 70 ? 'text-green-600' : sub.accuracy >= 40 ? 'text-yellow-600' : 'text-red-500'}`}>
+                                              {sub.accuracy}%
+                                            </span>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
 
       </div>

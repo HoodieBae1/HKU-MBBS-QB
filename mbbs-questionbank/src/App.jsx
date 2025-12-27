@@ -377,7 +377,7 @@ const App = () => {
   if (!session) return <Auth />;
   if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
   if (error) return <div>{error}</div>;
-  if (showDashboard) return <AdminDashboard onClose={() => setShowDashboard(false)} />;
+  if (showDashboard) return <AdminDashboard onClose={() => setShowDashboard(false)} questions={questions} />;
   if (showHistory) return <VersionHistory onClose={() => setShowHistory(false)} />;
 
   return (
