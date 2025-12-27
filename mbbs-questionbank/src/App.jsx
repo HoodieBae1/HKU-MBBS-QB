@@ -10,6 +10,7 @@ import UpdateManager from './UpdateManager';
 import AdminDashboard from './AdminDashboard';
 import UserStats from './UserStats';
 import NotesPanel from './NotesPanel';
+import ProgressPanel from './ProgressPanel';
 import { APP_VERSION } from './appVersion';
 
 // --- HELPER HOOK: Persist state to LocalStorage ---
@@ -47,9 +48,10 @@ const App = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   
-  // --- USER STATS TOGGLE ---
+  // --- VIEW TOGGLES ---
   const [showUserStats, setShowUserStats] = useState(false);
   const [showNotesPanel, setShowNotesPanel] = useState(false);
+  const [showProgressPanel, setShowProgressPanel] = useState(false); 
 
   // --- FILTERS & UI (Now Persistent) ---
   const [filtersOpen, setFiltersOpen] = useStickyState(true, 'app_filtersOpen');
@@ -151,10 +153,38 @@ const App = () => {
   };
 
   // --- ACTIONS ---
+  
+  // Logic to ensure only one drawer is open at a time
+  const toggleProgressPanel = () => {
+      if (!showProgressPanel) {
+          setShowUserStats(false);
+          setFiltersOpen(false);
+      }
+      setShowProgressPanel(!showProgressPanel);
+  };
+
+  const toggleUserStats = () => {
+      if (!showUserStats) {
+          setShowProgressPanel(false);
+          setFiltersOpen(false);
+      }
+      setShowUserStats(!showUserStats);
+  };
+
+  const toggleFilters = () => {
+      if (!filtersOpen) {
+          setShowProgressPanel(false);
+          setShowUserStats(false);
+      }
+      setFiltersOpen(!filtersOpen);
+  };
+
   const handleQuickFilter = (topic, subtopic) => {
     setSelectedTopic(topic);
     setSelectedSubtopic(subtopic);
+    // Close whatever panel was open
     setShowUserStats(false); 
+    setShowProgressPanel(false);
   };
 
   const handleToggleFlag = async (questionData) => {
@@ -472,9 +502,16 @@ const App = () => {
             <div className="flex items-center justify-between gap-4">
               
               <div className="flex-grow flex items-center gap-3">
-                <div className="flex-grow flex flex-col justify-center">
+                
+                {/* CLICKABLE PROGRESS AREA */}
+                <div 
+                    onClick={toggleProgressPanel}
+                    className={`flex-grow flex flex-col justify-center cursor-pointer group p-2 -ml-2 rounded-lg transition-colors ${showProgressPanel ? 'bg-indigo-50' : 'hover:bg-gray-50'}`}
+                >
                     <div className="flex justify-between text-xs font-bold text-gray-500 mb-1">
-                      <span>Progress</span>
+                      <span className={`${showProgressPanel ? 'text-indigo-600' : 'group-hover:text-indigo-600 transition-colors'}`}>
+                          {showProgressPanel ? 'Hide Progress' : 'View Progress Breakdown'}
+                      </span>
                       <span className="text-teal-600">{completedCount} / {totalQuestionsCount} ({progressPercentage}%)</span>
                     </div>
                     <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
@@ -483,7 +520,7 @@ const App = () => {
                 </div>
 
                 <button 
-                    onClick={() => setShowUserStats(!showUserStats)}
+                    onClick={toggleUserStats}
                     className={`p-2 rounded-lg border transition-all duration-200 ${showUserStats ? 'bg-teal-100 border-teal-300 text-teal-800' : 'bg-teal-50 hover:bg-teal-100 border-teal-200 text-teal-600'}`}
                     title="Toggle Statistics Card"
                 >
@@ -501,61 +538,79 @@ const App = () => {
               </button>
             </div>
 
-            {/* FILTER DRAWER */}
-            <div className={`grid transition-all duration-300 ease-in-out overflow-hidden ${filtersOpen ? 'grid-rows-[1fr] opacity-100 mt-4 pb-2' : 'grid-rows-[0fr] opacity-0 mt-0 pb-0'}`}>
-              <div className="min-h-0 flex flex-col gap-3">
-                <div className="relative w-full">
-                    <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
-                    <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
-                    {searchQuery && <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>}
+            {/* DRAWERS CONTAINER */}
+            <div className="relative">
+                
+                {/* 1. FILTER DRAWER */}
+                <div className={`grid transition-all duration-300 ease-in-out overflow-hidden ${filtersOpen ? 'grid-rows-[1fr] opacity-100 mt-4 pb-2' : 'grid-rows-[0fr] opacity-0 mt-0 pb-0'}`}>
+                  <div className="min-h-0 flex flex-col gap-3">
+                    <div className="relative w-full">
+                        <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
+                        <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
+                        {searchQuery && <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div className="relative">
+                            <select value={selectedTopic} onChange={(e) => {setSelectedTopic(e.target.value); setSelectedSubtopic('All')}} className="w-full pl-3 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white truncate pr-8">
+                              <option value="All">All Topics ({filterCounts.totalMatchingSearch})</option>
+                              {topicsList.map(t => <option key={t} value={t}>{t} ({filterCounts.tCounts[t]})</option>)}
+                            </select>
+                            <Filter className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
+                        </div>
+                        <div className="relative">
+                            <select value={selectedSubtopic} onChange={(e) => setSelectedSubtopic(e.target.value)} className="w-full pl-3 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white truncate pr-8">
+                              <option value="All">All Subtopics</option>
+                              {subtopicsList.map(t => <option key={t} value={t}>{t} ({filterCounts.sCounts[t]})</option>)}
+                            </select>
+                            <BookOpen className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
+                        </div>
+                        <div className="relative">
+                            <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="w-full pl-3 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white">
+                              <option value="All">All Types</option>
+                              <option value="MCQ">MCQ</option>
+                              <option value="SAQ">SAQ</option>
+                            </select>
+                        </div>
+                        <div className="relative">
+                            <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="w-full pl-3 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white">
+                              <option value="Newest">Newest First</option>
+                              <option value="Completed">Completed First</option>
+                              <option value="Unfinished">Unfinished First</option>
+                              <option value="Flagged">Flagged First</option>
+                              <option value="Original">Original Order</option>
+                            </select>
+                            <ArrowUpDown className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
+                        </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <div className="relative">
-                        <select value={selectedTopic} onChange={(e) => {setSelectedTopic(e.target.value); setSelectedSubtopic('All')}} className="w-full pl-3 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white truncate pr-8">
-                          <option value="All">All Topics ({filterCounts.totalMatchingSearch})</option>
-                          {topicsList.map(t => <option key={t} value={t}>{t} ({filterCounts.tCounts[t]})</option>)}
-                        </select>
-                        <Filter className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
-                    </div>
-                    <div className="relative">
-                        <select value={selectedSubtopic} onChange={(e) => setSelectedSubtopic(e.target.value)} className="w-full pl-3 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white truncate pr-8">
-                          <option value="All">All Subtopics</option>
-                          {subtopicsList.map(t => <option key={t} value={t}>{t} ({filterCounts.sCounts[t]})</option>)}
-                        </select>
-                        <BookOpen className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
-                    </div>
-                    <div className="relative">
-                        <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="w-full pl-3 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white">
-                          <option value="All">All Types</option>
-                          <option value="MCQ">MCQ</option>
-                          <option value="SAQ">SAQ</option>
-                        </select>
-                    </div>
-                    <div className="relative">
-                        <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="w-full pl-3 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white">
-                          <option value="Newest">Newest First</option>
-                          <option value="Completed">Completed First</option>
-                          <option value="Unfinished">Unfinished First</option>
-                          <option value="Flagged">Flagged First</option>
-                          <option value="Original">Original Order</option>
-                        </select>
-                        <ArrowUpDown className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
-                    </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* --- STATS DRAWER (INSIDE STICKY WRAPPER) --- */}
-          <div className={`grid transition-all duration-500 ease-in-out border-t border-gray-100 shadow-xl relative z-50 ${showUserStats ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-            <div className="min-h-0 overflow-hidden bg-slate-50">
-                <div className="max-h-[85vh] overflow-y-auto">
-                  <UserStats 
-                    questions={questions} 
-                    userProgress={userProgress} 
-                    onFilterSelect={handleQuickFilter} 
-                  />
+                {/* 2. STATS DRAWER */}
+                <div className={`grid transition-all duration-500 ease-in-out ${showUserStats ? 'grid-rows-[1fr] opacity-100 border-t border-gray-100 shadow-lg' : 'grid-rows-[0fr] opacity-0'}`}>
+                    <div className="min-h-0 overflow-hidden bg-slate-50">
+                        {showUserStats && (
+                            <UserStats 
+                                questions={questions} 
+                                userProgress={userProgress} 
+                                onFilterSelect={handleQuickFilter} 
+                            />
+                        )}
+                    </div>
                 </div>
+
+                {/* 3. PROGRESS DRAWER */}
+                <div className={`grid transition-all duration-500 ease-in-out ${showProgressPanel ? 'grid-rows-[1fr] opacity-100 border-t border-gray-100 shadow-lg' : 'grid-rows-[0fr] opacity-0'}`}>
+                    <div className="min-h-0 overflow-hidden bg-slate-50">
+                        {showProgressPanel && (
+                            <ProgressPanel 
+                                questions={questions} 
+                                userProgress={userProgress} 
+                                onFilterSelect={handleQuickFilter} // Pass filter handler
+                            />
+                        )}
+                    </div>
+                </div>
+
             </div>
           </div>
         </div>
@@ -586,7 +641,6 @@ const App = () => {
                 const hasNotes = progress?.notes && progress.notes.trim().length > 0;
                 const existingResponse = progress?.user_response || '';
                 
-                // NEW: Get score and maxScore for passing to QuestionCard
                 const score = progress?.score;
                 const maxScore = progress?.max_score;
 
@@ -600,7 +654,6 @@ const App = () => {
                           isFlagged={isFlagged}
                           hasNotes={hasNotes}
                           existingResponse={existingResponse} 
-                          // Pass score data to component
                           score={score}
                           maxScore={maxScore}
                           initialSelection={progress ? progress.selected_option : null}
