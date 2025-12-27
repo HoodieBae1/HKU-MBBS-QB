@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
-import { Folder, FileText, PieChart, Filter, AlertCircle } from 'lucide-react';
+import { Folder, PieChart, Filter, AlertCircle } from 'lucide-react';
 
 const UserStats = ({ questions, userProgress, onFilterSelect }) => {
   
   const stats = useMemo(() => {
     const hierarchy = {}; 
-    let totalCorrect = 0;
-    let totalAnswered = 0;
+    let sumGlobalPercentage = 0;
+    let countGlobalAnswered = 0;
 
     const metaMap = new Map();
     questions.forEach(q => {
@@ -17,47 +17,63 @@ const UserStats = ({ questions, userProgress, onFilterSelect }) => {
     });
 
     Object.values(userProgress).forEach(entry => {
-      if (entry.score === null && entry.selected_option === null) return;
+      // Must have a score to count towards accuracy stats
+      if (entry.score === null || entry.score === undefined) return;
 
       const meta = metaMap.get(String(entry.question_id));
       if (!meta) return;
 
       const { topic, subtopic } = meta;
 
-      if (!hierarchy[topic]) hierarchy[topic] = { correct: 0, total: 0, subtopics: {} };
-      if (!hierarchy[topic].subtopics[subtopic]) hierarchy[topic].subtopics[subtopic] = { correct: 0, total: 0 };
+      if (!hierarchy[topic]) hierarchy[topic] = { sumPct: 0, count: 0, subtopics: {} };
+      if (!hierarchy[topic].subtopics[subtopic]) hierarchy[topic].subtopics[subtopic] = { sumPct: 0, count: 0 };
 
-      const isCorrect = entry.score && entry.score >= 1;
+      // --- NORMALIZE SCORE LOGIC ---
+      let rawScore = parseFloat(entry.score);
+      let normalizedPercentage = 0;
 
-      hierarchy[topic].total += 1;
-      hierarchy[topic].subtopics[subtopic].total += 1;
-      totalAnswered++;
-
-      if (isCorrect) {
-        hierarchy[topic].correct += 1;
-        hierarchy[topic].subtopics[subtopic].correct += 1;
-        totalCorrect++;
+      // Logic:
+      // 1. If score <= 1 (e.g. 0.4 or 1.0), it's a decimal. Multiply by 100.
+      // 2. If score > 1 (e.g. 66.6), it's legacy percentage data. Use as is.
+      if (rawScore <= 1) {
+        normalizedPercentage = rawScore * 100;
+      } else {
+        normalizedPercentage = rawScore;
       }
+
+      // Add to Hierarchy
+      hierarchy[topic].sumPct += normalizedPercentage;
+      hierarchy[topic].count += 1;
+      
+      hierarchy[topic].subtopics[subtopic].sumPct += normalizedPercentage;
+      hierarchy[topic].subtopics[subtopic].count += 1;
+
+      // Add to Global
+      sumGlobalPercentage += normalizedPercentage;
+      countGlobalAnswered++;
     });
 
+    // --- CONSTRUCT FINAL STATS ARRAY ---
     const structuredStats = Object.entries(hierarchy).map(([tName, tData]) => {
       const subList = Object.entries(tData.subtopics).map(([sName, sData]) => ({
         name: sName,
-        total: sData.total,
-        accuracy: Math.round((sData.correct / sData.total) * 100)
+        total: sData.count,
+        accuracy: Math.round(sData.sumPct / sData.count) // Average Percentage
       })).sort((a, b) => b.accuracy - a.accuracy);
 
       return {
         name: tName,
-        total: tData.total,
-        accuracy: Math.round((tData.correct / tData.total) * 100),
+        total: tData.count,
+        accuracy: Math.round(tData.sumPct / tData.count), // Average Percentage
         subtopics: subList
       };
     }).sort((a, b) => b.accuracy - a.accuracy);
 
-    const overallAccuracy = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
+    const overallAccuracy = countGlobalAnswered > 0 
+      ? Math.round(sumGlobalPercentage / countGlobalAnswered) 
+      : 0;
 
-    return { structuredStats, overallAccuracy, totalAnswered };
+    return { structuredStats, overallAccuracy, totalAnswered: countGlobalAnswered };
   }, [questions, userProgress]);
 
   const getScoreColor = (score) => {
@@ -84,7 +100,7 @@ const UserStats = ({ questions, userProgress, onFilterSelect }) => {
                 </div>
                 <div>
                     <h2 className="font-bold text-gray-800">Your Statistics</h2>
-                    <p className="text-xs text-gray-500">Click any subtopic to filter questions</p>
+                    <p className="text-xs text-gray-500">Percentage of correct answers you got for each topic</p>
                 </div>
             </div>
 
@@ -94,7 +110,7 @@ const UserStats = ({ questions, userProgress, onFilterSelect }) => {
                     <span className="text-xl font-bold text-gray-800">{stats.totalAnswered}</span>
                 </div>
                 <div className="bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm flex flex-col items-center min-w-[100px]">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Accuracy</span>
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Avg. Accuracy</span>
                     <span className={`text-xl font-bold ${stats.overallAccuracy >= 70 ? 'text-green-600' : stats.overallAccuracy >= 40 ? 'text-yellow-600' : 'text-red-500'}`}>
                         {stats.overallAccuracy}%
                     </span>
@@ -102,11 +118,11 @@ const UserStats = ({ questions, userProgress, onFilterSelect }) => {
             </div>
         </div>
 
-        {/* --- NEW: REMINDER BOX --- */}
+        {/* --- REMINDER BOX --- */}
         <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-6 flex items-start gap-3 text-sm text-blue-800 shadow-sm">
             <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
             <div>
-              For MCQs, your answer is only saved to statistics when you click the <span className="inline-block px-1.5 py-0.5 bg-white border border-blue-200 rounded font-bold text-xs mx-1 shadow-sm">Mark Done</span> button after selecting an option.
+              Your answer is only saved to statistics when you click the <span className="inline-block px-1.5 py-0.5 bg-white border border-blue-200 rounded font-bold text-xs mx-1 shadow-sm">Mark Done</span> button.
             </div>
         </div>
 

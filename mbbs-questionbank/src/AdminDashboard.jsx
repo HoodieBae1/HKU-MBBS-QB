@@ -42,35 +42,52 @@ const AdminDashboard = ({ onClose, questions }) => {
         const userAiCalls = aiLogs.filter(l => l.user_id === user.id);
 
         const totalAnswered = userAnswers.length;
-        const correctAnswers = userAnswers.filter(a => a.score && a.score >= 1).length;
-        const accuracy = totalAnswered > 0 ? Math.round((correctAnswers / totalAnswered) * 100) : 0;
-
+        
+        // --- NEW: Global Average Calculation ---
+        let totalScoreSum = 0;
+        
         // --- NEW: Hierarchical Aggregation (Topic -> Subtopics) ---
-        const hierarchy = {}; // { "Cardiology": { correct: 10, total: 20, subtopics: { "Arrhythmias": {...} } } }
+        // Structure: { "Cardiology": { sumPct: 250, total: 3, subtopics: { "Arrhythmias": { sumPct: ..., total: ... } } } }
+        const hierarchy = {}; 
 
         userAnswers.forEach(ans => {
+          if (ans.score === null || ans.score === undefined) return;
+
           const meta = questionMetaMap.get(String(ans.question_id)) || { topic: 'Unknown', subtopic: 'Unknown' };
           const { topic, subtopic } = meta;
 
+          // Normalize Score (Handle 0.8 as 80, and 1 as 100)
+          let rawScore = parseFloat(ans.score);
+          let normalizedPct = 0;
+          if (rawScore <= 1) {
+            normalizedPct = rawScore * 100;
+          } else {
+            normalizedPct = rawScore; // Legacy handling if any > 1 exist
+          }
+
+          // Add to Global Sum
+          totalScoreSum += normalizedPct;
+
           // Init Topic
           if (!hierarchy[topic]) {
-            hierarchy[topic] = { correct: 0, total: 0, subtopics: {} };
+            hierarchy[topic] = { sumPct: 0, total: 0, subtopics: {} };
           }
           
           // Init Subtopic
           if (!hierarchy[topic].subtopics[subtopic]) {
-            hierarchy[topic].subtopics[subtopic] = { correct: 0, total: 0 };
+            hierarchy[topic].subtopics[subtopic] = { sumPct: 0, total: 0 };
           }
 
-          // Increment Counts
+          // Aggregate Counts & Scores
           hierarchy[topic].total += 1;
-          hierarchy[topic].subtopics[subtopic].total += 1;
+          hierarchy[topic].sumPct += normalizedPct;
 
-          if (ans.score && ans.score >= 1) {
-            hierarchy[topic].correct += 1;
-            hierarchy[topic].subtopics[subtopic].correct += 1;
-          }
+          hierarchy[topic].subtopics[subtopic].total += 1;
+          hierarchy[topic].subtopics[subtopic].sumPct += normalizedPct;
         });
+
+        // Global Accuracy
+        const accuracy = totalAnswered > 0 ? Math.round(totalScoreSum / totalAnswered) : 0;
 
         // Flatten Hierarchy for Rendering
         const structuredStats = Object.entries(hierarchy).map(([tName, tData]) => {
@@ -78,16 +95,16 @@ const AdminDashboard = ({ onClose, questions }) => {
           const subList = Object.entries(tData.subtopics).map(([sName, sData]) => ({
             name: sName,
             total: sData.total,
-            accuracy: Math.round((sData.correct / sData.total) * 100)
-          })).sort((a, b) => b.accuracy - a.accuracy); // Sort subtopics by accuracy
+            accuracy: Math.round(sData.sumPct / sData.total) // Average Pct
+          })).sort((a, b) => b.accuracy - a.accuracy); 
 
           return {
             name: tName,
             total: tData.total,
-            accuracy: Math.round((tData.correct / tData.total) * 100),
+            accuracy: Math.round(tData.sumPct / tData.total), // Average Pct
             subtopics: subList
           };
-        }).sort((a, b) => b.accuracy - a.accuracy); // Sort Topics by accuracy
+        }).sort((a, b) => b.accuracy - a.accuracy); 
         // ---------------------------------------------------------
 
         return {
@@ -139,7 +156,7 @@ const AdminDashboard = ({ onClose, questions }) => {
           <div className="p-2 bg-indigo-800 rounded-lg"><Trophy className="w-6 h-6 text-yellow-400" /></div>
           <div>
             <h1 className="text-xl font-bold">Admin Dashboard</h1>
-            <p className="text-xs text-indigo-300">Topic & Subtopic Analytics</p>
+            <p className="text-xs text-indigo-300">Topic & Subtopic Analytics (Avg. Scores)</p>
           </div>
         </div>
         <button onClick={onClose} className="p-2 hover:bg-indigo-800 rounded-full transition-colors"><X className="w-6 h-6" /></button>
@@ -167,7 +184,7 @@ const AdminDashboard = ({ onClose, questions }) => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
             <h2 className="font-bold text-gray-800">User Performance</h2>
-            <span className="text-xs text-gray-400">Sorted by Overall Accuracy</span>
+            <span className="text-xs text-gray-400">Sorted by Average Accuracy</span>
           </div>
           
           <table className="w-full text-left border-collapse">
@@ -176,7 +193,7 @@ const AdminDashboard = ({ onClose, questions }) => {
                 <th className="px-6 py-3 w-16">Rank</th>
                 <th className="px-6 py-3">User</th>
                 <th className="px-6 py-3 text-center">Questions</th>
-                <th className="px-6 py-3 text-center">Overall Accuracy</th>
+                <th className="px-6 py-3 text-center">Avg. Score</th>
                 <th className="px-6 py-3 text-center text-violet-600">AI Usage</th>
                 <th className="px-6 py-3 text-right">Breakdown</th>
               </tr>

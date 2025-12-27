@@ -152,7 +152,7 @@ const App = () => {
   const handleQuickFilter = (topic, subtopic) => {
     setSelectedTopic(topic);
     setSelectedSubtopic(subtopic);
-    setShowUserStats(false); // <--- AUTO CLOSE STATS
+    setShowUserStats(false); 
   };
 
   const handleToggleFlag = async (questionData) => {
@@ -189,6 +189,7 @@ const App = () => {
     const isCurrentlyCompleted = existingEntry && (existingEntry.score !== null || existingEntry.selected_option !== null || existingEntry.notes);
 
     if (isCurrentlyCompleted) {
+      // Toggle OFF
       if (existingEntry.is_flagged) {
         const payload = { ...existingEntry, score: null, selected_option: null, notes: null };
         setUserProgress(prev => ({ ...prev, [idString]: payload }));
@@ -202,10 +203,39 @@ const App = () => {
       return;
     }
 
-    setPendingQuestion(questionData);
-    setPendingMCQSelection(mcqSelection);
-    setModalInitialData(null);
-    setModalOpen(true);
+    if (questionData.type === 'MCQ') {
+        // --- MCQ PATH: INSTANT SAVE ---
+        const isCorrect = mcqSelection === questionData.correctAnswerIndex;
+        const finalScore = isCorrect ? 1 : 0; // 1 = Correct, 0 = Incorrect
+        
+        const payload = {
+          user_id: session.user.id,
+          question_id: idString,
+          notes: null, 
+          score: finalScore,
+          selected_option: mcqSelection,
+          is_flagged: existingEntry?.is_flagged || false
+        };
+
+        const optimisticId = existingEntry?.id || Date.now();
+        setUserProgress(prev => ({ ...prev, [idString]: { ...payload, id: optimisticId } }));
+
+        const { data, error } = await supabase.from('user_progress').upsert(payload, { onConflict: 'user_id,question_id' }).select();
+        
+        if (error) {
+            console.error(error);
+            fetchUserProgress(session.user.id);
+        } else if (data && data.length > 0) {
+            setUserProgress(prev => ({ ...prev, [idString]: data[0] }));
+        }
+
+    } else {
+        // --- SAQ PATH: OPEN MODAL ---
+        setPendingQuestion(questionData);
+        setPendingMCQSelection(mcqSelection);
+        setModalInitialData(null);
+        setModalOpen(true);
+    }
   };
 
   const handleReviewNotes = (questionData) => {
@@ -219,12 +249,15 @@ const App = () => {
     }
   };
 
+  // --- UPDATED: HANDLES SAQ % CALCULATION ---
   const handleConfirmCompletion = async (modalData) => {
     if (!session || !pendingQuestion) return;
     const idString = String(pendingQuestion.unique_id);
     const currentProgress = userProgress[idString] || {};
 
-    let finalScore = modalData.score;
+    let finalScore = null;
+    let finalNotes = modalData.notes || '';
+
     if (pendingQuestion.type === 'MCQ') {
         if (pendingMCQSelection !== null) {
             const isCorrect = pendingMCQSelection === pendingQuestion.correctAnswerIndex;
@@ -232,13 +265,27 @@ const App = () => {
         } else if (modalInitialData) {
             finalScore = modalInitialData.score;
         }
+    } else if (pendingQuestion.type === 'SAQ') {
+        // Calculate Percentage Score for SAQ
+        if (modalData.achieved !== null && modalData.total !== null && modalData.total > 0) {
+           finalScore = (modalData.achieved / modalData.total);
+           
+           // Prepend score to notes so user can see their raw numbers later
+           const scoreString = `[Score: ${modalData.achieved}/${modalData.total}]`;
+           // Avoid doubling up if editing
+           if (!finalNotes.includes(scoreString)) {
+             finalNotes = `${scoreString}\n${finalNotes}`.trim();
+           }
+        } else if (modalInitialData) {
+           finalScore = modalInitialData.score;
+        }
     }
 
     const finalSelection = pendingQuestion.type === 'MCQ' ? (pendingMCQSelection ?? modalInitialData?.selected_option) : null;
     const payload = {
       user_id: session.user.id,
       question_id: idString, 
-      notes: modalData.notes,
+      notes: finalNotes,
       score: finalScore,
       selected_option: finalSelection,
       is_flagged: currentProgress.is_flagged || false
