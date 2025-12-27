@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'; 
-import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, Square, StickyNote, Flag, Sparkles, Loader2, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, Square, StickyNote, Flag, Sparkles, Loader2, AlertCircle, Award } from 'lucide-react';
 import { supabase } from './supabase'; 
 import ReactMarkdown from 'react-markdown'; 
 
-const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingResponse, onToggleComplete, onToggleFlag, onReviewNotes, initialSelection }) => {
+const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingResponse, score, maxScore, onToggleComplete, onToggleFlag, onReviewNotes, initialSelection }) => {
   const [isRevealed, setIsRevealed] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   
@@ -29,8 +29,7 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
       setAnalysisError(null);
     }
     
-    // Sync SAQ text: If exists, load it. If not completed, it might be partial typing? 
-    // We only reset if NOT completed and NO existing response to clear "stale" state from recycling virtual components
+    // Sync SAQ text
     if (existingResponse) {
         setSaqInput(existingResponse);
     } else if (!isCompleted) {
@@ -46,7 +45,7 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
   };
 
   const handleMarkDoneClick = () => {
-    // Pass saqInput back to parent so it can be saved
+    // Pass saqInput back to parent
     onToggleComplete(selectedOption, saqInput);
   };
   
@@ -103,6 +102,10 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
     return 'opacity-50 border-gray-100'; 
   };
 
+  // Determine display denominator (Max Score)
+  // If maxScore is missing but it's an MCQ, default to 1. Otherwise use '-'
+  const displayMaxScore = maxScore || (isMCQ ? 1 : '-');
+
   return (
     <div className={`rounded-xl shadow-sm border overflow-hidden transition-all duration-300 ${isCompleted ? 'bg-green-50/50 border-green-200 opacity-75' : 'bg-white border-gray-200'} ${isFlagged ? 'ring-2 ring-orange-300 ring-offset-2' : ''}`}>
        
@@ -117,6 +120,18 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
         </div>
         
         <div className="flex items-center gap-3">
+          
+          {/* NEW: Score Badge for ALL Question Types */}
+          {isCompleted && (score !== undefined && score !== null) && (
+              <div className={`flex items-center gap-1 px-2 py-1 border rounded text-xs font-bold font-mono mr-1 ${
+                  score === displayMaxScore 
+                  ? 'bg-green-50 border-green-200 text-green-700' // Perfect score
+                  : 'bg-orange-50 border-orange-200 text-orange-700' // Partial/Zero score
+              }`}>
+                  {score} / {displayMaxScore}
+              </div>
+          )}
+
           <button
             onClick={onToggleFlag}
             className={`flex items-center justify-center p-1.5 rounded transition-colors ${

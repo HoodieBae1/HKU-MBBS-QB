@@ -121,7 +121,6 @@ const App = () => {
 
   // --- DB HELPER ---
   const fetchUserProgress = async (userId) => {
-    // Select user_response
     const { data, error } = await supabase
       .from('user_progress')
       .select('id, question_id, notes, user_response, score, max_score, selected_option, is_flagged')
@@ -155,7 +154,7 @@ const App = () => {
   const handleQuickFilter = (topic, subtopic) => {
     setSelectedTopic(topic);
     setSelectedSubtopic(subtopic);
-    setShowUserStats(false);
+    setShowUserStats(false); 
   };
 
   const handleToggleFlag = async (questionData) => {
@@ -191,7 +190,6 @@ const App = () => {
     const existingEntry = userProgress[idString];
     const isCurrentlyCompleted = existingEntry && (existingEntry.score !== null || existingEntry.selected_option !== null || existingEntry.notes);
 
-    // 1. If currently marked done, this acts as an "Unmark" / "Toggle Off"
     if (isCurrentlyCompleted) {
       if (existingEntry.is_flagged) {
         const payload = { 
@@ -213,7 +211,6 @@ const App = () => {
       return;
     }
 
-    // 2. MCQ Logic (Auto-save)
     if (questionData.type === 'MCQ') {
        const isCorrect = mcqSelection === questionData.correctAnswerIndex;
        const score = isCorrect ? 1 : 0;
@@ -242,12 +239,10 @@ const App = () => {
        return; 
     }
 
-    // 3. SAQ Logic: Open Modal with typed answer
     setPendingQuestion(questionData);
     setPendingMCQSelection(mcqSelection);
-    // Explicitly pass the text typed in the card to the modal's initial data
     setModalInitialData({ 
-        user_response: saqResponse || '' // Ensure not undefined
+        user_response: saqResponse || '' 
     });
     setModalOpen(true);
   };
@@ -280,12 +275,11 @@ const App = () => {
 
     const finalSelection = pendingQuestion.type === 'MCQ' ? (pendingMCQSelection ?? modalInitialData?.selected_option) : null;
     
-    // IMPORTANT: Grab user_response from modalData
     const payload = {
       user_id: session.user.id,
       question_id: idString, 
       notes: modalData.notes,
-      user_response: modalData.user_response, // This saves the text
+      user_response: modalData.user_response,
       score: finalScore,
       max_score: modalData.max_score, 
       selected_option: finalSelection,
@@ -590,8 +584,11 @@ const App = () => {
                 const isFlagged = checkIsFlagged(q.unique_id);
                 const progress = userProgress[String(q.unique_id)];
                 const hasNotes = progress?.notes && progress.notes.trim().length > 0;
-                // Grab existing response so QuestionCard knows to fill the box
                 const existingResponse = progress?.user_response || '';
+                
+                // NEW: Get score and maxScore for passing to QuestionCard
+                const score = progress?.score;
+                const maxScore = progress?.max_score;
 
                 return (
                     <div className="pb-6">
@@ -602,7 +599,10 @@ const App = () => {
                           isCompleted={isCompleted} 
                           isFlagged={isFlagged}
                           hasNotes={hasNotes}
-                          existingResponse={existingResponse} // Pass existing response
+                          existingResponse={existingResponse} 
+                          // Pass score data to component
+                          score={score}
+                          maxScore={maxScore}
                           initialSelection={progress ? progress.selected_option : null}
                           onToggleComplete={(mcqSelection, saqResponse) => handleInitiateCompletion(q, mcqSelection, saqResponse)} 
                           onToggleFlag={() => handleToggleFlag(q)}
