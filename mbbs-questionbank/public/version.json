@@ -1,6 +1,15 @@
 {
-  "currentVersion": "2.1.0",
+  "currentVersion": "2.1.1",
   "history": [
+      {
+      "version": "2.1.1",
+      "date": "2025-12-28",
+      "title": "Confirmation dialog for unmarking question as done",
+      "changes": [
+        "UX: Unchecking a question as \"Done\" previously wiped your notes instantly. We added a safety confirmation dialog to ensure you never lose your study notes or scores by accident again",
+        "System: Backend upgrades to user management and onboarding flows."
+      ]
+    },
     {
       "version": "2.1.0",
       "date": "2025-12-28",
