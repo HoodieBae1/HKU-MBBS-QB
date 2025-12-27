@@ -236,6 +236,14 @@ const App = () => {
     const isCurrentlyCompleted = existingEntry && (existingEntry.score !== null || existingEntry.selected_option !== null || existingEntry.notes);
 
     if (isCurrentlyCompleted) {
+      // --- WARNING CONFIRMATION START ---
+      const confirmUncheck = window.confirm(
+        "Marking question as undone will automatically delete notes associated with this question. Are you sure you want to mark this question as undone?\n\nIf you want to change notes or points allocation for this question, click the notes button."
+      );
+      
+      if (!confirmUncheck) return;
+      // --- WARNING CONFIRMATION END ---
+
       if (existingEntry.is_flagged) {
         const payload = { 
             ...existingEntry, 
