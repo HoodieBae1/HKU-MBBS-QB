@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy, BarChart3, PieChart, StickyNote } from 'lucide-react';
+import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy, BarChart3, PieChart, StickyNote, Users } from 'lucide-react';
 import { Virtuoso } from 'react-virtuoso';
 import { supabase } from './supabase';
 import QuestionCard from './QuestionCard';
@@ -11,6 +11,7 @@ import AdminDashboard from './AdminDashboard';
 import UserStats from './UserStats';
 import NotesPanel from './NotesPanel';
 import ProgressPanel from './ProgressPanel';
+import RecruiterDashboard from './RecruiterDashboard'; // Import this
 import { APP_VERSION } from './appVersion';
 
 // --- HELPER HOOK: Persist state to LocalStorage ---
@@ -44,9 +45,11 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // --- ADMIN STATE ---
+  // --- ADMIN & RECRUITER STATE ---
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isRecruiter, setIsRecruiter] = useState(false); // New state
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showRecruiterDash, setShowRecruiterDash] = useState(false); // New state
   
   // --- VIEW TOGGLES ---
   const [showUserStats, setShowUserStats] = useState(false);
@@ -93,6 +96,7 @@ const App = () => {
       } else {
         setUserProgress({});
         setIsAdmin(false);
+        setIsRecruiter(false);
       }
     });
 
@@ -146,9 +150,20 @@ const App = () => {
         .select('role')
         .eq('id', userId)
         .single();
-      if (!error && data?.role === 'admin') setIsAdmin(true);
+      
+      if (!error) {
+          // Admin gets both rights
+          if (data?.role === 'admin') {
+              setIsAdmin(true);
+              setIsRecruiter(true);
+          }
+          // Recruiter gets recruiter rights
+          if (data?.role === 'recruiter') {
+              setIsRecruiter(true);
+          }
+      }
     } catch (e) {
-      console.error("Admin check failed", e);
+      console.error("Role check failed", e);
     }
   };
 
@@ -453,6 +468,7 @@ const App = () => {
       {showDashboard && <AdminDashboard onClose={() => setShowDashboard(false)} questions={questions} />}
       {showHistory && <VersionHistory onClose={() => setShowHistory(false)} />}
       {showNotesPanel && <NotesPanel onClose={() => setShowNotesPanel(false)} questions={questions} userProgress={userProgress} />}
+      {showRecruiterDash && <RecruiterDashboard onClose={() => setShowRecruiterDash(false)} />}
       
       {/* --- UNIFIED STICKY HEADER & CONTROL BAR --- */}
       <div className="sticky top-0 z-50">
@@ -472,7 +488,23 @@ const App = () => {
             </div>
             <div className="flex items-center gap-2">
               
-              {/* NEW: Notes Button */}
+              {/* Recruiter / Admin Buttons */}
+              {isRecruiter && (
+              <button 
+                onClick={() => setShowRecruiterDash(true)} 
+                className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition shadow-sm border border-indigo-400 mr-2"
+                title="Recruiter Dashboard"
+              >
+                <Users className="w-5 h-5" />
+              </button>
+              )}
+
+              {isAdmin && (
+                <button onClick={() => setShowDashboard(true)} className="p-2 bg-indigo-800 hover:bg-indigo-900 text-white rounded-full transition shadow-sm border border-indigo-500 mr-2">
+                  <Trophy className="w-5 h-5 text-yellow-300" />
+                </button>
+              )}
+
               <button 
                 onClick={() => setShowNotesPanel(true)}
                 className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1"
@@ -480,12 +512,6 @@ const App = () => {
               >
                 <StickyNote className="w-5 h-5" />
               </button>
-
-              {isAdmin && (
-                <button onClick={() => setShowDashboard(true)} className="p-2 bg-indigo-800 hover:bg-indigo-900 text-white rounded-full transition shadow-sm border border-indigo-500 mr-2">
-                  <Trophy className="w-5 h-5 text-yellow-300" />
-                </button>
-              )}
               <button onClick={() => setShowHistory(true)} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white"><GitCommit className="w-5 h-5" /></button>
               <div className="hidden md:block text-right border-l border-teal-600 pl-4 ml-2">
                 <p className="text-xs text-teal-100">Logged in as</p>
@@ -605,7 +631,7 @@ const App = () => {
                             <ProgressPanel 
                                 questions={questions} 
                                 userProgress={userProgress} 
-                                onFilterSelect={handleQuickFilter} // Pass filter handler
+                                onFilterSelect={handleQuickFilter} 
                             />
                         )}
                     </div>

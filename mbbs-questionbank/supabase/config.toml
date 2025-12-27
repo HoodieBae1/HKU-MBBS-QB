@@ -402,3 +402,25 @@ entrypoint = "./functions/gemini-test/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/gemini-test/*.html" ]
+
+[functions.invite-user]
+enabled = true
+verify_jwt = true
+import_map = "./functions/invite-user/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/invite-user/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/invite-user/*.html" ]
+
+[functions.resend-invite]
+enabled = true
+verify_jwt = true
+import_map = "./functions/resend-invite/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/resend-invite/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/resend-invite/*.html" ]
