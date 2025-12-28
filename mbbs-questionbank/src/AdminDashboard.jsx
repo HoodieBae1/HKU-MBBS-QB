@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from './supabase';
-import { Trophy, Users, BrainCircuit, X, Loader2, Target, ChevronDown, ChevronUp, BarChart3, Folder, FileText } from 'lucide-react';
+import { Trophy, Users, BrainCircuit, X, Loader2, Target, ChevronDown, ChevronUp, BarChart3, Folder, FileText, RefreshCw } from 'lucide-react';
 
 const AdminDashboard = ({ onClose, questions }) => {
   const [loading, setLoading] = useState(true);
@@ -24,22 +24,56 @@ const AdminDashboard = ({ onClose, questions }) => {
     fetchDashboardData();
   }, [questionMetaMap]);
 
+  // --- HELPER: Fetch all rows from Supabase (Bypassing 1000 limit) ---
+  const fetchAllRows = async (table, selectQuery) => {
+    let allData = [];
+    let page = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from(table)
+        .select(selectQuery)
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        allData = [...allData, ...data];
+        if (data.length < pageSize) hasMore = false;
+        else page++;
+      } else {
+        hasMore = false;
+      }
+    }
+    return allData;
+  };
+
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
 
-      // Fetch Data
-      const { data: profiles, error: pErr } = await supabase.from('profiles').select('id, email');
-      if (pErr) throw pErr;
-      // Added max_score to selection
-      const { data: progress, error: prErr } = await supabase.from('user_progress').select('user_id, score, max_score, question_id');
-      if (prErr) throw prErr;
-      const { data: aiLogs, error: aiErr } = await supabase.from('ai_usage_logs').select('user_id');
-      if (aiErr) throw aiErr;
+      // 1. Fetch ALL Data (Paginated)
+      const profiles = await fetchAllRows('profiles', 'id, email');
+      
+      const rawProgress = await fetchAllRows(
+        'user_progress', 
+        'user_id, score, max_score, question_id, selected_option, user_response'
+      );
+      
+      const aiLogs = await fetchAllRows('ai_usage_logs', 'user_id');
 
-      // Process Data per User
+      // 2. Filter Logic: Remove rows that are just flags (no content)
+      const validProgress = rawProgress.filter(p => 
+        p.score !== null || 
+        p.selected_option !== null || 
+        (p.user_response && p.user_response.length > 0)
+      );
+
+      // 3. Process Data per User
       const userStats = profiles.map(user => {
-        const userAnswers = progress.filter(p => p.user_id === user.id);
+        const userAnswers = validProgress.filter(p => p.user_id === user.id);
         const userAiCalls = aiLogs.filter(l => l.user_id === user.id);
 
         const totalAnswered = userAnswers.length;
@@ -50,7 +84,7 @@ const AdminDashboard = ({ onClose, questions }) => {
         
         userAnswers.forEach(a => {
             const score = a.score || 0;
-            // Backwards compatibility logic
+            // Backwards compatibility: If max_score missing, assume 1 unless score > 1
             let max = a.max_score;
             if (!max || max === 0) max = score > 1 ? score : 1; 
             
@@ -60,7 +94,7 @@ const AdminDashboard = ({ onClose, questions }) => {
 
         const accuracy = sumMaxScore > 0 ? Math.round((sumScore / sumMaxScore) * 100) : 0;
 
-        // --- NEW: Hierarchical Aggregation (Topic -> Subtopics) ---
+        // --- Hierarchical Aggregation (Topic -> Subtopics) ---
         const hierarchy = {}; 
 
         userAnswers.forEach(ans => {
@@ -107,7 +141,6 @@ const AdminDashboard = ({ onClose, questions }) => {
             subtopics: subList
           };
         }).sort((a, b) => b.accuracy - a.accuracy); 
-        // ---------------------------------------------------------
 
         return {
           id: user.id,
@@ -119,11 +152,15 @@ const AdminDashboard = ({ onClose, questions }) => {
         };
       });
 
-      // Sort Users
+      // Sort Users (Accuracy Descending)
       userStats.sort((a, b) => b.accuracy - a.accuracy || b.totalAnswered - a.totalAnswered);
 
       setStats(userStats);
-      setSummary({ totalUsers: profiles.length, totalAnswers: progress.length, totalAiCalls: aiLogs.length });
+      setSummary({ 
+          totalUsers: profiles.length, 
+          totalAnswers: validProgress.length, 
+          totalAiCalls: aiLogs.length 
+      });
 
     } catch (error) {
       console.error("Dashboard Error:", error);
@@ -134,7 +171,6 @@ const AdminDashboard = ({ onClose, questions }) => {
 
   const toggleRow = (userId) => setExpandedUserId(expandedUserId === userId ? null : userId);
 
-  // Helper for color coding accuracy
   const getScoreColor = (score) => {
     if (score >= 70) return 'text-green-700 bg-green-100 border-green-200';
     if (score >= 40) return 'text-yellow-700 bg-yellow-100 border-yellow-200';
@@ -161,7 +197,16 @@ const AdminDashboard = ({ onClose, questions }) => {
             <p className="text-xs text-indigo-300">Topic & Subtopic Analytics</p>
           </div>
         </div>
-        <button onClick={onClose} className="p-2 hover:bg-indigo-800 rounded-full transition-colors"><X className="w-6 h-6" /></button>
+        <div className="flex items-center gap-2">
+            <button 
+                onClick={fetchDashboardData} 
+                className="p-2 bg-indigo-800 hover:bg-indigo-700 text-indigo-200 hover:text-white rounded-full transition-colors"
+                title="Refresh Data"
+            >
+                <RefreshCw className="w-5 h-5" />
+            </button>
+            <button onClick={onClose} className="p-2 hover:bg-indigo-800 rounded-full transition-colors"><X className="w-6 h-6" /></button>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto p-6">
