@@ -1,6 +1,17 @@
 {
-  "currentVersion": "2.1.2",
+  "currentVersion": "2.2.1",
   "history": [
+    {
+      "version": "2.2.1",
+      "date": "2025-12-28",
+      "title": "Added login by password and added more questions",
+      "changes": [
+        "UX: Added option login by password instead of magic link every time",
+        "Questions: Added all questions from M24 and M25 subfolder of goddisk, \"Medicine Final MB SAQ By topic up to 2017\". If year of question is unparsable by program, labeled as M55.",
+        "Bugfix: Fixed answer inaccuracy in M05-Q13 respiratory medicine question",
+        "System: Backend upgrades to solution tracking and progress saving."
+      ]
+    },
     {
       "version": "2.1.2",
       "date": "2025-12-28",
