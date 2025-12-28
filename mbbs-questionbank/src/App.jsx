@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy, BarChart3, PieChart, StickyNote, Users } from 'lucide-react';
+import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy, BarChart3, PieChart, StickyNote, Users, MessageCircleWarning } from 'lucide-react';
 import { Virtuoso } from 'react-virtuoso';
 import { supabase } from './supabase';
 import QuestionCard from './QuestionCard';
@@ -12,6 +12,7 @@ import UserStats from './UserStats';
 import NotesPanel from './NotesPanel';
 import ProgressPanel from './ProgressPanel';
 import RecruiterDashboard from './RecruiterDashboard'; // Import this
+import FeedbackModal from './FeedbackModal';
 import { APP_VERSION } from './appVersion';
 
 // --- HELPER HOOK: Persist state to LocalStorage ---
@@ -54,7 +55,8 @@ const App = () => {
   // --- VIEW TOGGLES ---
   const [showUserStats, setShowUserStats] = useState(false);
   const [showNotesPanel, setShowNotesPanel] = useState(false);
-  const [showProgressPanel, setShowProgressPanel] = useState(false); 
+  const [showProgressPanel, setShowProgressPanel] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   // --- FILTERS & UI (Now Persistent) ---
   const [filtersOpen, setFiltersOpen] = useStickyState(true, 'app_filtersOpen');
@@ -474,7 +476,7 @@ const App = () => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-20 relative">
       <UpdateManager />
-      
+      <FeedbackModal isOpen={showFeedbackModal} onClose={() => setShowFeedbackModal(false)} user={session?.user} />
       {/* --- OVERLAYS --- */}
       <CompletionModal 
         isOpen={modalOpen}
@@ -523,7 +525,6 @@ const App = () => {
                   <Trophy className="w-5 h-5 text-yellow-300" />
                 </button>
               )}
-
               <button 
                 onClick={() => setShowNotesPanel(true)}
                 className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1"
@@ -531,6 +532,13 @@ const App = () => {
               >
                 <StickyNote className="w-5 h-5" />
               </button>
+              <button 
+                onClick={() => setShowFeedbackModal(true)}
+                className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1"
+                title="Report Bug / Suggestion"
+              >
+                <MessageCircleWarning className="w-5 h-5" />
+                </button>
               <button onClick={() => setShowHistory(true)} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white"><GitCommit className="w-5 h-5" /></button>
               <div className="hidden md:block text-right border-l border-teal-600 pl-4 ml-2">
                 <p className="text-xs text-teal-100">Logged in as</p>
