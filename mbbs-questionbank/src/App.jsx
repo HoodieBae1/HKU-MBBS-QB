@@ -432,6 +432,17 @@ const App = () => {
         }
         return a.unique_id - b.unique_id;
       }
+      if (sortOrder === 'Oldest') {
+        const getYear = (idStr) => {
+          if (!idStr || idStr.length < 3) return 0;
+          const val = parseInt(idStr.substring(1, 3), 10);
+          return isNaN(val) ? 0 : (val < 50 ? 2000 + val : 1900 + val);
+        };
+        // a - b for Ascending (Oldest first)
+        const yearDiff = getYear(a.id) - getYear(b.id);
+        if (yearDiff !== 0) return yearDiff;
+        return a.unique_id - b.unique_id;
+      }
       if (sortOrder === 'Newest') {
         const getYear = (idStr) => {
           if (!idStr || idStr.length < 3) return 0;
@@ -608,6 +619,7 @@ const App = () => {
                         <div className="relative">
                             <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="w-full pl-3 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white">
                               <option value="Newest">Newest First</option>
+                              <option value="Oldest">Oldest First</option>
                               <option value="Completed">Completed First</option>
                               <option value="Unfinished">Unfinished First</option>
                               <option value="Flagged">Flagged First</option>
