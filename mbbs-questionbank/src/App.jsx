@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy, BarChart3, PieChart, StickyNote, Users, MessageCircleWarning } from 'lucide-react';
+import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy, BarChart3, PieChart, StickyNote, Users, MessageCircleWarning, KeyRound} from 'lucide-react';
 import { Virtuoso } from 'react-virtuoso';
 import { supabase } from './supabase';
 import QuestionCard from './QuestionCard';
@@ -52,6 +52,11 @@ const App = () => {
   const [showDashboard, setShowDashboard] = useState(false);
   const [showRecruiterDash, setShowRecruiterDash] = useState(false); // New state
   
+  // NEW STATE for Password Reset
+  const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  
   // --- VIEW TOGGLES ---
   const [showUserStats, setShowUserStats] = useState(false);
   const [showNotesPanel, setShowNotesPanel] = useState(false);
@@ -90,8 +95,14 @@ const App = () => {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
+      
+      // --- DETECT PASSWORD RECOVERY EVENT ---
+      if (event === 'PASSWORD_RECOVERY') {
+        setShowPasswordResetModal(true);
+      }
+      
       if(session) {
         fetchUserProgress(session.user.id);
         checkAdminStatus(session.user.id);
@@ -167,6 +178,22 @@ const App = () => {
     } catch (e) {
       console.error("Role check failed", e);
     }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!newPassword) return alert("Please enter a password");
+    setResetLoading(true);
+    
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+    if (error) {
+      alert("Error updating password: " + error.message);
+    } else {
+      alert("Password updated successfully! You can now log in with this password.");
+      setShowPasswordResetModal(false);
+      setNewPassword('');
+    }
+    setResetLoading(false);
   };
 
   // --- ACTIONS ---
@@ -477,6 +504,35 @@ const App = () => {
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-20 relative">
       <UpdateManager />
       <FeedbackModal isOpen={showFeedbackModal} onClose={() => setShowFeedbackModal(false)} user={session?.user} />
+      {showPasswordResetModal && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95">
+             <div className="flex flex-col items-center text-center mb-6">
+                <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-3">
+                   <KeyRound className="w-6 h-6 text-teal-600" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-800">Set New Password</h2>
+                <p className="text-sm text-gray-500">Please enter your new password below.</p>
+             </div>
+             
+             <input 
+               type="password"
+               placeholder="New Password"
+               value={newPassword}
+               onChange={(e) => setNewPassword(e.target.value)}
+               className="w-full px-4 py-3 border border-gray-300 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-teal-500"
+             />
+             
+             <button 
+                onClick={handleUpdatePassword}
+                disabled={resetLoading}
+                className="w-full py-3 bg-teal-700 text-white font-bold rounded-lg hover:bg-teal-800 transition-colors flex justify-center"
+             >
+                {resetLoading ? <Loader2 className="animate-spin" /> : "Save New Password"}
+             </button>
+          </div>
+        </div>
+      )}
       {/* --- OVERLAYS --- */}
       <CompletionModal 
         isOpen={modalOpen}
