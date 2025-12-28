@@ -1,7 +1,16 @@
 {
-  "currentVersion": "2.1.1",
+  "currentVersion": "2.1.2",
   "history": [
-      {
+    {
+      "version": "2.1.2",
+      "date": "2025-12-28",
+      "title": "Sort by oldest and suggestions for improvements",
+      "changes": [
+        "UX: Added option to sort questions by oldest first",
+        "Feature: Added suggestion button for users to suggest improvements or new features"
+      ]
+    },
+    {
       "version": "2.1.1",
       "date": "2025-12-28",
       "title": "Confirmation dialog for unmarking question as done",
