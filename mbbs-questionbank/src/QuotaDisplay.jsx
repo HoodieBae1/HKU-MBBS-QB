@@ -124,7 +124,7 @@ const QuotaDisplay = ({ session }) => {
 
         <div className="bg-slate-900/80 rounded p-2 border border-slate-700">
             <p className="text-[10px] text-gray-500 mb-1 text-center">Need to pay if we reach 100% usage</p>
-            <p className="text-[10px] text-gray-500 mb-1 text-center">Your share of $25 USD Pro Plan</p>
+            <p className="text-[10px] text-gray-500 mb-1 text-center">Your estimated share of $25 USD/month Pro Plan</p>
             <div className="flex items-center justify-center gap-1 text-xl font-bold text-green-400">
                 <DollarSign className="w-5 h-5" />
                 <span>{displayHKD} HKD</span>
