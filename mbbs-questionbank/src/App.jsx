@@ -1,4 +1,3 @@
-// ... (Imports remain the same)
 import React, { useState, useMemo, useEffect } from 'react';
 import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy, BarChart3, PieChart, StickyNote, Users, MessageCircleWarning, KeyRound, Download } from 'lucide-react';
 import { Virtuoso } from 'react-virtuoso';
@@ -18,7 +17,6 @@ import QuotaDisplay from './QuotaDisplay';
 import ReleaseNotesModal from './ReleaseNotesModal';
 import { APP_VERSION } from './appVersion';
 
-// ... (useStickyState function remains the same)
 function useStickyState(defaultValue, key) {
   const [value, setValue] = useState(() => {
     try {
@@ -42,7 +40,6 @@ function useStickyState(defaultValue, key) {
 }
 
 const App = () => {
-  // ... (State remains the same)
   const [session, setSession] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [userProgress, setUserProgress] = useState({});
@@ -87,7 +84,6 @@ const App = () => {
 
   const [showHistory, setShowHistory] = useState(false);
 
-  // ... (Effects for Auth and Data Loading remain the same)
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -242,7 +238,6 @@ const App = () => {
     document.body.removeChild(link);
   };
 
-  // ... (Toggle helpers)
   const toggleProgressPanel = () => {
       if (!showProgressPanel) { setShowUserStats(false); setFiltersOpen(false); }
       setShowProgressPanel(!showProgressPanel);
@@ -258,7 +253,6 @@ const App = () => {
     setShowUserStats(false); setShowProgressPanel(false);
   };
 
-  // --- UPDATED FLAG LOGIC: EXPLICIT NULLS ---
   const handleToggleFlag = async (questionData, currentDraftText) => {
     if (!session) return;
     const idString = String(questionData.unique_id);
@@ -268,27 +262,17 @@ const App = () => {
     const textToSave = currentDraftText !== undefined ? currentDraftText : (currentProgress.user_response || null);
 
     const payload = {
-      // Explicitly set keys to avoid undefined issues that might trick the DB or State
       user_id: session.user.id,
       question_id: idString,
-      
-      // Update Flag and Text
       is_flagged: newFlagStatus,
       user_response: textToSave,
-
-      // CRITICAL: Preserve existing score/selection/max_score if they exist.
-      // If they do NOT exist (new flag on fresh question), force them to NULL.
-      // This prevents the "Done" check from failing due to undefined vs null checks.
       score: currentProgress.score ?? null,
-      max_score: currentProgress.max_score ?? null, // Ensure max_score remains null for new flags
+      max_score: currentProgress.max_score ?? null,
       selected_option: currentProgress.selected_option ?? null,
       notes: currentProgress.notes || null,
-      
-      // Preserve ID for upsert
       ...(currentProgress.id ? { id: currentProgress.id } : {})
     };
     
-    // Optimistic Update
     setUserProgress(prev => ({ ...prev, [idString]: payload }));
     
     await supabase.from('user_progress').upsert(payload, { onConflict: 'user_id,question_id' });
@@ -328,7 +312,6 @@ const App = () => {
            return;
        }
 
-       // MCQ Save Logic
        const isCorrect = mcqSelection === questionData.correctAnswerIndex;
        const score = isCorrect ? 1 : 0;
        
@@ -338,7 +321,7 @@ const App = () => {
          notes: existingEntry?.notes || null,
          user_response: existingEntry?.user_response || null, 
          score: score,
-         max_score: 1, // Only set max_score to 1 when actually answering
+         max_score: 1, 
          selected_option: mcqSelection,
          is_flagged: existingEntry?.is_flagged || false
        };
@@ -349,7 +332,6 @@ const App = () => {
        return; 
     }
 
-    // SAQ Logic
     setPendingQuestion(questionData);
     setPendingMCQSelection(null);
     setModalViewMode(viewMode);
@@ -436,6 +418,7 @@ const App = () => {
     }
   };
 
+  // --- FIXED HANDLE REDO ---
   const handleRedo = async (questionData) => {
     if (!session) return;
     const idString = String(questionData.unique_id);
@@ -445,6 +428,8 @@ const App = () => {
 
     const payload = {
         ...existingEntry,
+        user_id: session.user.id, // Explicitly add user_id
+        question_id: idString,    // Explicitly add question_id
         score: null,
         max_score: null,
         selected_option: null,
@@ -454,22 +439,24 @@ const App = () => {
     };
 
     setUserProgress(prev => ({ ...prev, [idString]: payload }));
-    await supabase.from('user_progress').upsert(payload, { onConflict: 'user_id,question_id' });
+    
+    const { error } = await supabase.from('user_progress').upsert(payload, { onConflict: 'user_id,question_id' });
+    
+    if (error) {
+        console.error("Redo sync failed:", error);
+    }
   };
 
   const handleLogout = async () => { await supabase.auth.signOut(); };
 
-  // --- CHECK DONE LOGIC ---
   const checkIsCompleted = (id) => {
     const p = userProgress[String(id)];
     if (!p) return false;
-    // Strict null check ensures undefined doesn't trigger "Done"
     return p.score !== null || p.selected_option !== null;
   };
 
   const checkIsFlagged = (id) => userProgress[String(id)]?.is_flagged === true;
 
-  // ... (Filter & Render Logic remains the same)
   const filterCounts = useMemo(() => {
     const qLower = searchQuery.toLowerCase().trim();
     const baseSet = questions.filter(q => {
