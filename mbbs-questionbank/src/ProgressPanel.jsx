@@ -25,7 +25,10 @@ const ProgressPanel = ({ questions, userProgress, onFilterSelect }) => {
       totalQuestions++;
 
       const p = userProgress[String(q.unique_id)];
-      const isDone = p && (p.score !== null || p.selected_option !== null || (p.notes && p.notes.length > 0) || (p.user_response && p.user_response.length > 0));
+      
+      // --- FIX: Strict Completion Check ---
+      // Ignore notes and text drafts. Only count if scored or option selected.
+      const isDone = p && (p.score !== null || p.selected_option !== null);
 
       if (isDone) {
         hierarchy[tName].completed++;
@@ -70,7 +73,7 @@ const ProgressPanel = ({ questions, userProgress, onFilterSelect }) => {
          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
             <div 
                 className="h-full bg-indigo-500 rounded-full transition-all duration-500" 
-                style={{ width: `${(progressData.totalCompleted / progressData.totalQuestions) * 100}%` }}
+                style={{ width: `${progressData.totalQuestions > 0 ? (progressData.totalCompleted / progressData.totalQuestions) * 100 : 0}%` }}
             />
          </div>
       </div>
