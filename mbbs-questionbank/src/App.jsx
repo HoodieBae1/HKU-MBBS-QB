@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy, BarChart3, PieChart, StickyNote, Users, MessageCircleWarning, KeyRound } from 'lucide-react';
+import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy, BarChart3, PieChart, StickyNote, Users, MessageCircleWarning, KeyRound, Download } from 'lucide-react';
 import { Virtuoso } from 'react-virtuoso';
 import { supabase } from './supabase';
 import QuestionCard from './QuestionCard';
@@ -141,9 +141,11 @@ const App = () => {
 
   // --- DB HELPER ---
   const fetchUserProgress = async (userId) => {
+    // FIX: Removed 'updated_at' because it doesn't exist in your schema.
+    // Added 'created_at' instead which is in your schema.
     const { data, error } = await supabase
       .from('user_progress')
-      .select('id, question_id, notes, user_response, score, max_score, selected_option, is_flagged')
+      .select('id, question_id, notes, user_response, score, max_score, selected_option, is_flagged, created_at')
       .eq('user_id', userId);
 
     if (error) {
@@ -196,6 +198,60 @@ const App = () => {
   };
 
   // --- ACTIONS ---
+  
+  // --- DOWNLOAD DATA FEATURE ---
+  const handleDownloadData = () => {
+    if (!questions.length) return;
+
+    // Filter questions to only those the user has interacted with
+    const exportData = questions.map(q => {
+        const progress = userProgress[String(q.unique_id)];
+        
+        // If no progress exists, skip this question
+        if (!progress) return null;
+
+        return {
+            question_id: q.id,
+            unique_id: q.unique_id,
+            type: q.type,
+            topic: q.topic,
+            subtopic: q.subtopic,
+            question_text: q.question,
+            official_solution: q.official_answer,
+            // User Data
+            user_score: progress.score,
+            max_score: progress.max_score,
+            user_notes: progress.notes || "",
+            user_written_response: progress.user_response || "", // SAQ response
+            user_selected_option_index: progress.selected_option, // MCQ index
+            user_selected_option_text: (q.type === 'MCQ' && progress.selected_option !== null && q.options) 
+                                        ? q.options[progress.selected_option] 
+                                        : null,
+            is_flagged: progress.is_flagged,
+            // Use created_at since updated_at doesn't exist in your schema
+            timestamp: progress.created_at
+        };
+    }).filter(item => item !== null); 
+
+    if (exportData.length === 0) {
+        alert("No progress data found to export. Try answering some questions or adding notes first!");
+        return;
+    }
+
+    // Create JSON blob
+    const jsonString = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    // Trigger Download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `my_progress_data_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const toggleProgressPanel = () => {
       if (!showProgressPanel) {
           setShowUserStats(false);
@@ -461,26 +517,16 @@ const App = () => {
       if (sortOrder === 'Incorrect') {
         const getIncorrectStatus = (qItem) => {
             const p = userProgress[String(qItem.unique_id)];
-            // Not incorrect if unattempted (score is null/undefined)
             if (!p || p.score === null || p.score === undefined) return false;
-            
-            // Determine Max Score (stored or default 1 for MCQ)
             let max = p.max_score;
             if ((!max) && qItem.type === 'MCQ') max = 1;
-            
-            // If we still don't know max, we can't judge correctness safely.
             if (!max) return false; 
-            
-            // Incorrect if Score < Max
             return p.score < max;
         };
 
         const aInc = getIncorrectStatus(a);
         const bInc = getIncorrectStatus(b);
-
-        // Incorrect items first (-1)
         if (aInc !== bInc) return aInc ? -1 : 1;
-        // If status is same, fall back to ID sort
         return a.unique_id - b.unique_id;
       }
 
@@ -635,7 +681,15 @@ const App = () => {
               >
                 <MessageCircleWarning className="w-5 h-5" />
                 </button>
-              <button onClick={() => setShowHistory(true)} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white"><GitCommit className="w-5 h-5" /></button>
+              <button onClick={() => setShowHistory(true)} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1"><GitCommit className="w-5 h-5" /></button>
+              <button 
+                onClick={handleDownloadData} 
+                className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white"
+                title="Download My Data"
+              >
+                <Download className="w-5 h-5" />
+              </button>
+
               <div className="hidden md:block text-right border-l border-teal-600 pl-4 ml-2">
                 <p className="text-xs text-teal-100">Logged in as</p>
                 <p className="text-xs font-bold">{session.user.email}</p>

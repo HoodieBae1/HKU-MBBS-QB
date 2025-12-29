@@ -1,6 +1,25 @@
 {
-  "currentVersion": "2.2.3",
+  "currentVersion": "2.3.1",
   "history": [
+    {
+      "version": "2.3.1",
+      "date": "2025-12-29",
+      "title": "Lost progress bug fix",
+      "changes": [
+        "Major fix: New download button caused progress not showing on the front end. Don't worry your data is still in the database. Fixed now. Apologies for the inconvenience caused."
+      ]
+    },
+    {
+      "version": "2.3.0",
+      "date": "2025-12-29",
+      "title": "Updates to notes panel and added download data button",
+      "changes": [
+        "UI: Refactored notes button so that it shows before clicking mark done button. Notes panel now opens from the side, allowing you to see the question and answers while typing notes.",
+        "UI: Added feature to sort questions by incorrect first",
+        "Feature: Added download button to download all your progress and notes as a json text file. The data stored on the server is generally safe as it is stored in the cloud. The only way the data will be lost is if cloud server corrupts or if I accidentally delete the database. If you want peace of mind, you can downlaod your data periodically.",
+        "Up next: Seperate family medicine as its own big topic."
+      ]
+    },
     {
       "version": "2.2.3",
       "date": "2025-12-29",
