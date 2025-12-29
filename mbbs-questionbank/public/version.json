@@ -1,6 +1,17 @@
 {
-  "currentVersion": "2.4.0",
+  "currentVersion": "3.0.0",
   "history": [
+    {
+      "version": "3.0.0",
+      "date": "2025-12-30",
+      "title": "Added nice formatting for notes and solutions, allow images in notes. Allow for question redo without deletion of notes",
+      "changes": [
+        "Feature: Allow formatting in notes, as well as adding images to notes. Can just paste image in notes but that will eat up your quota fast and cost a lot of money. Better to upload image to an image hosting site like imgur first and link it in notes. Visually there is no difference, it is just more annoying because you need to upload the screenshot to imgur first.",
+        "Feature: Allow redoing a question. Press and hold the 'Done' button to redo. REDOING A QUESTION WILL ERASE YOUR PREVIOUS ANSWER AND SCORE. Notes will not be erased.",
+        "Feature: Added sort by with notes first",
+        "Internal: Refactored question states, progress pandel, and accuracy statistics calculation. Allow null scores to accomodate redoing a question."
+      ]
+    },
     {
       "version": "2.4.0",
       "date": "2025-12-29",
