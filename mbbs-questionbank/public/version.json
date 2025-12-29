@@ -1,6 +1,14 @@
 {
-  "currentVersion": "2.2.1",
+  "currentVersion": "2.2.2",
   "history": [
+    {
+      "version": "2.2.2",
+      "date": "2025-12-29",
+      "title": "Added more questions from goddisk",
+      "changes": [
+        "Questions: Added all questions from M21, M22, M23 subfolder of goddisk"
+      ]
+    },
     {
       "version": "2.2.1",
       "date": "2025-12-28",
