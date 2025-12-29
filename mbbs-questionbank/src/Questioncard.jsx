@@ -19,7 +19,7 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
   const [holdProgress, setHoldProgress] = useState(0);
   const holdTimerRef = useRef(null);
   const progressIntervalRef = useRef(null);
-  const HOLD_DURATION = 800; // 0.8 seconds to confirm (feels snappier)
+  const HOLD_DURATION = 800; 
 
   const isMCQ = data.type === 'MCQ';
 
@@ -45,22 +45,21 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
   const handleSaqChange = (val) => setSaqInput(val);
 
   const handleMCQSelect = (idx) => {
-    if (isCompleted) return; // LOCKED if completed. Must Redo to change.
+    if (isCompleted) return; 
     if (selectedOption !== null) return; 
     setSelectedOption(idx);
     setIsRevealed(true); 
-    onToggleComplete(idx, null);
+    onToggleComplete(idx, null, 'FULL'); 
   };
 
   // --- HOLD LOGIC ---
   const startHold = () => {
-    if (!isCompleted) return; // Only allow hold on completed questions
+    if (!isCompleted) return; 
     setIsHolding(true);
     setHoldProgress(0);
 
     const startTime = Date.now();
 
-    // Animate progress bar
     progressIntervalRef.current = setInterval(() => {
         const elapsed = Date.now() - startTime;
         const pct = Math.min((elapsed / HOLD_DURATION) * 100, 100);
@@ -71,7 +70,6 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
         }
     }, 16);
 
-    // Trigger action after duration
     holdTimerRef.current = setTimeout(() => {
         completeRedo();
     }, HOLD_DURATION);
@@ -91,34 +89,106 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
     if (onRedo) onRedo();
   };
 
+  // --- BUTTON CLICK HANDLERS ---
+  const handleNotesClick = () => {
+    const viewMode = isCompleted ? 'FULL' : 'NOTES';
+    onReviewNotes(saqInput, viewMode); 
+  };
+
   const handleMainButtonClick = () => {
-    // Only handles the "Mark Done" action for SAQs.
-    // Does NOTHING if already completed (Hold required).
     if (!isCompleted && !isMCQ) {
-         onToggleComplete(null, saqInput);
+         onToggleComplete(null, saqInput, 'GRADING'); 
     }
   };
 
   // --- HELPERS ---
-  const handleRequestAI = async () => { /* ... keep existing AI code ... */ };
-  
-  const getOptionStyle = (idx) => {
-    // If completed, dim everything except selected
-    if (isCompleted) {
-        if (idx === selectedOption) return 'bg-slate-100 border-slate-400 font-bold';
-        return 'opacity-40 border-gray-100 cursor-not-allowed';
+  const handleRequestAI = async () => { 
+    if (analysisData) return; 
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("Please refresh the page, you appear to be logged out.");
+
+      const response = await fetch('https://qzoreybelgjynenkwobi.supabase.co/functions/v1/gemini-tutor', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ 
+          question_id: data.unique_id, 
+          question: data.question,
+          official_answer: data.official_answer,
+          options: data.options,
+          type: data.type
+        })
+      });
+
+      const responseData = await response.json();
+      if (!response.ok) throw new Error(responseData.error || "Server error");
+      setAnalysisData(responseData.analysis); 
+    } catch (err) {
+      console.error(err);
+      setAnalysisError(err.message || "Unable to reach the AI Professor.");
+    } finally {
+      setIsAnalyzing(false);
     }
-    // If not completed
-    if (selectedOption === null) return 'hover:bg-slate-50 cursor-pointer border-gray-200';
-    if (idx === data.correctAnswerIndex) return 'bg-emerald-100 border-emerald-500 text-emerald-800 font-medium';
-    if (idx === selectedOption) return 'bg-red-50 border-red-300 text-red-700'; 
+  };
+  
+  // FIX: Logic updated to keep colors visible even when completed
+  const getOptionStyle = (idx) => {
+    // 1. Initial State: No selection, not done -> Standard Interactive
+    if (!isCompleted && selectedOption === null) {
+        return 'hover:bg-slate-50 cursor-pointer border-gray-200';
+    }
+
+    // 2. Result State (Done OR Selection made) -> Show Colors
+    
+    // Always show Correct Answer as Green
+    if (idx === data.correctAnswerIndex) {
+        return 'bg-emerald-100 border-emerald-500 text-emerald-800 font-medium';
+    }
+
+    // Show User's Wrong Selection as Red
+    if (idx === selectedOption) {
+        return 'bg-red-50 border-red-300 text-red-700'; 
+    }
+
+    // Fade out everything else
     return 'opacity-50 border-gray-100'; 
   };
   
-  const displayMaxScore = maxScore || (isMCQ ? 1 : '-');
+  const displayMaxScore = maxScore || (isMCQ && isCompleted ? 1 : '-');
+
+  const getNotesButtonLabel = () => {
+      if (isCompleted) return 'View Notes/Edit Question';
+      if (hasNotes) return 'View Notes';
+      return 'Notes';
+  };
+
+  // --- STYLING LOGIC ---
+  const isFullMarks = score === (maxScore || (isMCQ ? 1 : 0));
+  
+  const getCardBackground = () => {
+      if (!isCompleted) return 'bg-white border-gray-200';
+      if (isFullMarks) return 'bg-green-50/50 border-green-200 opacity-75'; 
+      return 'bg-red-50/50 border-red-200 opacity-75'; 
+  };
+
+  const getDoneButtonStyle = () => {
+      if (isCompleted) {
+          return 'bg-green-100 text-green-700 border-green-200 cursor-pointer';
+      }
+      if (isMCQ) {
+          return 'bg-white text-gray-300 border-gray-200 cursor-default';
+      }
+      return 'bg-white text-gray-400 border-gray-200 hover:text-teal-600 hover:border-teal-300 cursor-pointer';
+  };
 
   return (
-    <div className={`rounded-xl shadow-sm border overflow-hidden transition-all duration-300 ${isCompleted ? 'bg-green-50/50 border-green-200 opacity-75' : 'bg-white border-gray-200'} ${isFlagged ? 'ring-2 ring-orange-300 ring-offset-2' : ''}`}>
+    <div className={`rounded-xl shadow-sm border overflow-hidden transition-all duration-300 ${getCardBackground()} ${isFlagged ? 'ring-2 ring-orange-300 ring-offset-2' : ''}`}>
        
        <div className="bg-slate-50/50 px-5 py-3 border-b border-gray-100 flex justify-between items-center">
          <div className="flex gap-2 text-xs font-semibold">
@@ -136,13 +206,13 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
               <div className={`flex items-center gap-1 px-2 py-1 border rounded text-xs font-bold font-mono mr-1 ${
                   score === displayMaxScore 
                   ? 'bg-green-50 border-green-200 text-green-700'
-                  : 'bg-orange-50 border-orange-200 text-orange-700'
+                  : 'bg-red-50 border-red-200 text-red-700'
               }`}>
                   {score} / {displayMaxScore}
               </div>
           )}
 
-          {/* Flag (Auto-Saves Text) */}
+          {/* Flag */}
           <button
             onClick={() => onToggleFlag(saqInput)}
             className={`flex items-center justify-center p-1.5 rounded transition-colors ${
@@ -154,9 +224,9 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
             <Flag className={`w-4 h-4 ${isFlagged ? 'fill-current' : ''}`} />
           </button>
 
-          {/* Notes (Edit Mode) */}
+          {/* Notes Button */}
           <button
-            onClick={() => onReviewNotes(saqInput)}
+            onClick={handleNotesClick}
             className={`flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded transition-colors ${
                 hasNotes 
                 ? 'bg-yellow-100 text-yellow-700 border border-yellow-200 hover:bg-yellow-200' 
@@ -164,14 +234,12 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
             }`}
           >
             <StickyNote className={`w-4 h-4 ${hasNotes ? 'fill-yellow-500 text-yellow-600' : ''}`} />
-            {hasNotes ? 'View Notes/Edit Question' : 'Notes'}
+            {getNotesButtonLabel()}
           </button>
 
           {/* DONE / REDO BUTTON */}
           <button 
-            // Click only works if NOT completed (to mark done)
             onClick={handleMainButtonClick}
-            // Hold events only work if COMPLETED (to redo)
             onMouseDown={startHold}
             onMouseUp={cancelHold}
             onMouseLeave={cancelHold}
@@ -179,13 +247,8 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
             onTouchEnd={cancelHold}
             onContextMenu={(e) => e.preventDefault()}
             
-            className={`relative overflow-hidden flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded border transition-all select-none ${
-              isCompleted 
-                ? 'bg-green-100 text-green-700 border-green-200 cursor-pointer' 
-                : 'bg-white text-gray-400 border-gray-200 hover:text-teal-600 hover:border-teal-300'
-            }`}
+            className={`relative overflow-hidden flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded border transition-all select-none ${getDoneButtonStyle()}`}
           >
-            {/* Progress Bar Layer */}
             {isCompleted && (
                 <div 
                     className="absolute inset-0 bg-red-100 z-0 transition-all duration-75 ease-linear"
@@ -193,12 +256,11 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
                 />
             )}
             
-            {/* Label Layer */}
             <div className="relative z-10 flex items-center gap-1.5">
                 {isCompleted ? (
                     isHolding ? (
                         <>
-                           <RotateCcw className="w-4 h-4 animate-spin-slow" />
+                           <RotateCcw className="w-4 h-4 animate-spin-slow text-red-600" />
                            <span className="text-red-700">Hold to Redo</span>
                         </>
                     ) : (
@@ -234,7 +296,6 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
               <button
                 key={i}
                 onClick={() => handleMCQSelect(i)}
-                // DISABLE if done. Must Redo first.
                 disabled={isCompleted}
                 className={`w-full text-left px-4 py-3 border rounded-lg transition-all duration-200 ${getOptionStyle(i)}`}
               >
@@ -247,7 +308,6 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
           </div>
         )}
 
-        {/* ... Rest of SAQ input and Solutions rendering ... */}
         {!isMCQ && (
             <div className="mb-4">
                 <div className={`${isCompleted ? '' : ''}`}> 
@@ -263,7 +323,6 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
         
         {isRevealed && (
           <div className="mt-6 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
-             {/* ... (Keep AI and Solution display code) ... */}
              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                <div className="flex items-center gap-2 mb-2 text-emerald-800 font-bold text-sm uppercase tracking-wide">
                  <CheckCircle2 className="w-4 h-4" />
@@ -271,7 +330,46 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
                </div>
                <p className="text-emerald-900 whitespace-pre-line leading-relaxed">{data.official_answer}</p>
              </div>
-             {/* ... */}
+            
+             {data.ai_answer && (
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 relative overflow-hidden">
+                <BrainCircuit className="absolute -right-4 -bottom-4 w-24 h-24 text-indigo-100/50 pointer-events-none" />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-2 text-indigo-700 font-bold text-sm uppercase tracking-wide">
+                    <Bot className="w-4 h-4" />
+                    AI Summary
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded uppercase mt-0.5 border ${data.ai_answer.agreement === 'Agree' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
+                      {data.ai_answer.agreement}
+                    </span>
+                    <p className="text-indigo-900 leading-relaxed italic text-sm">"{data.ai_answer.explanation}"</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="border border-violet-100 rounded-lg overflow-hidden bg-white shadow-sm">
+                {analysisData && (
+                  <div className="p-5 bg-gradient-to-br from-white to-violet-50/30">
+                     <div className="flex items-center gap-2 mb-3 pb-3 border-b border-violet-100">
+                        <Sparkles className="w-4 h-4 text-violet-600" />
+                        <span className="font-bold text-sm text-violet-900 uppercase tracking-wide">AI Professor's Detailed Analysis</span>
+                     </div>
+                     <div className="text-slate-700 font-serif text-sm leading-relaxed">
+                       <ReactMarkdown components={{ h1: ({node, ...props}) => <h1 className="text-lg font-bold text-violet-900 mt-4 mb-2" {...props} />, h2: ({node, ...props}) => <h2 className="text-base font-bold text-violet-800 mt-4 mb-2 uppercase tracking-wide" {...props} />, h3: ({node, ...props}) => <h3 className="text-sm font-bold text-violet-700 mt-3 mb-1" {...props} />, p: ({node, ...props}) => <p className="mb-3" {...props} />, ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />, li: ({node, ...props}) => <li className="pl-1" {...props} />, strong: ({node, ...props}) => <strong className="font-bold text-violet-950" {...props} /> }}>{analysisData}</ReactMarkdown>
+                     </div>
+                  </div>
+                )}
+                {!analysisData && !isAnalyzing && (
+                  <button onClick={handleRequestAI} className="w-full p-4 bg-violet-50 hover:bg-violet-100 transition-colors flex items-center justify-center gap-2 group text-violet-700 font-medium">
+                    <div className="p-1 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform"><Sparkles className="w-4 h-4 text-violet-600" /></div>
+                    Detailed Explanation (Using Gemini 2.5 Flash)
+                  </button>
+                )}
+                {isAnalyzing && <div className="p-8 flex flex-col items-center justify-center text-center bg-violet-50/50"><Loader2 className="w-6 h-6 text-violet-600 animate-spin mb-2" /><p className="text-xs text-violet-600 font-bold uppercase tracking-wider animate-pulse">Consulting Professor AI...</p></div>}
+                {analysisError && <div className="p-3 bg-red-50 flex items-center justify-between text-xs text-red-600"><div className="flex items-center gap-2"><AlertCircle className="w-4 h-4" /><span>{analysisError}</span></div><button onClick={() => setAnalysisError(null)} className="underline hover:text-red-800">Dismiss</button></div>}
+            </div>
           </div>
         )}
       </div>

@@ -1,4 +1,4 @@
-// ... (All previous imports remain exactly the same)
+// ... (Imports remain the same)
 import React, { useState, useMemo, useEffect } from 'react';
 import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy, BarChart3, PieChart, StickyNote, Users, MessageCircleWarning, KeyRound, Download } from 'lucide-react';
 import { Virtuoso } from 'react-virtuoso';
@@ -18,6 +18,7 @@ import QuotaDisplay from './QuotaDisplay';
 import ReleaseNotesModal from './ReleaseNotesModal';
 import { APP_VERSION } from './appVersion';
 
+// ... (useStickyState function remains the same)
 function useStickyState(defaultValue, key) {
   const [value, setValue] = useState(() => {
     try {
@@ -41,7 +42,7 @@ function useStickyState(defaultValue, key) {
 }
 
 const App = () => {
-  // ... (State declarations are standard, no changes needed to existing logic structure)
+  // ... (State remains the same)
   const [session, setSession] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [userProgress, setUserProgress] = useState({});
@@ -64,6 +65,7 @@ const App = () => {
   const [showNotesPanel, setShowNotesPanel] = useState(false);
   const [showProgressPanel, setShowProgressPanel] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [modalViewMode, setModalViewMode] = useState('FULL'); 
 
   const [filtersOpen, setFiltersOpen] = useStickyState(true, 'app_filtersOpen');
   const [searchQuery, setSearchQuery] = useStickyState('', 'app_searchQuery');
@@ -85,7 +87,7 @@ const App = () => {
 
   const [showHistory, setShowHistory] = useState(false);
 
-  // ... (Effect hooks for Auth and Loading)
+  // ... (Effects for Auth and Data Loading remain the same)
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -132,7 +134,6 @@ const App = () => {
     return () => subscription.unsubscribe();
   }, []);
   
-  // ... (Version Check)
   useEffect(() => {
     const checkVersion = async () => {
       const lastSeenVersion = localStorage.getItem('app_last_seen_version');
@@ -241,6 +242,7 @@ const App = () => {
     document.body.removeChild(link);
   };
 
+  // ... (Toggle helpers)
   const toggleProgressPanel = () => {
       if (!showProgressPanel) { setShowUserStats(false); setFiltersOpen(false); }
       setShowProgressPanel(!showProgressPanel);
@@ -256,7 +258,7 @@ const App = () => {
     setShowUserStats(false); setShowProgressPanel(false);
   };
 
-  // --- UPDATED FLAG LOGIC: Accepts draft text ---
+  // --- UPDATED FLAG LOGIC: EXPLICIT NULLS ---
   const handleToggleFlag = async (questionData, currentDraftText) => {
     if (!session) return;
     const idString = String(questionData.unique_id);
@@ -266,21 +268,33 @@ const App = () => {
     const textToSave = currentDraftText !== undefined ? currentDraftText : (currentProgress.user_response || null);
 
     const payload = {
-      ...currentProgress,
+      // Explicitly set keys to avoid undefined issues that might trick the DB or State
       user_id: session.user.id,
       question_id: idString,
+      
+      // Update Flag and Text
       is_flagged: newFlagStatus,
-      user_response: textToSave 
+      user_response: textToSave,
+
+      // CRITICAL: Preserve existing score/selection/max_score if they exist.
+      // If they do NOT exist (new flag on fresh question), force them to NULL.
+      // This prevents the "Done" check from failing due to undefined vs null checks.
+      score: currentProgress.score ?? null,
+      max_score: currentProgress.max_score ?? null, // Ensure max_score remains null for new flags
+      selected_option: currentProgress.selected_option ?? null,
+      notes: currentProgress.notes || null,
+      
+      // Preserve ID for upsert
+      ...(currentProgress.id ? { id: currentProgress.id } : {})
     };
-    if (payload.score === undefined) payload.score = null;
     
-    setUserProgress(prev => ({ ...prev, [idString]: { ...payload } }));
+    // Optimistic Update
+    setUserProgress(prev => ({ ...prev, [idString]: payload }));
     
     await supabase.from('user_progress').upsert(payload, { onConflict: 'user_id,question_id' });
   };
 
-  // --- UPDATED COMPLETION LOGIC: Safe Unmark (Preserves Notes) ---
-  const handleInitiateCompletion = async (questionData, mcqSelection, saqResponse) => {
+  const handleInitiateCompletion = async (questionData, mcqSelection, saqResponse, viewMode = 'FULL') => {
     if (!session) return;
     const idString = String(questionData.unique_id);
     const existingEntry = userProgress[idString];
@@ -288,16 +302,12 @@ const App = () => {
     const isCurrentlyCompleted = existingEntry && (existingEntry.score !== null || existingEntry.selected_option !== null);
 
     if (questionData.type === 'MCQ') {
-       // Check if toggling OFF
        if (isCurrentlyCompleted && existingEntry.selected_option === mcqSelection) {
-           
-           // SAFETY CHECK: Do we have valuable data to keep?
            const hasDataToKeep = (existingEntry.notes && existingEntry.notes.trim().length > 0) || 
                                  (existingEntry.user_response && existingEntry.user_response.trim().length > 0) ||
                                  existingEntry.is_flagged;
 
            if (hasDataToKeep) {
-                // SOFT RESET: Clear only score/selection
                 const payload = { 
                     ...existingEntry, 
                     score: null, 
@@ -310,7 +320,6 @@ const App = () => {
                 setUserProgress(prev => ({ ...prev, [idString]: payload }));
                 await supabase.from('user_progress').upsert(payload, { onConflict: 'user_id,question_id' });
            } else {
-                // HARD DELETE: Row is empty
                 const newProgress = { ...userProgress };
                 delete newProgress[idString];
                 setUserProgress(newProgress);
@@ -319,7 +328,7 @@ const App = () => {
            return;
        }
 
-       // MCQ Save (Mark Done)
+       // MCQ Save Logic
        const isCorrect = mcqSelection === questionData.correctAnswerIndex;
        const score = isCorrect ? 1 : 0;
        
@@ -329,7 +338,7 @@ const App = () => {
          notes: existingEntry?.notes || null,
          user_response: existingEntry?.user_response || null, 
          score: score,
-         max_score: 1, 
+         max_score: 1, // Only set max_score to 1 when actually answering
          selected_option: mcqSelection,
          is_flagged: existingEntry?.is_flagged || false
        };
@@ -340,9 +349,10 @@ const App = () => {
        return; 
     }
 
-    // SAQ Logic (New Completion)
+    // SAQ Logic
     setPendingQuestion(questionData);
     setPendingMCQSelection(null);
+    setModalViewMode(viewMode);
     setModalInitialData({ 
         user_response: saqResponse || '',
         score: null,
@@ -352,12 +362,13 @@ const App = () => {
     setModalOpen(true);
   };
 
-  const handleReviewNotes = (questionData, draftSaqResponse) => {
+  const handleReviewNotes = (questionData, draftSaqResponse, viewMode = 'FULL') => {
     const idString = String(questionData.unique_id);
     const existingData = userProgress[idString];
     
     setPendingQuestion(questionData);
-    
+    setModalViewMode(viewMode); 
+
     let resolvedResponse = '';
     if (draftSaqResponse !== undefined && draftSaqResponse !== null) {
         resolvedResponse = draftSaqResponse;
@@ -366,11 +377,7 @@ const App = () => {
     }
 
     if (existingData) {
-      setModalInitialData({
-        ...existingData,
-        user_response: resolvedResponse
-      });
-      setPendingMCQSelection(null); 
+      setModalInitialData({ ...existingData, user_response: resolvedResponse });
     } else {
       setModalInitialData({
         notes: '',
@@ -379,9 +386,7 @@ const App = () => {
         max_score: null,
         selected_option: null
       });
-      setPendingMCQSelection(null);
     }
-    
     setModalOpen(true);
   };
 
@@ -438,37 +443,33 @@ const App = () => {
 
     if (!existingEntry) return;
 
-    // SOFT RESET: Clear Score, Response, and Selection.
-    // Explicitly PRESERVE Notes and Flag.
     const payload = {
         ...existingEntry,
         score: null,
         max_score: null,
         selected_option: null,
-        user_response: null, // Wipe the text answer
-        // Keep these:
+        user_response: null, 
         notes: existingEntry.notes,
         is_flagged: existingEntry.is_flagged
     };
 
-    // Optimistic Update
     setUserProgress(prev => ({ ...prev, [idString]: payload }));
-
-    // Sync to DB
     await supabase.from('user_progress').upsert(payload, { onConflict: 'user_id,question_id' });
   };
 
   const handleLogout = async () => { await supabase.auth.signOut(); };
 
+  // --- CHECK DONE LOGIC ---
   const checkIsCompleted = (id) => {
     const p = userProgress[String(id)];
     if (!p) return false;
+    // Strict null check ensures undefined doesn't trigger "Done"
     return p.score !== null || p.selected_option !== null;
   };
 
   const checkIsFlagged = (id) => userProgress[String(id)]?.is_flagged === true;
 
-  // --- FILTER & RENDER LOGIC (No Changes) ---
+  // ... (Filter & Render Logic remains the same)
   const filterCounts = useMemo(() => {
     const qLower = searchQuery.toLowerCase().trim();
     const baseSet = questions.filter(q => {
@@ -590,6 +591,7 @@ const App = () => {
         question={pendingQuestion}
         type={pendingQuestion?.type}
         initialData={modalInitialData}
+        viewMode={modalViewMode}
       />
       
       {showDashboard && <AdminDashboard onClose={() => setShowDashboard(false)} questions={questions} />}
@@ -749,9 +751,9 @@ const App = () => {
                           score={score}
                           maxScore={maxScore}
                           initialSelection={progress ? progress.selected_option : null}
-                          onToggleComplete={(mcqSelection, saqResponse) => handleInitiateCompletion(q, mcqSelection, saqResponse)} 
+                          onToggleComplete={(mcqSelection, saqResponse, viewMode) => handleInitiateCompletion(q, mcqSelection, saqResponse, viewMode)} 
+                          onReviewNotes={(draft, viewMode) => handleReviewNotes(q, draft, viewMode)}
                           onToggleFlag={(draft) => handleToggleFlag(q, draft)}
-                          onReviewNotes={(draft) => handleReviewNotes(q, draft)}
                           onRedo={() => handleRedo(q)}
                         />
                     </div>
