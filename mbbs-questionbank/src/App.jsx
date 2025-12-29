@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy, BarChart3, PieChart, StickyNote, Users, MessageCircleWarning, KeyRound} from 'lucide-react';
+import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy, BarChart3, PieChart, StickyNote, Users, MessageCircleWarning, KeyRound } from 'lucide-react';
 import { Virtuoso } from 'react-virtuoso';
 import { supabase } from './supabase';
 import QuestionCard from './QuestionCard';
@@ -66,11 +66,13 @@ const App = () => {
   // --- FILTERS & UI (Persistent) ---
   const [filtersOpen, setFiltersOpen] = useStickyState(true, 'app_filtersOpen');
   const [searchQuery, setSearchQuery] = useStickyState('', 'app_searchQuery');
+  
+  // Filters
   const [selectedTopic, setSelectedTopic] = useStickyState('All', 'app_selectedTopic');
   const [selectedSubtopic, setSelectedSubtopic] = useStickyState('All', 'app_selectedSubtopic');
   const [selectedType, setSelectedType] = useStickyState('All', 'app_selectedType');
   const [sortOrder, setSortOrder] = useStickyState('Newest', 'app_sortOrder');
-
+  
   // --- SCROLL POSITION STATE ---
   const initialScrollIndex = useMemo(() => {
     const saved = window.localStorage.getItem('app_scrollIndex');
@@ -359,7 +361,6 @@ const App = () => {
         }
     }
 
-    // Determine if we should mark MCQ as "selected" based on notes update vs fresh answer
     const finalSelection = pendingQuestion.type === 'MCQ' 
         ? (pendingMCQSelection ?? modalInitialData?.selected_option) 
         : null;
@@ -436,10 +437,14 @@ const App = () => {
     const qLower = searchQuery.toLowerCase().trim();
 
     let result = questions.filter(q => {
+      // 1. Topic Filter
       if (selectedTopic !== 'All' && q.topic !== selectedTopic) return false;
+      // 2. Subtopic Filter
       if (selectedSubtopic !== 'All' && q.subtopic !== selectedSubtopic) return false;
+      // 3. Type Filter
       if (selectedType !== 'All' && q.type !== selectedType) return false;
 
+      // 4. Search Filter
       if (qLower) {
         const match = 
           q.question?.toLowerCase().includes(qLower) ||
@@ -453,6 +458,32 @@ const App = () => {
     });
 
     return result.sort((a, b) => {
+      if (sortOrder === 'Incorrect') {
+        const getIncorrectStatus = (qItem) => {
+            const p = userProgress[String(qItem.unique_id)];
+            // Not incorrect if unattempted (score is null/undefined)
+            if (!p || p.score === null || p.score === undefined) return false;
+            
+            // Determine Max Score (stored or default 1 for MCQ)
+            let max = p.max_score;
+            if ((!max) && qItem.type === 'MCQ') max = 1;
+            
+            // If we still don't know max, we can't judge correctness safely.
+            if (!max) return false; 
+            
+            // Incorrect if Score < Max
+            return p.score < max;
+        };
+
+        const aInc = getIncorrectStatus(a);
+        const bInc = getIncorrectStatus(b);
+
+        // Incorrect items first (-1)
+        if (aInc !== bInc) return aInc ? -1 : 1;
+        // If status is same, fall back to ID sort
+        return a.unique_id - b.unique_id;
+      }
+
       if (sortOrder === 'Flagged') {
         const isAFlagged = checkIsFlagged(a.unique_id);
         const isBFlagged = checkIsFlagged(b.unique_id);
@@ -691,6 +722,7 @@ const App = () => {
                             <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="w-full pl-3 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white">
                               <option value="Newest">Newest First</option>
                               <option value="Oldest">Oldest First</option>
+                              <option value="Incorrect">Incorrect First</option>
                               <option value="Completed">Completed First</option>
                               <option value="Unfinished">Unfinished First</option>
                               <option value="Flagged">Flagged First</option>
