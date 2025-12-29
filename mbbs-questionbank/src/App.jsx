@@ -14,6 +14,7 @@ import ProgressPanel from './ProgressPanel';
 import RecruiterDashboard from './RecruiterDashboard';
 import FeedbackModal from './FeedbackModal';
 import QuotaDisplay from './QuotaDisplay';
+import ReleaseNotesModal from './ReleaseNotesModal';
 import { APP_VERSION } from './appVersion';
 
 // --- HELPER HOOK: Persist state to LocalStorage ---
@@ -57,6 +58,10 @@ const App = () => {
   const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
+
+  // --- RELEASE NOTES STATE ---
+  const [showReleaseModal, setShowReleaseModal] = useState(false);
+  const [releaseNoteData, setReleaseNoteData] = useState(null);
   
   // --- VIEW TOGGLES ---
   const [showUserStats, setShowUserStats] = useState(false);
@@ -139,7 +144,40 @@ const App = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+  
+  // --- CHECK FOR VERSION UPDATE ON MOUNT ---
+  useEffect(() => {
+    const checkVersion = async () => {
+      const lastSeenVersion = localStorage.getItem('app_last_seen_version');
+      
+      // If version mismatch (or first time load)
+      if (lastSeenVersion !== APP_VERSION) {
+        try {
+          // Fetch version.json to find the notes for THIS version
+          const res = await fetch(`/version.json?t=${new Date().getTime()}`);
+          const data = await res.json();
+          
+          // Find the entry that matches the current APP_VERSION
+          const currentNotes = data.history.find(h => h.version === APP_VERSION);
+          
+          if (currentNotes) {
+            setReleaseNoteData(currentNotes);
+            setShowReleaseModal(true);
+          }
+        } catch (e) {
+          console.error("Failed to fetch release notes", e);
+        }
+      }
+    };
+    
+    checkVersion();
+  }, []);
 
+  const handleCloseReleaseNotes = () => {
+    // Save current version to local storage so it doesn't show again
+    localStorage.setItem('app_last_seen_version', APP_VERSION);
+    setShowReleaseModal(false);
+  };
   // --- DB HELPER ---
   const fetchUserProgress = async (userId) => {
     const { data, error } = await supabase
@@ -593,6 +631,11 @@ const App = () => {
     // MAIN WRAPPER: Shifts left when modal is open to allow seeing the question
     <div className={`min-h-screen bg-slate-50 text-slate-900 font-sans pb-20 relative transition-[margin] duration-300 ease-in-out ${modalOpen ? 'md:mr-[480px]' : 'mr-0'}`}>
       <UpdateManager />
+      <ReleaseNotesModal 
+        isOpen={showReleaseModal} 
+        onClose={handleCloseReleaseNotes} 
+        data={releaseNoteData} 
+      />
       <FeedbackModal isOpen={showFeedbackModal} onClose={() => setShowFeedbackModal(false)} user={session?.user} />
       
       {showPasswordResetModal && (

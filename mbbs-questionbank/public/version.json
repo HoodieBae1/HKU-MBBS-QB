@@ -1,6 +1,18 @@
 {
-  "currentVersion": "2.3.1",
+  "currentVersion": "2.4.0",
   "history": [
+    {
+      "version": "2.4.0",
+      "date": "2025-12-29",
+      "title": "More questions and added estimated cost",
+      "changes": [
+        "Questions: Added questions from 'Med SAQ 2018-2023' and 'Final MB SAQ' google drives",
+        "Feature: Added UI to see estimated cost. If we reach 100%, we will need to split the $25 USD per month pro plan. You can see your estimated share amount in HKD. (top left)",
+        "Feature: Top right you can download your data as a json file for backup. Implemented this in 2.3.0 but don't think anyone saw it. See version history notes for details of each version update.",
+        "UI: Popup for new version notes so easily seen",
+        "Up next: allow adding images to notes."
+      ]
+    },
     {
       "version": "2.3.1",
       "date": "2025-12-29",
