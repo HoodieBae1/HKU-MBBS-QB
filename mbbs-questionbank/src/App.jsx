@@ -423,25 +423,41 @@ const App = () => {
     setModalOpen(true);
   };
 
-  const handleReviewNotes = (questionData) => {
+  const handleReviewNotes = (questionData, draftSaqResponse) => {
     const idString = String(questionData.unique_id);
-    const existingData = userProgress[idString];
+    const existingData = userProgress[idString]; // Data from DB
     
     setPendingQuestion(questionData);
     
+    // --- FIX START: Robust Data Resolution ---
+    // 1. Determine User Response:
+    //    Priority A: Draft from QuestionCard (if user typed something)
+    //    Priority B: Data from DB (if draft is empty/undefined)
+    let resolvedResponse = '';
+    
+    if (draftSaqResponse && draftSaqResponse.trim().length > 0) {
+        resolvedResponse = draftSaqResponse;
+    } else if (existingData && existingData.user_response) {
+        resolvedResponse = existingData.user_response;
+    }
+
     if (existingData) {
-      setModalInitialData(existingData);
+      setModalInitialData({
+        ...existingData,
+        user_response: resolvedResponse
+      });
       setPendingMCQSelection(null); 
     } else {
       setModalInitialData({
         notes: '',
-        user_response: '',
+        user_response: resolvedResponse,
         score: null,
         max_score: null,
         selected_option: null
       });
       setPendingMCQSelection(null);
     }
+    // --- FIX END ---
     
     setModalOpen(true);
   };
@@ -916,7 +932,7 @@ const App = () => {
                           initialSelection={progress ? progress.selected_option : null}
                           onToggleComplete={(mcqSelection, saqResponse) => handleInitiateCompletion(q, mcqSelection, saqResponse)} 
                           onToggleFlag={() => handleToggleFlag(q)}
-                          onReviewNotes={() => handleReviewNotes(q)}
+                          onReviewNotes={(draft) => handleReviewNotes(q, draft)}
                         />
                     </div>
                 );

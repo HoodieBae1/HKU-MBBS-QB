@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, Square, StickyNote, Flag, Sparkles, Loader2, AlertCircle, Award } from 'lucide-react';
 import { supabase } from './supabase'; 
 import ReactMarkdown from 'react-markdown'; 
-import RichTextEditor from './RichTextEditor'; // Ensure this is imported
+import RichTextEditor from './RichTextEditor'; 
 
 const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingResponse, score, maxScore, onToggleComplete, onToggleFlag, onReviewNotes, initialSelection }) => {
   const [isRevealed, setIsRevealed] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   
-  // State for SAQ Input
+  // 1. Initialize State
   const [saqInput, setSaqInput] = useState('');
+  const [userHasEdited, setUserHasEdited] = useState(false);
 
   // AI Analysis State
   const [analysisData, setAnalysisData] = useState(null);
@@ -20,6 +21,7 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
 
   // --- SYNC WITH DB ---
   useEffect(() => {
+    // MCQ Selection Sync
     if (initialSelection !== undefined && initialSelection !== null) {
       setSelectedOption(initialSelection);
       setIsRevealed(true);
@@ -30,28 +32,46 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
       setAnalysisError(null);
     }
     
-    // Sync SAQ text
-    if (existingResponse) {
-        setSaqInput(existingResponse);
-    } else if (!isCompleted) {
-        // Only reset if not completed/saved, to prevent wiping user's unsaved draft
-        // Note: In a virtual list, this might reset if you scroll far away.
-        // Ideally, unsaved drafts should be lifted up, but for now this works for active interaction.
-        setSaqInput('');
+    // --- DATABASE SYNC LOGIC ---
+    // If the user hasn't touched the keyboard yet, keep the text box in sync with the DB.
+    // This ensures that when the data loads from Supabase, the box fills up automatically.
+    if (!userHasEdited) {
+        setSaqInput(existingResponse || '');
     }
-  }, [initialSelection, isCompleted, existingResponse]);
+  }, [initialSelection, isCompleted, existingResponse, userHasEdited]);
 
   // --- HANDLERS ---
+
+  // Handle Input Changes from Editor
+  const handleSaqChange = (val) => {
+    // Only mark as edited if the content is actually different to prevent 
+    // initial render loops from libraries like Quill
+    setSaqInput(val);
+    setUserHasEdited(true);
+  };
+
+  // Helper to determine which data to send up
+  const getCurrentAnswerData = () => {
+      // THE FIX:
+      // If user has edited, send their draft.
+      // If NOT, send 'existingResponse' (the DB prop) directly. 
+      // This bypasses any stale local state issues.
+      return userHasEdited ? saqInput : (existingResponse || '');
+  };
+
   const handleMCQSelect = (idx) => {
     if (selectedOption !== null) return; 
     setSelectedOption(idx);
     setIsRevealed(true); 
-    onToggleComplete(idx, saqInput);
+    onToggleComplete(idx, getCurrentAnswerData());
   };
 
   const handleMarkDoneClick = () => {
-    // This passes the current HTML value of saqInput to the parent
-    onToggleComplete(selectedOption, saqInput);
+    onToggleComplete(selectedOption, getCurrentAnswerData());
+  };
+
+  const handleNotesClick = () => {
+    onReviewNotes(getCurrentAnswerData());
   };
   
   // --- AI FUNCTION ---
@@ -142,7 +162,7 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
           </button>
 
           <button
-            onClick={onReviewNotes}
+            onClick={handleNotesClick}
             className={`flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded transition-colors ${
                 hasNotes 
                 ? 'bg-yellow-100 text-yellow-700 border border-yellow-200 hover:bg-yellow-200' 
@@ -207,7 +227,7 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
                 <div className={`${isCompleted ? 'opacity-70 pointer-events-none grayscale' : ''}`}>
                     <RichTextEditor 
                         value={saqInput}
-                        onChange={setSaqInput} // Correctly updates state with HTML string
+                        onChange={handleSaqChange} 
                         placeholder="Type your answer here before checking solutions..."
                         readOnly={isCompleted} 
                     />

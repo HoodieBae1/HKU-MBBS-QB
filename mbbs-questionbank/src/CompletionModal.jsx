@@ -1,21 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, MessageSquare, Award, StickyNote, PenTool, ChevronRight, AlertTriangle } from 'lucide-react';
-import RichTextEditor from './RichTextEditor'; // <--- Import
+import { X, Save, MessageSquare, Award, StickyNote, PenTool, ChevronRight, AlertTriangle, Loader2 } from 'lucide-react';
+import RichTextEditor from './RichTextEditor'; 
 
 const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData }) => {
   const [notes, setNotes] = useState('');
   const [userResponse, setUserResponse] = useState(''); 
   const [score, setScore] = useState('');
   const [maxScore, setMaxScore] = useState('');
+  
+  // --- FIX START: Data Loading Gate ---
+  // We use this to ensure we don't render the heavy editors until the data is fully synced.
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      setNotes(initialData?.notes || '');
-      setUserResponse(initialData?.user_response || ''); 
-      setScore(initialData?.score !== undefined && initialData?.score !== null ? initialData.score : '');
-      setMaxScore(initialData?.max_score || ''); 
+    if (isOpen && initialData) {
+      setNotes(initialData.notes || '');
+      setUserResponse(initialData.user_response || ''); 
+      setScore(initialData.score !== undefined && initialData.score !== null ? initialData.score : '');
+      setMaxScore(initialData.max_score || ''); 
+      
+      // Allow a tiny tick for state to settle before rendering the editors
+      // This prevents the "Empty Editor" flash/bug
+      const timer = setTimeout(() => setDataLoaded(true), 10);
+      return () => clearTimeout(timer);
+    } else {
+      setDataLoaded(false);
     }
-  }, [isOpen, initialData, type]);
+  }, [isOpen, initialData, type, question?.unique_id]);
+  // --- FIX END ---
 
   const handleSave = () => {
     if (type === 'SAQ' && (score !== '' || maxScore !== '')) {
@@ -69,17 +81,25 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
 
           {/* SAQ: User Response Input */}
           {type === 'SAQ' && (
-            <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+            <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm min-h-[200px]">
               <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                 <PenTool className="w-4 h-4 text-indigo-500" />
                 Your Answer
               </label>
-              {/* --- CHANGED TO RICH EDITOR --- */}
-              <RichTextEditor 
-                value={userResponse}
-                onChange={setUserResponse}
-                placeholder="Type your answer here..."
-              />
+              
+              {/* --- FIX: Only render Editor when dataLoaded is true --- */}
+              {dataLoaded ? (
+                  <RichTextEditor 
+                    key={`response-${question?.unique_id}`}
+                    value={userResponse}
+                    onChange={setUserResponse}
+                    placeholder="Type your answer here..."
+                  />
+              ) : (
+                  <div className="h-40 flex items-center justify-center bg-gray-50 rounded-lg text-gray-400 gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Loading editor...
+                  </div>
+              )}
             </div>
           )}
 
@@ -129,7 +149,7 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
           )}
 
           {/* Notes Input */}
-          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm min-h-[200px]">
             <label className="block text-sm font-bold text-gray-700 mb-2">
               Notes & Reflections
             </label>
@@ -137,12 +157,20 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 Images pasted here count towards your database quota. Resize them before pasting!
             </div>
-            {/* --- CHANGED TO RICH EDITOR --- */}
-            <RichTextEditor 
-                value={notes}
-                onChange={setNotes}
-                placeholder="Write down key takeaways, mnemonics..."
-            />
+            
+            {/* --- FIX: Only render Editor when dataLoaded is true --- */}
+            {dataLoaded ? (
+                <RichTextEditor 
+                    key={`notes-${question?.unique_id}`}
+                    value={notes}
+                    onChange={setNotes}
+                    placeholder="Write down key takeaways, mnemonics..."
+                />
+            ) : (
+                <div className="h-40 flex items-center justify-center bg-gray-50 rounded-lg text-gray-400 gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Loading editor...
+                </div>
+            )}
           </div>
 
         </div>
