@@ -8,8 +8,6 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
   const [score, setScore] = useState('');
   const [maxScore, setMaxScore] = useState('');
   
-  // --- FIX START: Data Loading Gate ---
-  // We use this to ensure we don't render the heavy editors until the data is fully synced.
   const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
@@ -17,25 +15,23 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
       setNotes(initialData.notes || '');
       setUserResponse(initialData.user_response || ''); 
       setScore(initialData.score !== undefined && initialData.score !== null ? initialData.score : '');
-      setMaxScore(initialData.max_score || ''); 
+      setMaxScore(initialData.max_score !== undefined && initialData.max_score !== null ? initialData.max_score : ''); 
       
-      // Allow a tiny tick for state to settle before rendering the editors
-      // This prevents the "Empty Editor" flash/bug
       const timer = setTimeout(() => setDataLoaded(true), 10);
       return () => clearTimeout(timer);
     } else {
       setDataLoaded(false);
     }
   }, [isOpen, initialData, type, question?.unique_id]);
-  // --- FIX END ---
 
   const handleSave = () => {
+    // Validation: If user enters one score field, they must enter both.
     if (type === 'SAQ' && (score !== '' || maxScore !== '')) {
         const s = parseFloat(score);
         const m = parseFloat(maxScore);
         
         if (isNaN(s) || isNaN(m)) {
-            alert("Please enter valid numbers for score.");
+            alert("Please enter valid numbers for both score fields (or leave both blank).");
             return;
         }
         if (s > m) {
@@ -47,8 +43,9 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
     onSave({
       notes,
       user_response: userResponse, 
+      // FIX: If string is empty, send null. Do NOT default to 1.
       score: score !== '' ? parseFloat(score) : null,
-      max_score: maxScore !== '' ? parseFloat(maxScore) : 1
+      max_score: maxScore !== '' ? parseFloat(maxScore) : null 
     });
   };
   
@@ -63,8 +60,8 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
         {/* Header */}
         <div className="bg-teal-700 text-white px-6 py-4 flex justify-between items-center shrink-0 shadow-sm">
           <h2 className="text-lg font-bold flex items-center gap-2">
-            {initialData && (initialData.notes || initialData.score) ? <StickyNote className="w-5 h-5 text-teal-200" /> : <MessageSquare className="w-5 h-5 text-teal-200" />}
-            {initialData && (initialData.notes || initialData.score) ? 'Edit Notes & Score' : 'Add Notes & Score'}
+            {initialData && (initialData.notes || initialData.score !== null) ? <StickyNote className="w-5 h-5 text-teal-200" /> : <MessageSquare className="w-5 h-5 text-teal-200" />}
+            {initialData && (initialData.notes || initialData.score !== null) ? 'Edit Notes & Score' : 'Add Notes & Score'}
           </h2>
           <button onClick={onClose} className="text-teal-200 hover:text-white transition-colors p-1 hover:bg-teal-600 rounded">
             <ChevronRight className="w-6 h-6" />
@@ -87,7 +84,6 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
                 Your Answer
               </label>
               
-              {/* --- FIX: Only render Editor when dataLoaded is true --- */}
               {dataLoaded ? (
                   <RichTextEditor 
                     key={`response-${question?.unique_id}`}
@@ -135,6 +131,7 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
                       />
                   </div>
               </div>
+              <p className="text-[10px] text-gray-400 mt-2">Leave blank if you only want to save notes without grading.</p>
             </div>
           )}
 
@@ -158,7 +155,6 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
                 Images pasted here count towards your database quota. Resize them before pasting!
             </div>
             
-            {/* --- FIX: Only render Editor when dataLoaded is true --- */}
             {dataLoaded ? (
                 <RichTextEditor 
                     key={`notes-${question?.unique_id}`}
