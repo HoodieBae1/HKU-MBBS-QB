@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, MessageSquare, Award, StickyNote, PenTool, ChevronRight } from 'lucide-react';
+import { X, Save, MessageSquare, Award, StickyNote, PenTool, ChevronRight, AlertTriangle } from 'lucide-react';
+import RichTextEditor from './RichTextEditor'; // <--- Import
 
 const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData }) => {
   const [notes, setNotes] = useState('');
@@ -17,7 +18,6 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
   }, [isOpen, initialData, type]);
 
   const handleSave = () => {
-    // SAQ Validation for Auto-Complete
     if (type === 'SAQ' && (score !== '' || maxScore !== '')) {
         const s = parseFloat(score);
         const m = parseFloat(maxScore);
@@ -39,14 +39,11 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
       max_score: maxScore !== '' ? parseFloat(maxScore) : 1
     });
   };
-
-  // We do not render a backdrop div, allowing interaction with the main page.
   
   return (
     <>
-      {/* Side Panel (Drawer) */}
       <div 
-        className={`fixed top-0 right-0 h-full w-full md:w-[480px] z-[100] bg-white shadow-[-5px_0_25px_-5px_rgba(0,0,0,0.1)] border-l border-gray-200 flex flex-col transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 h-full w-full md:w-[600px] z-[100] bg-white shadow-[-5px_0_25px_-5px_rgba(0,0,0,0.1)] border-l border-gray-200 flex flex-col transform transition-transform duration-300 ease-in-out ${
             isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -77,12 +74,11 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
                 <PenTool className="w-4 h-4 text-indigo-500" />
                 Your Answer
               </label>
-              <textarea
-                rows={6}
-                placeholder="Type your answer here..."
+              {/* --- CHANGED TO RICH EDITOR --- */}
+              <RichTextEditor 
                 value={userResponse}
-                onChange={(e) => setUserResponse(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-y transition-shadow bg-indigo-50/10 text-sm font-medium text-slate-800"
+                onChange={setUserResponse}
+                placeholder="Type your answer here..."
               />
             </div>
           )}
@@ -95,9 +91,6 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
                 <Award className="w-4 h-4" />
                 Self Evaluation
               </label>
-              <p className="text-xs text-orange-600/80 mb-4">
-                Fill these fields (Score + Total) to automatically mark this question as "Done".
-              </p>
               
               <div className="flex items-center gap-3">
                   <div className="flex-1">
@@ -125,7 +118,7 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
             </div>
           )}
 
-          {/* MCQ Score Display (ReadOnly) */}
+          {/* MCQ Score Display */}
           {type === 'MCQ' && initialData && initialData.selected_option !== null && (
              <div className="bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center shadow-sm">
                 <span className="text-sm font-semibold text-gray-600">Current Status:</span>
@@ -135,17 +128,20 @@ const CompletionModal = ({ isOpen, onClose, onSave, question, type, initialData 
              </div>
           )}
 
-          {/* Notes Input (For both) */}
+          {/* Notes Input */}
           <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
             <label className="block text-sm font-bold text-gray-700 mb-2">
               Notes & Reflections
             </label>
-            <textarea
-              rows={12}
-              placeholder="Write down key takeaways, mnemonics, or why you got it wrong. These notes are searchable later."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none resize-none transition-shadow text-sm leading-relaxed"
+            <div className="bg-yellow-50 text-yellow-800 p-2 mb-2 rounded text-xs flex gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                Images pasted here count towards your database quota. Resize them before pasting!
+            </div>
+            {/* --- CHANGED TO RICH EDITOR --- */}
+            <RichTextEditor 
+                value={notes}
+                onChange={setNotes}
+                placeholder="Write down key takeaways, mnemonics..."
             />
           </div>
 

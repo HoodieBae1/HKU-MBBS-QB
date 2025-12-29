@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { X, Search, BookOpen, Filter, StickyNote, ChevronDown, ChevronUp, ArrowRight, MessageSquare, PenTool } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+// We removed ReactMarkdown as we are now using raw HTML from Quill
 
 const NotesPanel = ({ onClose, questions, userProgress }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,13 +18,13 @@ const NotesPanel = ({ onClose, questions, userProgress }) => {
       .map(q => ({
         ...q,
         userNote: userProgress[String(q.unique_id)].notes,
-        userResponse: userProgress[String(q.unique_id)].user_response, // Get the response too
+        userResponse: userProgress[String(q.unique_id)].user_response,
         userScore: userProgress[String(q.unique_id)].score,
         updatedAt: userProgress[String(q.unique_id)].updated_at 
       }));
   }, [questions, userProgress]);
 
-  // 2. Generate Filter Options based on existing notes
+  // 2. Filter Options
   const availableTopics = useMemo(() => [...new Set(allNotes.map(n => n.topic))].sort(), [allNotes]);
   const availableSubtopics = useMemo(() => {
     return [...new Set(allNotes
@@ -40,6 +40,7 @@ const NotesPanel = ({ onClose, questions, userProgress }) => {
       const matchSubtopic = selectedSubtopic === 'All' || item.subtopic === selectedSubtopic;
       
       const qLower = searchQuery.toLowerCase();
+      // Note: searching inside HTML strings is imperfect but sufficient for basic text matching
       const matchSearch = !searchQuery || 
         item.userNote.toLowerCase().includes(qLower) ||
         (item.userResponse && item.userResponse.toLowerCase().includes(qLower)) ||
@@ -57,6 +58,18 @@ const NotesPanel = ({ onClose, questions, userProgress }) => {
   return (
     <div className="fixed inset-0 z-[60] bg-slate-100 overflow-auto animate-in slide-in-from-bottom duration-300">
       
+      {/* Styles to restore list bullets and basic formatting removed by Tailwind */}
+      <style>{`
+        .html-content ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.5rem; }
+        .html-content ol { list-style-type: decimal; padding-left: 1.25rem; margin-bottom: 0.5rem; }
+        .html-content p { margin-bottom: 0.5rem; }
+        .html-content blockquote { border-left: 4px solid #e2e8f0; padding-left: 1rem; color: #64748b; }
+        .html-content strong { font-weight: 700; }
+        .html-content em { font-style: italic; }
+        .html-content img { max-width: 100%; border-radius: 0.5rem; margin: 0.5rem 0; }
+        .html-content a { color: #0d9488; text-decoration: underline; }
+      `}</style>
+
       {/* Header */}
       <div className="bg-amber-100 border-b border-amber-200 sticky top-0 z-10 px-6 py-4 flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-3">
@@ -86,7 +99,7 @@ const NotesPanel = ({ onClose, questions, userProgress }) => {
             <div className="md:col-span-4 relative">
                <input 
                  type="text" 
-                 placeholder="Search inside notes, answers or questions..." 
+                 placeholder="Search inside notes..." 
                  value={searchQuery}
                  onChange={(e) => setSearchQuery(e.target.value)}
                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-400 outline-none"
@@ -160,23 +173,26 @@ const NotesPanel = ({ onClose, questions, userProgress }) => {
                        </div>
                     </div>
 
-                    {/* Show Typed Response if available */}
+                    {/* Show Typed Response if available (Rendered as HTML) */}
                     {item.userResponse && (
                         <div className="mb-4 bg-indigo-50/50 p-3 rounded-lg border border-indigo-100/50">
                             <div className="text-[10px] font-bold text-indigo-400 uppercase mb-1 flex items-center gap-1">
                                 <PenTool className="w-3 h-3" /> Your Answer
                             </div>
-                            <p className="text-indigo-900/80 text-sm font-medium italic">
-                                "{item.userResponse}"
-                            </p>
+                            <div 
+                                className="text-indigo-900/80 text-sm font-medium html-content"
+                                dangerouslySetInnerHTML={{ __html: item.userResponse }}
+                            />
                         </div>
                     )}
 
                     <div className="flex items-start gap-3">
                        <MessageSquare className="w-5 h-5 text-amber-500 mt-1 shrink-0" />
-                       <p className="text-gray-800 text-sm whitespace-pre-wrap font-medium leading-relaxed font-serif">
-                          {item.userNote}
-                       </p>
+                       {/* Render Note HTML */}
+                       <div 
+                          className="text-gray-800 text-sm font-medium leading-relaxed font-serif html-content w-full"
+                          dangerouslySetInnerHTML={{ __html: item.userNote }}
+                       />
                     </div>
                     
                     {!isExpanded && (
@@ -197,7 +213,7 @@ const NotesPanel = ({ onClose, questions, userProgress }) => {
                              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                                 <ArrowRight className="w-3 h-3" /> Original Question ({item.type})
                              </h4>
-                             <div className="text-gray-800 font-medium mb-4 text-sm leading-relaxed">
+                             <div className="text-gray-800 font-medium mb-4 text-sm leading-relaxed whitespace-pre-line">
                                 {item.question}
                              </div>
                              {item.options && item.options.length > 0 && (

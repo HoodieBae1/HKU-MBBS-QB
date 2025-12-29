@@ -2,15 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, Square, StickyNote, Flag, Sparkles, Loader2, AlertCircle, Award } from 'lucide-react';
 import { supabase } from './supabase'; 
 import ReactMarkdown from 'react-markdown'; 
+import RichTextEditor from './RichTextEditor'; // Ensure this is imported
 
 const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingResponse, score, maxScore, onToggleComplete, onToggleFlag, onReviewNotes, initialSelection }) => {
   const [isRevealed, setIsRevealed] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   
-  // New State for SAQ Input
+  // State for SAQ Input
   const [saqInput, setSaqInput] = useState('');
 
-  // --- NEW: AI Analysis State ---
+  // AI Analysis State
   const [analysisData, setAnalysisData] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState(null);
@@ -33,6 +34,9 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
     if (existingResponse) {
         setSaqInput(existingResponse);
     } else if (!isCompleted) {
+        // Only reset if not completed/saved, to prevent wiping user's unsaved draft
+        // Note: In a virtual list, this might reset if you scroll far away.
+        // Ideally, unsaved drafts should be lifted up, but for now this works for active interaction.
         setSaqInput('');
     }
   }, [initialSelection, isCompleted, existingResponse]);
@@ -46,10 +50,11 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
   };
 
   const handleMarkDoneClick = () => {
+    // This passes the current HTML value of saqInput to the parent
     onToggleComplete(selectedOption, saqInput);
   };
   
-  // --- FUNCTION: CALL SUPABASE EDGE FUNCTION ---
+  // --- AI FUNCTION ---
   const handleRequestAI = async () => {
     if (analysisData) return; 
 
@@ -60,9 +65,7 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
 
-      if (!token) {
-        throw new Error("Please refresh the page, you appear to be logged out.");
-      }
+      if (!token) throw new Error("Please refresh the page, you appear to be logged out.");
 
       const response = await fetch('https://qzoreybelgjynenkwobi.supabase.co/functions/v1/gemini-tutor', {
         method: 'POST',
@@ -81,9 +84,7 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
 
       const responseData = await response.json();
 
-      if (!response.ok) {
-        throw new Error(responseData.error || "Server error");
-      }
+      if (!response.ok) throw new Error(responseData.error || "Server error");
 
       setAnalysisData(responseData.analysis); 
         
@@ -201,18 +202,16 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
                         Your Response
                     </div>
                 )}
-                <textarea 
-                    value={saqInput}
-                    onChange={(e) => setSaqInput(e.target.value)}
-                    placeholder="Type your answer here before checking solutions..."
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-y transition-shadow text-sm text-slate-800 ${
-                        isCompleted 
-                        ? 'bg-gray-50 border-gray-200 text-gray-600 cursor-not-allowed' 
-                        : 'bg-indigo-50/20 border-gray-300'
-                    }`}
-                    rows={4}
-                    disabled={isCompleted} 
-                />
+                
+                {/* Updated SAQ Input using RichTextEditor */}
+                <div className={`${isCompleted ? 'opacity-70 pointer-events-none grayscale' : ''}`}>
+                    <RichTextEditor 
+                        value={saqInput}
+                        onChange={setSaqInput} // Correctly updates state with HTML string
+                        placeholder="Type your answer here before checking solutions..."
+                        readOnly={isCompleted} 
+                    />
+                </div>
             </div>
         )}
 
