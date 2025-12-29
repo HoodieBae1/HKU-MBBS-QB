@@ -6,14 +6,12 @@ const AdminDashboard = ({ onClose, questions }) => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState([]);
   const [summary, setSummary] = useState({ totalUsers: 0, totalAnswers: 0, totalAiCalls: 0 });
-  const [quotaData, setQuotaData] = useState({ totalDbBytes: 0, userBytesMap: {} }); // Store quota info
+  const [quotaData, setQuotaData] = useState({ totalDbBytes: 0, userBytesMap: {} });
   const [expandedUserId, setExpandedUserId] = useState(null);
 
-  // Constants for Cost Calc
   const PRO_PLAN_COST_USD = 25;
   const USD_TO_HKD_RATE = 7.8;
 
-  // 1. Create a fast Lookup Map: unique_id -> { topic, subtopic }
   const questionMetaMap = useMemo(() => {
     const map = new Map();
     questions.forEach(q => {
@@ -29,7 +27,6 @@ const AdminDashboard = ({ onClose, questions }) => {
     fetchDashboardData();
   }, [questionMetaMap]);
 
-  // --- HELPER: Fetch all rows from Supabase (Bypassing 1000 limit) ---
   const fetchAllRows = async (table, selectQuery) => {
     let allData = [];
     let page = 0;
@@ -59,15 +56,13 @@ const AdminDashboard = ({ onClose, questions }) => {
     try {
       setLoading(true);
 
-      // 1. Parallel Fetch: Data rows AND Quota Stats
       const [profiles, rawProgress, aiLogs, quotaResult] = await Promise.all([
-        fetchAllRows('profiles', 'id, email'),
+        fetchAllRows('profiles', 'id, email, display_name'),
         fetchAllRows('user_progress', 'user_id, score, max_score, question_id, selected_option, user_response'),
         fetchAllRows('ai_usage_logs', 'user_id'),
-        supabase.rpc('get_all_users_quota_stats') // Fetch Quota Data
+        supabase.rpc('get_all_users_quota_stats') 
       ]);
 
-      // Process Quota Data
       const totalDbBytes = quotaResult.data?.total_db_bytes || 0;
       const userBytesMap = {};
       if (quotaResult.data?.users) {
@@ -77,55 +72,55 @@ const AdminDashboard = ({ onClose, questions }) => {
       }
       setQuotaData({ totalDbBytes, userBytesMap });
 
-      // 2. Filter Logic: Remove rows that are just flags
+      // Valid Progress for Graded stats (must have content)
       const validProgress = rawProgress.filter(p => 
         p.score !== null || 
         p.selected_option !== null || 
         (p.user_response && p.user_response.length > 0)
       );
 
-      // 3. Process Data per User
       const userStats = profiles.map(user => {
-        const userAnswers = validProgress.filter(p => p.user_id === user.id);
+        // 1. All Entries (Attempted)
+        const allUserEntries = rawProgress.filter(p => p.user_id === user.id);
+        const totalAttempted = allUserEntries.length;
+
+        // 2. Graded Entries (For Accuracy)
+        const userGradedAnswers = validProgress.filter(p => p.user_id === user.id);
         const userAiCalls = aiLogs.filter(l => l.user_id === user.id);
 
-        const totalAnswered = userAnswers.length;
-        
+        let totalGradedQuestions = 0;
         let sumScore = 0;
         let sumMaxScore = 0;
         
-        userAnswers.forEach(a => {
-            const score = a.score || 0;
-            let max = a.max_score;
-            if (!max || max === 0) max = score > 1 ? score : 1; 
+        userGradedAnswers.forEach(a => {
+            if (a.score === null || a.max_score === null || a.max_score === 0) return;
             
-            sumScore += score;
-            sumMaxScore += max;
+            sumScore += a.score;
+            sumMaxScore += a.max_score;
+            totalGradedQuestions++;
         });
 
         const accuracy = sumMaxScore > 0 ? Math.round((sumScore / sumMaxScore) * 100) : 0;
 
-        // --- Hierarchical Aggregation ---
+        // 3. Hierarchy Breakdown
         const hierarchy = {}; 
 
-        userAnswers.forEach(ans => {
+        userGradedAnswers.forEach(ans => {
           const meta = questionMetaMap.get(String(ans.question_id)) || { topic: 'Unknown', subtopic: 'Unknown' };
           const { topic, subtopic } = meta;
+
+          if (ans.score === null || ans.max_score === null || ans.max_score === 0) return;
 
           if (!hierarchy[topic]) hierarchy[topic] = { score: 0, maxScore: 0, count: 0, subtopics: {} };
           if (!hierarchy[topic].subtopics[subtopic]) hierarchy[topic].subtopics[subtopic] = { score: 0, maxScore: 0, count: 0 };
 
-          const score = ans.score || 0;
-          let max = ans.max_score;
-          if (!max || max === 0) max = score > 1 ? score : 1;
-
           hierarchy[topic].count += 1;
-          hierarchy[topic].score += score;
-          hierarchy[topic].maxScore += max;
+          hierarchy[topic].score += ans.score;
+          hierarchy[topic].maxScore += ans.max_score;
 
           hierarchy[topic].subtopics[subtopic].count += 1;
-          hierarchy[topic].subtopics[subtopic].score += score;
-          hierarchy[topic].subtopics[subtopic].maxScore += max;
+          hierarchy[topic].subtopics[subtopic].score += ans.score;
+          hierarchy[topic].subtopics[subtopic].maxScore += ans.max_score;
         });
 
         const structuredStats = Object.entries(hierarchy).map(([tName, tData]) => {
@@ -146,19 +141,22 @@ const AdminDashboard = ({ onClose, questions }) => {
         return {
           id: user.id,
           email: user.email,
-          totalAnswered,
+          display_name: user.display_name,
+          totalAttempted, // NEW: Total entries in DB
+          totalGraded: totalGradedQuestions,
           accuracy,
           aiUsageCount: userAiCalls.length,
           structuredStats
         };
       });
 
-      userStats.sort((a, b) => b.accuracy - a.accuracy || b.totalAnswered - a.totalAnswered);
+      // Sort by accuracy, then by attempted count
+      userStats.sort((a, b) => b.accuracy - a.accuracy || b.totalAttempted - a.totalAttempted);
 
       setStats(userStats);
       setSummary({ 
           totalUsers: profiles.length, 
-          totalAnswers: validProgress.length, 
+          totalAnswers: rawProgress.length, // Summary now reflects total attempts
           totalAiCalls: aiLogs.length 
       });
 
@@ -183,15 +181,10 @@ const AdminDashboard = ({ onClose, questions }) => {
     return 'bg-red-400';
   };
 
-  // --- COST CALCULATION HELPER ---
   const calculateUserCost = (userId) => {
     const userBytes = quotaData.userBytesMap[userId] || 0;
-    const totalBytes = quotaData.totalDbBytes || 1; // avoid division by zero
-    
-    // (UserBytes / TotalDBBytes) * 25 USD * 7.8 Rate
+    const totalBytes = quotaData.totalDbBytes || 1; 
     const rawCostHKD = (userBytes / totalBytes) * PRO_PLAN_COST_USD * USD_TO_HKD_RATE;
-    
-    // Round to nearest 0.1
     return (Math.round(rawCostHKD * 10) / 10).toFixed(1);
   };
 
@@ -230,7 +223,7 @@ const AdminDashboard = ({ onClose, questions }) => {
              <p className="text-3xl font-bold text-gray-800">{summary.totalUsers}</p>
           </div>
           <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center">
-             <div className="flex items-center gap-2 text-gray-500 mb-1"><Target className="w-4 h-4" /><span className="text-xs font-bold uppercase">Answers Logged</span></div>
+             <div className="flex items-center gap-2 text-gray-500 mb-1"><Target className="w-4 h-4" /><span className="text-xs font-bold uppercase">Total Attempts</span></div>
              <p className="text-3xl font-bold text-teal-600">{summary.totalAnswers}</p>
           </div>
           <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center">
@@ -243,7 +236,7 @@ const AdminDashboard = ({ onClose, questions }) => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
             <h2 className="font-bold text-gray-800">User Performance & Costs</h2>
-            <span className="text-xs text-gray-400">Sorted by Overall Accuracy</span>
+            <span className="text-xs text-gray-400">Sorted by Accuracy</span>
           </div>
           
           <table className="w-full text-left border-collapse">
@@ -251,7 +244,8 @@ const AdminDashboard = ({ onClose, questions }) => {
               <tr className="text-xs font-bold text-gray-500 uppercase bg-gray-50/50 border-b border-gray-100">
                 <th className="px-6 py-3 w-16">Rank</th>
                 <th className="px-6 py-3">User</th>
-                <th className="px-6 py-3 text-center">Questions</th>
+                <th className="px-6 py-3 text-center">Attempted</th> {/* NEW COLUMN */}
+                <th className="px-6 py-3 text-center">Graded</th>
                 <th className="px-6 py-3 text-center">Accuracy</th>
                 <th className="px-6 py-3 text-center text-violet-600">AI Calls</th>
                 <th className="px-6 py-3 text-right text-emerald-600">Est. Cost</th>
@@ -270,13 +264,24 @@ const AdminDashboard = ({ onClose, questions }) => {
                       <td className="px-6 py-4">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${index === 0 ? 'bg-yellow-100 text-yellow-700' : index === 1 ? 'bg-gray-200 text-gray-600' : index === 2 ? 'bg-orange-100 text-orange-700' : 'text-gray-400 bg-gray-100'}`}>{index + 1}</div>
                       </td>
+                      
                       <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900">{user.email}</div>
-                        <div className="text-[10px] text-gray-400 font-mono">{user.id.slice(0, 8)}...</div>
+                        <div className="font-bold text-gray-900 text-sm">
+                            {user.display_name || <span className="text-gray-400 italic">No Name Set</span>}
+                        </div>
+                        <div className="text-xs text-gray-500">{user.email}</div>
                       </td>
+
+                      {/* ATTEMPTED COLUMN */}
                       <td className="px-6 py-4 text-center">
-                        <span className="inline-block px-3 py-1 bg-gray-100 rounded-full text-sm font-semibold text-gray-700">{user.totalAnswered}</span>
+                        <span className="inline-block px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-semibold">{user.totalAttempted}</span>
                       </td>
+
+                      {/* GRADED COLUMN */}
+                      <td className="px-6 py-4 text-center">
+                        <span className="inline-block px-3 py-1 bg-gray-100 rounded-full text-sm font-semibold text-gray-700">{user.totalGraded}</span>
+                      </td>
+
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
                            <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
@@ -287,7 +292,6 @@ const AdminDashboard = ({ onClose, questions }) => {
                       </td>
                       <td className="px-6 py-4 text-center"><span className="font-mono font-bold text-violet-600">{user.aiUsageCount}</span></td>
                       
-                      {/* NEW COST COLUMN */}
                       <td className="px-6 py-4 text-right">
                          <div className="flex items-center justify-end gap-1 font-mono font-bold text-emerald-600 bg-emerald-50 py-1 px-2 rounded inline-block ml-auto">
                             <DollarSign className="w-3 h-3" />
@@ -305,15 +309,15 @@ const AdminDashboard = ({ onClose, questions }) => {
                     {/* Expanded Details Row */}
                     {isExpanded && (
                       <tr className="bg-indigo-50/30 animate-in fade-in duration-200">
-                        <td colSpan="7" className="px-6 py-6">
+                        <td colSpan="8" className="px-6 py-6">
                           <div className="bg-white rounded-lg border border-indigo-100 p-6 shadow-sm">
                             <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
                               <BarChart3 className="w-4 h-4 text-indigo-500" />
-                              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Detailed Breakdown</h3>
+                              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Detailed Breakdown (Graded Only)</h3>
                             </div>
 
                             {user.structuredStats.length === 0 ? (
-                              <p className="text-gray-400 text-sm italic">No data available yet.</p>
+                              <p className="text-gray-400 text-sm italic">No graded data available yet.</p>
                             ) : (
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {user.structuredStats.map((topic, i) => (
