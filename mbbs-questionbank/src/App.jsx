@@ -253,13 +253,26 @@ const App = () => {
     setShowUserStats(false); setShowProgressPanel(false);
   };
 
+  // --- NEW HELPER: CLEAN HTML CONTENT ---
+  // Returns NULL if string contains only HTML tags, whitespace, or non-breaking spaces
+  const cleanHtmlContent = (html) => {
+    if (!html) return null;
+    // 1. Remove HTML tags
+    // 2. Remove &nbsp; entities
+    // 3. Trim whitespace
+    const textOnly = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+    return textOnly.length === 0 ? null : html;
+  };
+
   const handleToggleFlag = async (questionData, currentDraftText) => {
     if (!session) return;
     const idString = String(questionData.unique_id);
     const currentProgress = userProgress[idString] || {};
     const newFlagStatus = !currentProgress.is_flagged;
 
-    const textToSave = currentDraftText !== undefined ? currentDraftText : (currentProgress.user_response || null);
+    const rawText = currentDraftText !== undefined ? currentDraftText : (currentProgress.user_response || null);
+    // Sanitize before saving
+    const textToSave = cleanHtmlContent(rawText);
 
     const payload = {
       user_id: session.user.id,
@@ -287,8 +300,8 @@ const App = () => {
 
     if (questionData.type === 'MCQ') {
        if (isCurrentlyCompleted && existingEntry.selected_option === mcqSelection) {
-           const hasDataToKeep = (existingEntry.notes && existingEntry.notes.trim().length > 0) || 
-                                 (existingEntry.user_response && existingEntry.user_response.trim().length > 0) ||
+           const hasDataToKeep = (existingEntry.notes && cleanHtmlContent(existingEntry.notes) !== null) || 
+                                 (existingEntry.user_response && cleanHtmlContent(existingEntry.user_response) !== null) ||
                                  existingEntry.is_flagged;
 
            if (hasDataToKeep) {
@@ -391,11 +404,15 @@ const App = () => {
         ? (pendingMCQSelection ?? modalInitialData?.selected_option) 
         : null;
     
+    // Use Helper to clean Notes and Response before saving
+    const cleanedNotes = cleanHtmlContent(modalData.notes);
+    const cleanedResponse = cleanHtmlContent(modalData.user_response);
+
     const payload = {
       user_id: session.user.id,
       question_id: idString, 
-      notes: modalData.notes,
-      user_response: modalData.user_response,
+      notes: cleanedNotes,
+      user_response: cleanedResponse,
       score: finalScore,
       max_score: modalData.max_score, 
       selected_option: finalSelection,
@@ -494,11 +511,13 @@ const App = () => {
     });
 
     return result.sort((a, b) => {
-      // --- NEW: Sort by Notes ---
       if (sortOrder === 'Notes') {
+        // --- UPDATED SORT LOGIC ---
+        // Strip HTML before determining if notes exist
         const hasNotes = (qItem) => {
             const p = userProgress[String(qItem.unique_id)];
-            return p && p.notes && p.notes.trim().length > 0;
+            if (!p || !p.notes) return false;
+            return cleanHtmlContent(p.notes) !== null;
         };
         const aNotes = hasNotes(a);
         const bNotes = hasNotes(b);
@@ -727,7 +746,8 @@ const App = () => {
                 const isCompleted = checkIsCompleted(q.unique_id);
                 const isFlagged = checkIsFlagged(q.unique_id);
                 const progress = userProgress[String(q.unique_id)];
-                const hasNotes = progress?.notes && progress.notes.trim().length > 0;
+                // UPDATED: Check for *clean* notes
+                const hasNotes = progress?.notes && cleanHtmlContent(progress.notes) !== null;
                 const existingResponse = progress?.user_response || '';
                 const score = progress?.score;
                 const maxScore = progress?.max_score;
