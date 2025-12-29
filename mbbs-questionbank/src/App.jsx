@@ -13,6 +13,7 @@ import NotesPanel from './NotesPanel';
 import ProgressPanel from './ProgressPanel';
 import RecruiterDashboard from './RecruiterDashboard';
 import FeedbackModal from './FeedbackModal';
+import QuotaDisplay from './QuotaDisplay';
 import { APP_VERSION } from './appVersion';
 
 // --- HELPER HOOK: Persist state to LocalStorage ---
@@ -652,6 +653,9 @@ const App = () => {
                 <div className="flex items-center gap-2 text-[10px] text-teal-200 uppercase tracking-wider">
                   <span>Question Bank</span>
                   <span className="px-1.5 py-0.5 bg-teal-800 rounded text-teal-100 opacity-80 font-mono">v{APP_VERSION}</span>
+                  <div className="ml-2 border-l border-teal-600 pl-2">
+                    <QuotaDisplay session={session}/>
+                  </div>
                 </div>
               </div>
             </div>
@@ -679,7 +683,7 @@ const App = () => {
               >
                 <StickyNote className="w-5 h-5" />
               </button>
-              
+
               <button 
                 onClick={handleDownloadData} 
                 className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white"

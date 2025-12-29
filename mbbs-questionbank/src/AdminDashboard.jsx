@@ -1,12 +1,17 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from './supabase';
-import { Trophy, Users, BrainCircuit, X, Loader2, Target, ChevronDown, ChevronUp, BarChart3, Folder, FileText, RefreshCw } from 'lucide-react';
+import { Trophy, Users, BrainCircuit, X, Loader2, Target, ChevronDown, ChevronUp, BarChart3, Folder, FileText, RefreshCw, DollarSign } from 'lucide-react';
 
 const AdminDashboard = ({ onClose, questions }) => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState([]);
   const [summary, setSummary] = useState({ totalUsers: 0, totalAnswers: 0, totalAiCalls: 0 });
+  const [quotaData, setQuotaData] = useState({ totalDbBytes: 0, userBytesMap: {} }); // Store quota info
   const [expandedUserId, setExpandedUserId] = useState(null);
+
+  // Constants for Cost Calc
+  const PRO_PLAN_COST_USD = 25;
+  const USD_TO_HKD_RATE = 7.8;
 
   // 1. Create a fast Lookup Map: unique_id -> { topic, subtopic }
   const questionMetaMap = useMemo(() => {
@@ -54,17 +59,25 @@ const AdminDashboard = ({ onClose, questions }) => {
     try {
       setLoading(true);
 
-      // 1. Fetch ALL Data (Paginated)
-      const profiles = await fetchAllRows('profiles', 'id, email');
-      
-      const rawProgress = await fetchAllRows(
-        'user_progress', 
-        'user_id, score, max_score, question_id, selected_option, user_response'
-      );
-      
-      const aiLogs = await fetchAllRows('ai_usage_logs', 'user_id');
+      // 1. Parallel Fetch: Data rows AND Quota Stats
+      const [profiles, rawProgress, aiLogs, quotaResult] = await Promise.all([
+        fetchAllRows('profiles', 'id, email'),
+        fetchAllRows('user_progress', 'user_id, score, max_score, question_id, selected_option, user_response'),
+        fetchAllRows('ai_usage_logs', 'user_id'),
+        supabase.rpc('get_all_users_quota_stats') // Fetch Quota Data
+      ]);
 
-      // 2. Filter Logic: Remove rows that are just flags (no content)
+      // Process Quota Data
+      const totalDbBytes = quotaResult.data?.total_db_bytes || 0;
+      const userBytesMap = {};
+      if (quotaResult.data?.users) {
+        quotaResult.data.users.forEach(u => {
+            userBytesMap[u.user_id] = u.total_user_bytes;
+        });
+      }
+      setQuotaData({ totalDbBytes, userBytesMap });
+
+      // 2. Filter Logic: Remove rows that are just flags
       const validProgress = rawProgress.filter(p => 
         p.score !== null || 
         p.selected_option !== null || 
@@ -78,13 +91,11 @@ const AdminDashboard = ({ onClose, questions }) => {
 
         const totalAnswered = userAnswers.length;
         
-        // Sum based calculation
         let sumScore = 0;
         let sumMaxScore = 0;
         
         userAnswers.forEach(a => {
             const score = a.score || 0;
-            // Backwards compatibility: If max_score missing, assume 1 unless score > 1
             let max = a.max_score;
             if (!max || max === 0) max = score > 1 ? score : 1; 
             
@@ -94,28 +105,20 @@ const AdminDashboard = ({ onClose, questions }) => {
 
         const accuracy = sumMaxScore > 0 ? Math.round((sumScore / sumMaxScore) * 100) : 0;
 
-        // --- Hierarchical Aggregation (Topic -> Subtopics) ---
+        // --- Hierarchical Aggregation ---
         const hierarchy = {}; 
 
         userAnswers.forEach(ans => {
           const meta = questionMetaMap.get(String(ans.question_id)) || { topic: 'Unknown', subtopic: 'Unknown' };
           const { topic, subtopic } = meta;
 
-          // Init Topic
-          if (!hierarchy[topic]) {
-            hierarchy[topic] = { score: 0, maxScore: 0, count: 0, subtopics: {} };
-          }
-          
-          // Init Subtopic
-          if (!hierarchy[topic].subtopics[subtopic]) {
-            hierarchy[topic].subtopics[subtopic] = { score: 0, maxScore: 0, count: 0 };
-          }
+          if (!hierarchy[topic]) hierarchy[topic] = { score: 0, maxScore: 0, count: 0, subtopics: {} };
+          if (!hierarchy[topic].subtopics[subtopic]) hierarchy[topic].subtopics[subtopic] = { score: 0, maxScore: 0, count: 0 };
 
           const score = ans.score || 0;
           let max = ans.max_score;
           if (!max || max === 0) max = score > 1 ? score : 1;
 
-          // Increment Counts
           hierarchy[topic].count += 1;
           hierarchy[topic].score += score;
           hierarchy[topic].maxScore += max;
@@ -125,9 +128,7 @@ const AdminDashboard = ({ onClose, questions }) => {
           hierarchy[topic].subtopics[subtopic].maxScore += max;
         });
 
-        // Flatten Hierarchy for Rendering
         const structuredStats = Object.entries(hierarchy).map(([tName, tData]) => {
-          // Flatten Subtopics
           const subList = Object.entries(tData.subtopics).map(([sName, sData]) => ({
             name: sName,
             total: sData.count,
@@ -152,7 +153,6 @@ const AdminDashboard = ({ onClose, questions }) => {
         };
       });
 
-      // Sort Users (Accuracy Descending)
       userStats.sort((a, b) => b.accuracy - a.accuracy || b.totalAnswered - a.totalAnswered);
 
       setStats(userStats);
@@ -183,6 +183,18 @@ const AdminDashboard = ({ onClose, questions }) => {
     return 'bg-red-400';
   };
 
+  // --- COST CALCULATION HELPER ---
+  const calculateUserCost = (userId) => {
+    const userBytes = quotaData.userBytesMap[userId] || 0;
+    const totalBytes = quotaData.totalDbBytes || 1; // avoid division by zero
+    
+    // (UserBytes / TotalDBBytes) * 25 USD * 7.8 Rate
+    const rawCostHKD = (userBytes / totalBytes) * PRO_PLAN_COST_USD * USD_TO_HKD_RATE;
+    
+    // Round to nearest 0.1
+    return (Math.round(rawCostHKD * 10) / 10).toFixed(1);
+  };
+
   if (loading) return <div className="fixed inset-0 z-[60] flex items-center justify-center bg-white/90"><Loader2 className="animate-spin w-8 h-8 text-indigo-600"/></div>;
 
   return (
@@ -194,7 +206,7 @@ const AdminDashboard = ({ onClose, questions }) => {
           <div className="p-2 bg-indigo-800 rounded-lg"><Trophy className="w-6 h-6 text-yellow-400" /></div>
           <div>
             <h1 className="text-xl font-bold">Admin Dashboard</h1>
-            <p className="text-xs text-indigo-300">Topic & Subtopic Analytics</p>
+            <p className="text-xs text-indigo-300">Performance & Quota Analytics</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -230,7 +242,7 @@ const AdminDashboard = ({ onClose, questions }) => {
         {/* User Table */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-            <h2 className="font-bold text-gray-800">User Performance</h2>
+            <h2 className="font-bold text-gray-800">User Performance & Costs</h2>
             <span className="text-xs text-gray-400">Sorted by Overall Accuracy</span>
           </div>
           
@@ -240,14 +252,16 @@ const AdminDashboard = ({ onClose, questions }) => {
                 <th className="px-6 py-3 w-16">Rank</th>
                 <th className="px-6 py-3">User</th>
                 <th className="px-6 py-3 text-center">Questions</th>
-                <th className="px-6 py-3 text-center">Overall Accuracy</th>
-                <th className="px-6 py-3 text-center text-violet-600">AI Usage</th>
-                <th className="px-6 py-3 text-right">Breakdown</th>
+                <th className="px-6 py-3 text-center">Accuracy</th>
+                <th className="px-6 py-3 text-center text-violet-600">AI Calls</th>
+                <th className="px-6 py-3 text-right text-emerald-600">Est. Cost</th>
+                <th className="px-6 py-3 text-right">Details</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {stats.map((user, index) => {
                 const isExpanded = expandedUserId === user.id;
+                const costHKD = calculateUserCost(user.id);
                 
                 return (
                   <React.Fragment key={user.id}>
@@ -272,6 +286,15 @@ const AdminDashboard = ({ onClose, questions }) => {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center"><span className="font-mono font-bold text-violet-600">{user.aiUsageCount}</span></td>
+                      
+                      {/* NEW COST COLUMN */}
+                      <td className="px-6 py-4 text-right">
+                         <div className="flex items-center justify-end gap-1 font-mono font-bold text-emerald-600 bg-emerald-50 py-1 px-2 rounded inline-block ml-auto">
+                            <DollarSign className="w-3 h-3" />
+                            {costHKD} HKD
+                         </div>
+                      </td>
+
                       <td className="px-6 py-4 text-right">
                         <button className="text-gray-400 hover:text-indigo-600 transition-colors">
                           {isExpanded ? <ChevronUp className="w-5 h-5"/> : <ChevronDown className="w-5 h-5"/>}
@@ -282,7 +305,7 @@ const AdminDashboard = ({ onClose, questions }) => {
                     {/* Expanded Details Row */}
                     {isExpanded && (
                       <tr className="bg-indigo-50/30 animate-in fade-in duration-200">
-                        <td colSpan="6" className="px-6 py-6">
+                        <td colSpan="7" className="px-6 py-6">
                           <div className="bg-white rounded-lg border border-indigo-100 p-6 shadow-sm">
                             <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
                               <BarChart3 className="w-4 h-4 text-indigo-500" />
@@ -296,7 +319,6 @@ const AdminDashboard = ({ onClose, questions }) => {
                                 {user.structuredStats.map((topic, i) => (
                                   <div key={i} className="border border-gray-200 rounded-lg overflow-hidden bg-slate-50">
                                     
-                                    {/* Topic Header */}
                                     <div className="bg-white p-3 border-b border-gray-200 flex justify-between items-center">
                                       <div className="flex items-center gap-2">
                                         <Folder className="w-4 h-4 text-indigo-400" />
@@ -307,12 +329,10 @@ const AdminDashboard = ({ onClose, questions }) => {
                                       </div>
                                     </div>
                                     
-                                    {/* Topic Score Bar */}
                                     <div className="w-full h-1 bg-gray-100">
                                        <div className={`h-full ${getBarColor(topic.accuracy)}`} style={{width: `${topic.accuracy}%`}}></div>
                                     </div>
 
-                                    {/* Subtopics List */}
                                     <div className="p-3 space-y-2">
                                       {topic.subtopics.map((sub, j) => (
                                         <div key={j} className="flex items-center justify-between text-xs">
