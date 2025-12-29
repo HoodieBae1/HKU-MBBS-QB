@@ -18,11 +18,18 @@ const UserStats = ({ questions, userProgress, onFilterSelect }) => {
     });
 
     Object.values(userProgress).forEach(entry => {
-      // Filter out entries that are just flags or placeholders
-      if (entry.score === null && entry.selected_option === null) return;
-
       const meta = metaMap.get(String(entry.question_id));
       if (!meta) return;
+
+      // --- STRICT FILTER ---
+      // Only count questions that have been explicitly graded.
+      // If score is null OR max_score is null/0, it means it's either:
+      // 1. Just flagged
+      // 2. Just notes (no grade)
+      // 3. Unmarked (Redone)
+      if (entry.score === null || entry.max_score === null || entry.max_score === 0) {
+          return;
+      }
 
       const { topic, subtopic } = meta;
 
@@ -30,14 +37,8 @@ const UserStats = ({ questions, userProgress, onFilterSelect }) => {
       if (!hierarchy[topic]) hierarchy[topic] = { score: 0, maxScore: 0, count: 0, subtopics: {} };
       if (!hierarchy[topic].subtopics[subtopic]) hierarchy[topic].subtopics[subtopic] = { score: 0, maxScore: 0, count: 0 };
 
-      // Determine Max Score (Backwards compatibility: If missing/null, assume 1 unless score > 1)
-      // Safety: If an SAQ has score 3 but no max_score (legacy), default to score (100%) to avoid >100% bug.
-      let currentMax = entry.max_score;
-      if (!currentMax || currentMax === 0) {
-          currentMax = entry.score > 1 ? entry.score : 1; 
-      }
-      
-      const currentScore = entry.score || 0;
+      const currentScore = entry.score;
+      const currentMax = entry.max_score;
 
       // Aggregations
       hierarchy[topic].count += 1;
@@ -115,18 +116,18 @@ const UserStats = ({ questions, userProgress, onFilterSelect }) => {
             </div>
         </div>
 
-        {/* --- NEW: REMINDER BOX --- */}
+        {/* Reminder Box */}
         <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-6 flex items-start gap-3 text-sm text-blue-800 shadow-sm">
             <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
             <div>
-              Your answer is only saved to statistics when you click the <span className="inline-block px-1.5 py-0.5 bg-white border border-blue-200 rounded font-bold text-xs mx-1 shadow-sm">Mark Done</span> button after selecting an option for MCQ or filling in scores for SAQ.
+              Questions are only included in statistics if they have been <strong>graded</strong> (Max Score &gt; 0). Notes-only entries are excluded.
             </div>
         </div>
 
         {/* Grid Content */}
         {stats.structuredStats.length === 0 ? (
           <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-400 italic">
-             No data yet. Complete some questions to see your mastery breakdown!
+             No graded questions found yet.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
