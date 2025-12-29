@@ -418,7 +418,6 @@ const App = () => {
     }
   };
 
-  // --- FIXED HANDLE REDO ---
   const handleRedo = async (questionData) => {
     if (!session) return;
     const idString = String(questionData.unique_id);
@@ -428,8 +427,8 @@ const App = () => {
 
     const payload = {
         ...existingEntry,
-        user_id: session.user.id, // Explicitly add user_id
-        question_id: idString,    // Explicitly add question_id
+        user_id: session.user.id, 
+        question_id: idString,
         score: null,
         max_score: null,
         selected_option: null,
@@ -439,12 +438,7 @@ const App = () => {
     };
 
     setUserProgress(prev => ({ ...prev, [idString]: payload }));
-    
-    const { error } = await supabase.from('user_progress').upsert(payload, { onConflict: 'user_id,question_id' });
-    
-    if (error) {
-        console.error("Redo sync failed:", error);
-    }
+    await supabase.from('user_progress').upsert(payload, { onConflict: 'user_id,question_id' });
   };
 
   const handleLogout = async () => { await supabase.auth.signOut(); };
@@ -500,6 +494,18 @@ const App = () => {
     });
 
     return result.sort((a, b) => {
+      // --- NEW: Sort by Notes ---
+      if (sortOrder === 'Notes') {
+        const hasNotes = (qItem) => {
+            const p = userProgress[String(qItem.unique_id)];
+            return p && p.notes && p.notes.trim().length > 0;
+        };
+        const aNotes = hasNotes(a);
+        const bNotes = hasNotes(b);
+        if (aNotes !== bNotes) return aNotes ? -1 : 1;
+        return a.unique_id - b.unique_id;
+      }
+
       if (sortOrder === 'Incorrect') {
         const getIncorrectStatus = (qItem) => {
             const p = userProgress[String(qItem.unique_id)];
@@ -678,6 +684,7 @@ const App = () => {
                             <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="w-full pl-3 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white">
                               <option value="Newest">Newest First</option>
                               <option value="Oldest">Oldest First</option>
+                              <option value="Notes">With Notes First</option> {/* NEW OPTION */}
                               <option value="Incorrect">Incorrect First</option>
                               <option value="Completed">Completed First</option>
                               <option value="Unfinished">Unfinished First</option>
