@@ -141,8 +141,6 @@ const App = () => {
 
   // --- DB HELPER ---
   const fetchUserProgress = async (userId) => {
-    // FIX: Removed 'updated_at' because it doesn't exist in your schema.
-    // Added 'created_at' instead which is in your schema.
     const { data, error } = await supabase
       .from('user_progress')
       .select('id, question_id, notes, user_response, score, max_score, selected_option, is_flagged, created_at')
@@ -200,14 +198,12 @@ const App = () => {
   // --- ACTIONS ---
   
   // --- DOWNLOAD DATA FEATURE ---
-  const handleDownloadData = () => {
-    if (!questions.length) return;
+  const handleDownloadData = async () => {
+    if (!questions.length || !session) return;
 
-    // Filter questions to only those the user has interacted with
+    // 1. Filter questions to only those the user has interacted with
     const exportData = questions.map(q => {
         const progress = userProgress[String(q.unique_id)];
-        
-        // If no progress exists, skip this question
         if (!progress) return null;
 
         return {
@@ -218,17 +214,15 @@ const App = () => {
             subtopic: q.subtopic,
             question_text: q.question,
             official_solution: q.official_answer,
-            // User Data
             user_score: progress.score,
             max_score: progress.max_score,
             user_notes: progress.notes || "",
-            user_written_response: progress.user_response || "", // SAQ response
-            user_selected_option_index: progress.selected_option, // MCQ index
+            user_written_response: progress.user_response || "",
+            user_selected_option_index: progress.selected_option,
             user_selected_option_text: (q.type === 'MCQ' && progress.selected_option !== null && q.options) 
                                         ? q.options[progress.selected_option] 
                                         : null,
             is_flagged: progress.is_flagged,
-            // Use created_at since updated_at doesn't exist in your schema
             timestamp: progress.created_at
         };
     }).filter(item => item !== null); 
@@ -238,12 +232,23 @@ const App = () => {
         return;
     }
 
-    // Create JSON blob
+    // 2. LOG THE DOWNLOAD ACTION
+    try {
+        await supabase.from('export_logs').insert({
+            user_id: session.user.id,
+            record_count: exportData.length,
+            user_agent: navigator.userAgent
+        });
+    } catch (logError) {
+        console.error("Failed to log download action:", logError);
+        // We continue with the download even if logging fails
+    }
+
+    // 3. TRIGGER BROWSER DOWNLOAD
     const jsonString = JSON.stringify(exportData, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
 
-    // Trigger Download
     const link = document.createElement('a');
     link.href = url;
     link.download = `my_progress_data_${new Date().toISOString().split('T')[0]}.json`;
