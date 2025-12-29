@@ -11,7 +11,7 @@ import AdminDashboard from './AdminDashboard';
 import UserStats from './UserStats';
 import NotesPanel from './NotesPanel';
 import ProgressPanel from './ProgressPanel';
-import RecruiterDashboard from './RecruiterDashboard'; // Import this
+import RecruiterDashboard from './RecruiterDashboard';
 import FeedbackModal from './FeedbackModal';
 import { APP_VERSION } from './appVersion';
 
@@ -48,11 +48,11 @@ const App = () => {
 
   // --- ADMIN & RECRUITER STATE ---
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isRecruiter, setIsRecruiter] = useState(false); // New state
+  const [isRecruiter, setIsRecruiter] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
-  const [showRecruiterDash, setShowRecruiterDash] = useState(false); // New state
+  const [showRecruiterDash, setShowRecruiterDash] = useState(false);
   
-  // NEW STATE for Password Reset
+  // PASSWORD RESET STATE
   const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
@@ -63,7 +63,7 @@ const App = () => {
   const [showProgressPanel, setShowProgressPanel] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
-  // --- FILTERS & UI (Now Persistent) ---
+  // --- FILTERS & UI (Persistent) ---
   const [filtersOpen, setFiltersOpen] = useStickyState(true, 'app_filtersOpen');
   const [searchQuery, setSearchQuery] = useStickyState('', 'app_searchQuery');
   const [selectedTopic, setSelectedTopic] = useStickyState('All', 'app_selectedTopic');
@@ -98,7 +98,6 @@ const App = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       
-      // --- DETECT PASSWORD RECOVERY EVENT ---
       if (event === 'PASSWORD_RECOVERY') {
         setShowPasswordResetModal(true);
       }
@@ -165,12 +164,10 @@ const App = () => {
         .single();
       
       if (!error) {
-          // Admin gets both rights
           if (data?.role === 'admin') {
               setIsAdmin(true);
               setIsRecruiter(true);
           }
-          // Recruiter gets recruiter rights
           if (data?.role === 'recruiter') {
               setIsRecruiter(true);
           }
@@ -197,8 +194,6 @@ const App = () => {
   };
 
   // --- ACTIONS ---
-  
-  // Logic to ensure only one drawer is open at a time
   const toggleProgressPanel = () => {
       if (!showProgressPanel) {
           setShowUserStats(false);
@@ -226,7 +221,6 @@ const App = () => {
   const handleQuickFilter = (topic, subtopic) => {
     setSelectedTopic(topic);
     setSelectedSubtopic(subtopic);
-    // Close whatever panel was open
     setShowUserStats(false); 
     setShowProgressPanel(false);
   };
@@ -265,13 +259,11 @@ const App = () => {
     const isCurrentlyCompleted = existingEntry && (existingEntry.score !== null || existingEntry.selected_option !== null || existingEntry.notes);
 
     if (isCurrentlyCompleted) {
-      // --- WARNING CONFIRMATION START ---
       const confirmUncheck = window.confirm(
         "Marking question as undone will automatically delete notes associated with this question. Are you sure you want to mark this question as undone?\n\nIf you want to change notes or points allocation for this question, click the notes button."
       );
       
       if (!confirmUncheck) return;
-      // --- WARNING CONFIRMATION END ---
 
       if (existingEntry.is_flagged) {
         const payload = { 
@@ -332,12 +324,24 @@ const App = () => {
   const handleReviewNotes = (questionData) => {
     const idString = String(questionData.unique_id);
     const existingData = userProgress[idString];
+    
+    setPendingQuestion(questionData);
+    
     if (existingData) {
-      setPendingQuestion(questionData);
       setModalInitialData(existingData);
       setPendingMCQSelection(null); 
-      setModalOpen(true);
+    } else {
+      setModalInitialData({
+        notes: '',
+        user_response: '',
+        score: null,
+        max_score: null,
+        selected_option: null
+      });
+      setPendingMCQSelection(null);
     }
+    
+    setModalOpen(true);
   };
 
   const handleConfirmCompletion = async (modalData) => {
@@ -350,12 +354,15 @@ const App = () => {
         if (pendingMCQSelection !== null) {
             const isCorrect = pendingMCQSelection === pendingQuestion.correctAnswerIndex;
             finalScore = isCorrect ? 1 : 0;
-        } else if (modalInitialData) {
+        } else if (modalInitialData && modalInitialData.score !== undefined) {
             finalScore = modalInitialData.score;
         }
     }
 
-    const finalSelection = pendingQuestion.type === 'MCQ' ? (pendingMCQSelection ?? modalInitialData?.selected_option) : null;
+    // Determine if we should mark MCQ as "selected" based on notes update vs fresh answer
+    const finalSelection = pendingQuestion.type === 'MCQ' 
+        ? (pendingMCQSelection ?? modalInitialData?.selected_option) 
+        : null;
     
     const payload = {
       user_id: session.user.id,
@@ -397,7 +404,7 @@ const App = () => {
 
   const checkIsFlagged = (id) => userProgress[String(id)]?.is_flagged === true;
 
-  // --- FILTER LOGIC & COUNTS ---
+  // --- FILTER LOGIC ---
   const filterCounts = useMemo(() => {
     const qLower = searchQuery.toLowerCase().trim();
     const baseSet = questions.filter(q => {
@@ -467,7 +474,6 @@ const App = () => {
           const val = parseInt(idStr.substring(1, 3), 10);
           return isNaN(val) ? 0 : (val < 50 ? 2000 + val : 1900 + val);
         };
-        // a - b for Ascending (Oldest first)
         const yearDiff = getYear(a.id) - getYear(b.id);
         if (yearDiff !== 0) return yearDiff;
         return a.unique_id - b.unique_id;
@@ -501,9 +507,11 @@ const App = () => {
   if (error) return <div>{error}</div>;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-20 relative">
+    // MAIN WRAPPER: Shifts left when modal is open to allow seeing the question
+    <div className={`min-h-screen bg-slate-50 text-slate-900 font-sans pb-20 relative transition-[margin] duration-300 ease-in-out ${modalOpen ? 'md:mr-[480px]' : 'mr-0'}`}>
       <UpdateManager />
       <FeedbackModal isOpen={showFeedbackModal} onClose={() => setShowFeedbackModal(false)} user={session?.user} />
+      
       {showPasswordResetModal && (
         <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95">
@@ -533,6 +541,7 @@ const App = () => {
           </div>
         </div>
       )}
+
       {/* --- OVERLAYS --- */}
       <CompletionModal 
         isOpen={modalOpen}
@@ -542,16 +551,17 @@ const App = () => {
         type={pendingQuestion?.type}
         initialData={modalInitialData}
       />
+      
       {showDashboard && <AdminDashboard onClose={() => setShowDashboard(false)} questions={questions} />}
       {showHistory && <VersionHistory onClose={() => setShowHistory(false)} />}
       {showNotesPanel && <NotesPanel onClose={() => setShowNotesPanel(false)} questions={questions} userProgress={userProgress} />}
       {showRecruiterDash && <RecruiterDashboard onClose={() => setShowRecruiterDash(false)} />}
       
       {/* --- UNIFIED STICKY HEADER & CONTROL BAR --- */}
-      <div className="sticky top-0 z-50">
+      <div className="sticky top-0 z-40">
         
         {/* HEADER */}
-        <header className="bg-teal-700 text-white shadow-md z-50 relative">
+        <header className="bg-teal-700 text-white shadow-md relative">
           <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
             <div className="flex items-center gap-3">
               <Stethoscope className="w-7 h-7 text-teal-200" />
@@ -565,7 +575,6 @@ const App = () => {
             </div>
             <div className="flex items-center gap-2">
               
-              {/* Recruiter / Admin Buttons */}
               {isRecruiter && (
               <button 
                 onClick={() => setShowRecruiterDash(true)} 
@@ -605,14 +614,12 @@ const App = () => {
           </div>
         </header>
 
-        {/* CONTROL BAR (Inside sticky wrapper) */}
-        <div className="bg-white border-b border-gray-200 shadow-sm z-40 relative">
+        {/* CONTROL BAR */}
+        <div className="bg-white border-b border-gray-200 shadow-sm relative">
           <div className="max-w-6xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between gap-4">
               
               <div className="flex-grow flex items-center gap-3">
-                
-                {/* CLICKABLE PROGRESS AREA */}
                 <div 
                     onClick={toggleProgressPanel}
                     className={`flex-grow flex flex-col justify-center cursor-pointer group p-2 -ml-2 rounded-lg transition-colors ${showProgressPanel ? 'bg-indigo-50' : 'hover:bg-gray-50'}`}

@@ -42,10 +42,10 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
     if (selectedOption !== null) return; 
     setSelectedOption(idx);
     setIsRevealed(true); 
+    onToggleComplete(idx, saqInput);
   };
 
   const handleMarkDoneClick = () => {
-    // Pass saqInput back to parent
     onToggleComplete(selectedOption, saqInput);
   };
   
@@ -102,8 +102,6 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
     return 'opacity-50 border-gray-100'; 
   };
 
-  // Determine display denominator (Max Score)
-  // If maxScore is missing but it's an MCQ, default to 1. Otherwise use '-'
   const displayMaxScore = maxScore || (isMCQ ? 1 : '-');
 
   return (
@@ -121,12 +119,11 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
         
         <div className="flex items-center gap-3">
           
-          {/* NEW: Score Badge for ALL Question Types */}
           {isCompleted && (score !== undefined && score !== null) && (
               <div className={`flex items-center gap-1 px-2 py-1 border rounded text-xs font-bold font-mono mr-1 ${
                   score === displayMaxScore 
-                  ? 'bg-green-50 border-green-200 text-green-700' // Perfect score
-                  : 'bg-orange-50 border-orange-200 text-orange-700' // Partial/Zero score
+                  ? 'bg-green-50 border-green-200 text-green-700'
+                  : 'bg-orange-50 border-orange-200 text-orange-700'
               }`}>
                   {score} / {displayMaxScore}
               </div>
@@ -143,19 +140,17 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
             <Flag className={`w-4 h-4 ${isFlagged ? 'fill-current' : ''}`} />
           </button>
 
-          {isCompleted && (
-            <button
-              onClick={onReviewNotes}
-              className={`flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded transition-colors ${
-                  hasNotes 
-                  ? 'bg-yellow-100 text-yellow-700 border border-yellow-200 hover:bg-yellow-200' 
-                  : 'bg-white text-gray-500 border border-gray-200 hover:text-teal-600 hover:border-teal-300'
-              }`}
-            >
-              <StickyNote className={`w-4 h-4 ${hasNotes ? 'fill-yellow-500 text-yellow-600' : ''}`} />
-              {hasNotes ? 'View Notes' : 'Notes'}
-            </button>
-          )}
+          <button
+            onClick={onReviewNotes}
+            className={`flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded transition-colors ${
+                hasNotes 
+                ? 'bg-yellow-100 text-yellow-700 border border-yellow-200 hover:bg-yellow-200' 
+                : 'bg-white text-gray-500 border border-gray-200 hover:text-teal-600 hover:border-teal-300'
+            }`}
+          >
+            <StickyNote className={`w-4 h-4 ${hasNotes ? 'fill-yellow-500 text-yellow-600' : ''}`} />
+            {hasNotes ? 'View Notes' : 'Notes'}
+          </button>
 
           <button 
             onClick={handleMarkDoneClick}
@@ -181,7 +176,6 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
           {data.question}
         </h3>
 
-        {/* MCQ OPTIONS */}
         {isMCQ && data.options && (
           <div className="flex flex-col gap-3">
             {data.options.map((opt, i) => (
@@ -200,7 +194,6 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
           </div>
         )}
 
-        {/* SAQ INPUT AREA (Always visible if !isMCQ) */}
         {!isMCQ && (
             <div className="mb-4">
                 {isCompleted && (
@@ -218,12 +211,11 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
                         : 'bg-indigo-50/20 border-gray-300'
                     }`}
                     rows={4}
-                    disabled={isCompleted} // Read-only if completed
+                    disabled={isCompleted} 
                 />
             </div>
         )}
 
-        {/* --- SOLUTIONS AREA --- */}
         {isRevealed && (
           <div className="mt-6 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
             
@@ -237,7 +229,6 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
               </p>
             </div>
 
-            {/* PRE-COMPUTED AI SUMMARY */}
             {data.ai_answer && (
               <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 relative overflow-hidden">
                 <BrainCircuit className="absolute -right-4 -bottom-4 w-24 h-24 text-indigo-100/50 pointer-events-none" />
@@ -256,31 +247,25 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
               </div>
             )}
 
-            {/* NEW: DETAILED AI ANALYSIS SECTION */}
             <div className="border border-violet-100 rounded-lg overflow-hidden bg-white shadow-sm">
                 
-                {/* 1. The Result (if loaded) */}
                 {analysisData && (
                   <div className="p-5 bg-gradient-to-br from-white to-violet-50/30">
                      <div className="flex items-center gap-2 mb-3 pb-3 border-b border-violet-100">
                         <Sparkles className="w-4 h-4 text-violet-600" />
-                        <span className="font-bold text-sm text-violet-900 uppercase tracking-wide">AI Professor's Detailed Analysis (Gemini 2.5 Flash)</span>
+                        <span className="font-bold text-sm text-violet-900 uppercase tracking-wide">AI Professor's Detailed Analysis</span>
                      </div>
                      
-                     {/* --- 2. UPDATED MARKDOWN RENDERER --- */}
                      <div className="text-slate-700 font-serif text-sm leading-relaxed">
                        <ReactMarkdown
                           components={{
-                            // Custom styles for Markdown elements
                             h1: ({node, ...props}) => <h1 className="text-lg font-bold text-violet-900 mt-4 mb-2" {...props} />,
                             h2: ({node, ...props}) => <h2 className="text-base font-bold text-violet-800 mt-4 mb-2 uppercase tracking-wide" {...props} />,
                             h3: ({node, ...props}) => <h3 className="text-sm font-bold text-violet-700 mt-3 mb-1" {...props} />,
                             p: ({node, ...props}) => <p className="mb-3" {...props} />,
                             ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
-                            ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
                             li: ({node, ...props}) => <li className="pl-1" {...props} />,
                             strong: ({node, ...props}) => <strong className="font-bold text-violet-950" {...props} />,
-                            em: ({node, ...props}) => <em className="italic text-slate-600" {...props} />,
                           }}
                        >
                          {analysisData}
@@ -290,7 +275,6 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
                   </div>
                 )}
 
-                {/* 2. The Button */}
                 {!analysisData && !isAnalyzing && (
                   <button 
                     onClick={handleRequestAI}
@@ -303,7 +287,6 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
                   </button>
                 )}
 
-                {/* 3. Loading Spinner */}
                 {isAnalyzing && (
                   <div className="p-8 flex flex-col items-center justify-center text-center bg-violet-50/50">
                     <Loader2 className="w-6 h-6 text-violet-600 animate-spin mb-2" />
@@ -311,7 +294,6 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
                   </div>
                 )}
 
-                {/* 4. Error Message */}
                 {analysisError && (
                   <div className="p-3 bg-red-50 flex items-center justify-between text-xs text-red-600">
                     <div className="flex items-center gap-2">
