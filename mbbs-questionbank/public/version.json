@@ -1,6 +1,14 @@
 {
-  "currentVersion": "2.2.2",
+  "currentVersion": "2.2.3",
   "history": [
+    {
+      "version": "2.2.3",
+      "date": "2025-12-29",
+      "title": "Subtopics labeling minor fix",
+      "changes": [
+        "Bugfix: Minor subtopics labelling bug fix"
+      ]
+    },
     {
       "version": "2.2.2",
       "date": "2025-12-29",
