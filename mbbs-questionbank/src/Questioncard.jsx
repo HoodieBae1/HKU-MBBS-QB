@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react'; 
 import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, Square, StickyNote, Flag, Sparkles, Loader2, AlertCircle, RotateCcw } from 'lucide-react';
+import { supabase } from './supabase'; 
 import ReactMarkdown from 'react-markdown'; 
 import RichTextEditor from './RichTextEditor'; 
+
+// --- 1. IMPORT KATEX & PLUGINS ---
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css'; // <--- Crucial for styling
+// ---------------------------------
 
 // --- DEFINE MODELS ---
 const AI_MODELS = [
@@ -29,7 +36,7 @@ const AI_MODELS = [
   { 
     id: 'gemini-2.5-pro', 
     name: '2.5 Pro',
-    cost: '~$0.10', 
+    cost: '~$0.1', 
     label: 'High Reasoning', 
     style: 'border-blue-200 hover:bg-blue-50' 
   },
@@ -45,27 +52,15 @@ const AI_MODELS = [
 const QuestionCard = ({ 
     data, index, isCompleted, isFlagged, hasNotes, 
     existingResponse, score, maxScore, initialSelection,
-    
-    // Handlers
     onToggleComplete, onToggleFlag, onReviewNotes, onRedo,
-    
-    // Persistent State Props
-    isRevealedOverride,
-    onToggleReveal,
-    onTextChange,
-
-    // NEW: AI Props from App.jsx
-    aiState,     
-    onRequestAI  
+    isRevealedOverride, onToggleReveal, onTextChange,
+    aiState, onRequestAI  
 }) => {
   
   const [selectedOption, setSelectedOption] = useState(null);
-
-  // Local Input for performance (Typing lag fix)
   const [localInput, setLocalInput] = useState(existingResponse || '');
   const debouncedUpdateRef = useRef(null);
 
-  // --- UNPACK AI STATE FROM PROPS ---
   const {
       loadingModel = null,
       data: analysisData = null,
@@ -74,7 +69,6 @@ const QuestionCard = ({
       purchasedModels = [],
       selectedModel = 'gemini-2.5-flash' 
   } = aiState || {};
-  // ---------------------------------
 
   const [isHolding, setIsHolding] = useState(false);
   const [holdProgress, setHoldProgress] = useState(0);
@@ -85,7 +79,6 @@ const QuestionCard = ({
   const isMCQ = data.type === 'MCQ';
   const isRevealed = isCompleted || isRevealedOverride || false;
 
-  // --- SYNC EFFECTS ---
   useEffect(() => {
     if (initialSelection !== undefined && initialSelection !== null) {
       setSelectedOption(initialSelection);
@@ -103,7 +96,6 @@ const QuestionCard = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingResponse]); 
 
-  // --- HANDLERS ---
   const handleSaqChange = (val) => {
       setLocalInput(val);
       if (debouncedUpdateRef.current) clearTimeout(debouncedUpdateRef.current);
@@ -124,7 +116,6 @@ const QuestionCard = ({
     onToggleComplete(idx, null, 'FULL'); 
   };
 
-  // --- HOLD LOGIC ---
   const startHold = () => {
     if (!isCompleted) return; 
     setIsHolding(true);
@@ -153,7 +144,6 @@ const QuestionCard = ({
     if (onRedo) onRedo();
   };
 
-  // --- BUTTON CLICK HANDLERS ---
   const handleNotesClick = () => {
     const viewMode = isCompleted ? 'FULL' : 'NOTES';
     onReviewNotes(localInput, viewMode); 
@@ -167,7 +157,6 @@ const QuestionCard = ({
     }
   };
 
-  // --- STYLES ---
   const getOptionStyle = (idx) => {
     if (!isCompleted && selectedOption === null) return 'hover:bg-slate-50 cursor-pointer border-gray-200';
     if (idx === data.correctAnswerIndex) return 'bg-emerald-100 border-emerald-500 text-emerald-800 font-medium';
@@ -211,7 +200,6 @@ const QuestionCard = ({
         </div>
         
         <div className="flex items-center gap-3">
-          {/* Score */}
           {isCompleted && (score !== undefined && score !== null) && (
               <div className={`flex items-center gap-1 px-2 py-1 border rounded text-xs font-bold font-mono mr-1 ${
                   score === displayMaxScore 
@@ -222,38 +210,16 @@ const QuestionCard = ({
               </div>
           )}
 
-          {/* Flag */}
-          <button
-            onClick={() => onToggleFlag(localInput)}
-            className={`flex items-center justify-center p-1.5 rounded transition-colors ${
-              isFlagged ? 'bg-orange-100 text-orange-600 border border-orange-200' : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50'
-            }`}
-          >
+          <button onClick={() => onToggleFlag(localInput)} className={`flex items-center justify-center p-1.5 rounded transition-colors ${isFlagged ? 'bg-orange-100 text-orange-600 border border-orange-200' : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50'}`}>
             <Flag className={`w-4 h-4 ${isFlagged ? 'fill-current' : ''}`} />
           </button>
 
-          {/* Notes */}
-          <button
-            onClick={handleNotesClick}
-            className={`flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded transition-colors ${
-                hasNotes ? 'bg-yellow-100 text-yellow-700 border border-yellow-200 hover:bg-yellow-200' : 'bg-white text-gray-500 border border-gray-200 hover:text-teal-600 hover:border-teal-300'
-            }`}
-          >
+          <button onClick={handleNotesClick} className={`flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded transition-colors ${hasNotes ? 'bg-yellow-100 text-yellow-700 border border-yellow-200 hover:bg-yellow-200' : 'bg-white text-gray-500 border border-gray-200 hover:text-teal-600 hover:border-teal-300'}`}>
             <StickyNote className={`w-4 h-4 ${hasNotes ? 'fill-yellow-500 text-yellow-600' : ''}`} />
             {getNotesButtonLabel()}
           </button>
 
-          {/* Done/Redo */}
-          <button 
-            onClick={handleMainButtonClick}
-            onMouseDown={startHold}
-            onMouseUp={cancelHold}
-            onMouseLeave={cancelHold}
-            onTouchStart={startHold}
-            onTouchEnd={cancelHold}
-            onContextMenu={(e) => e.preventDefault()}
-            className={`relative overflow-hidden flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded border transition-all select-none ${getDoneButtonStyle()}`}
-          >
+          <button onClick={handleMainButtonClick} onMouseDown={startHold} onMouseUp={cancelHold} onMouseLeave={cancelHold} onTouchStart={startHold} onTouchEnd={cancelHold} onContextMenu={(e) => e.preventDefault()} className={`relative overflow-hidden flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded border transition-all select-none ${getDoneButtonStyle()}`}>
             {isCompleted && (
                 <div className="absolute inset-0 bg-red-100 z-0 transition-all duration-75 ease-linear" style={{ width: `${holdProgress}%` }} />
             )}
@@ -266,14 +232,9 @@ const QuestionCard = ({
             </div>
           </button>
           
-          {/* Question ID + Code Display */}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
-                {data.id}
-            </span>
-            <span className="text-[10px] text-gray-400 font-mono">
-                QUID:{data.unique_id}
-            </span>
+            <span className="text-[10px] text-gray-400 font-mono">ID:{data.unique_id}</span>
+            <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{data.id}</span>
           </div>
         </div>
       </div>
@@ -338,14 +299,13 @@ const QuestionCard = ({
 
             <div className="border border-violet-100 rounded-lg overflow-hidden bg-white shadow-sm mt-4">
                 
-                {/* 1. RESULT VIEW (Persisted via Props) */}
                 {analysisData && (
                   <div className="p-5 bg-gradient-to-br from-white to-violet-50/30 animate-in fade-in duration-500">
                      <div className="flex items-start justify-between mb-3 pb-3 border-b border-violet-100">
                         <div className="flex items-center gap-2">
                             <Sparkles className="w-4 h-4 text-violet-600" />
                             <span className="font-bold text-sm text-violet-900 uppercase tracking-wide">
-                                Professor AI's Analysis ({AI_MODELS.find(m => m.id === selectedModel)?.name})
+                                Analysis ({AI_MODELS.find(m => m.id === selectedModel)?.name})
                             </span>
                         </div>
                         {analysisCost !== null && analysisCost !== undefined && !isNaN(analysisCost) && (
@@ -357,41 +317,50 @@ const QuestionCard = ({
                         )}
                      </div>
                      <div className="text-slate-700 font-serif text-sm leading-relaxed min-h-[150px]">
-                       <ReactMarkdown components={{ 
-                           h1: ({node, ...props}) => <h1 className="text-lg font-bold text-violet-900 mt-4 mb-2" {...props} />, 
-                           h2: ({node, ...props}) => <h2 className="text-base font-bold text-violet-800 mt-4 mb-2 uppercase tracking-wide" {...props} />, 
-                           h3: ({node, ...props}) => <h3 className="text-sm font-bold text-violet-700 mt-3 mb-1" {...props} />, 
-                           p: ({node, ...props}) => <p className="mb-3" {...props} />, 
-                           ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />, 
-                           li: ({node, ...props}) => <li className="pl-1" {...props} />, 
-                           strong: ({node, ...props}) => <strong className="font-bold text-violet-950" {...props} /> 
-                       }}>{analysisData}</ReactMarkdown>
+                       
+                       {/* --- 2. PASS PLUGINS HERE --- */}
+                       <ReactMarkdown 
+                            remarkPlugins={[remarkMath]}
+                            rehypePlugins={[rehypeKatex]}
+                            components={{ 
+                                h1: ({node, ...props}) => <h1 className="text-lg font-bold text-violet-900 mt-4 mb-2" {...props} />, 
+                                h2: ({node, ...props}) => <h2 className="text-base font-bold text-violet-800 mt-4 mb-2 uppercase tracking-wide" {...props} />, 
+                                h3: ({node, ...props}) => <h3 className="text-sm font-bold text-violet-700 mt-3 mb-1" {...props} />, 
+                                p: ({node, ...props}) => <p className="mb-3" {...props} />, 
+                                ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />, 
+                                li: ({node, ...props}) => <li className="pl-1" {...props} />, 
+                                strong: ({node, ...props}) => <strong className="font-bold text-violet-950" {...props} /> 
+                            }}
+                       >
+                           {analysisData}
+                       </ReactMarkdown>
+                       {/* --------------------------- */}
+
                      </div>
                   </div>
                 )}
 
-                {/* 2. SELECTION GRID */}
                 <div className={`bg-slate-50/50 p-4 ${analysisData ? 'border-t border-violet-100' : ''}`}>
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                             <Bot className="w-4 h-4 text-violet-500" />
                             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                               {analysisData ? 'Switch Model / Compare' : 'Ask professor ai (Gemini)'}
+                               {analysisData ? 'Switch Model / Compare' : 'Ask Professor AI'}
                             </span>
                         </div>
                     </div>
                     
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
                         {AI_MODELS.map((model) => {
-                            const isThisLoading = loadingModel === model.id; // Check Prop State
+                            const isThisLoading = loadingModel === model.id;
                             const isAnyLoading = loadingModel !== null;
                             const isCurrentView = selectedModel === model.id && analysisData;
-                            const isUnlocked = purchasedModels.includes(model.id); // Check Prop State
+                            const isUnlocked = purchasedModels.includes(model.id);
                             
                             return (
                                 <button
                                     key={model.id}
-                                    onClick={() => onRequestAI(model.id)} // Call Prop Handler
+                                    onClick={() => onRequestAI(model.id)}
                                     disabled={isAnyLoading}
                                     className={`
                                         relative flex flex-col items-center justify-center p-2 rounded-lg border transition-all duration-200 
@@ -426,7 +395,6 @@ const QuestionCard = ({
                     )}
                 </div>
 
-                {/* 3. ERROR VIEW */}
                 {analysisError && (
                     <div className="p-3 bg-red-50 flex items-center justify-between text-xs text-red-600 border-t border-red-100 animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-2"><AlertCircle className="w-4 h-4" /><span>{analysisError}</span></div>
