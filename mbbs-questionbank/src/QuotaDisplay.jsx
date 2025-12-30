@@ -109,7 +109,7 @@ const QuotaDisplay = ({ session }) => {
         
         <div className="space-y-1 text-xs mb-3">
             <div className="flex justify-between items-center text-gray-300">
-                <span className="flex items-center gap-1"><BrainCircuit className="w-3 h-3"/> AI Usage</span>
+                <span className="flex items-center gap-1"><BrainCircuit className="w-3 h-3"/>AI Usage</span>
                 <span className="font-mono">{aiMB} MB</span>
             </div>
             <div className="flex justify-between items-center text-gray-300">
