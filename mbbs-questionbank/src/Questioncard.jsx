@@ -14,28 +14,28 @@ const AI_MODELS = [
   },
   { 
     id: 'gemini-2.5-flash', 
-    name: 'G2.5 Flash', 
+    name: '2.5 Flash', 
     cost: '~$0.03', 
     label: 'Standard', 
     style: 'border-violet-200 hover:bg-violet-50' 
   },
   { 
     id: 'gemini-3-flash-preview', 
-    name: 'G3 Flash',
+    name: '3 Flash',
     cost: '~$0.02', 
     label: 'Next-Gen Fast', 
     style: 'border-cyan-200 hover:bg-cyan-50' 
   },
   { 
     id: 'gemini-2.5-pro', 
-    name: 'G2.5 Pro',
+    name: '2.5 Pro',
     cost: '~$0.10', 
     label: 'High Reasoning', 
     style: 'border-blue-200 hover:bg-blue-50' 
   },
   { 
     id: 'gemini-3-pro-preview', 
-    name: 'G3 Pro', 
+    name: '3 Pro', 
     cost: '~$0.12', 
     label: 'Deepest Thought', 
     style: 'border-fuchsia-300 bg-fuchsia-50/50 hover:bg-fuchsia-100' 
@@ -345,7 +345,7 @@ const QuestionCard = ({
                         <div className="flex items-center gap-2">
                             <Sparkles className="w-4 h-4 text-violet-600" />
                             <span className="font-bold text-sm text-violet-900 uppercase tracking-wide">
-                                Analysis ({AI_MODELS.find(m => m.id === selectedModel)?.name})
+                                Professor AI's Analysis ({AI_MODELS.find(m => m.id === selectedModel)?.name})
                             </span>
                         </div>
                         {analysisCost !== null && analysisCost !== undefined && !isNaN(analysisCost) && (
@@ -376,7 +376,7 @@ const QuestionCard = ({
                         <div className="flex items-center gap-2">
                             <Bot className="w-4 h-4 text-violet-500" />
                             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                               {analysisData ? 'Switch Model / Compare' : 'Ask the Professor'}
+                               {analysisData ? 'Switch Model / Compare' : 'Ask professor ai (Gemini)'}
                             </span>
                         </div>
                     </div>
