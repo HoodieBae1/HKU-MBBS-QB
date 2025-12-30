@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.0.0",
+  "currentVersion": "3.1.0",
   "history": [
+    {
+      "version": "3.1.0",
+      "date": "2025-12-30",
+      "title": "Fixed sorting bug. Additions to sort and feedback.",
+      "changes": [
+        "Bugfix: Fixed sort by new not actually sorting by newest questions",
+        "Feature: Added sort by random",
+        "Refactor: Added community tab in feedback form to track feedback progress and add comments",
+        "Refactor: Improved search bar so it's more responsive"
+      ]
+    },
     {
       "version": "3.0.0",
       "date": "2025-12-30",
