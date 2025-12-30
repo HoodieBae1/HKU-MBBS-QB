@@ -15,6 +15,7 @@ import RecruiterDashboard from './RecruiterDashboard';
 import FeedbackModal from './FeedbackModal';
 import QuotaDisplay from './QuotaDisplay';
 import ReleaseNotesModal from './ReleaseNotesModal';
+import AIUsageDisplay from './AIUsageDisplay';
 import { APP_VERSION } from './appVersion';
 
 function useStickyState(defaultValue, key) {
@@ -662,6 +663,9 @@ const App = () => {
                   <span className="px-1.5 py-0.5 bg-teal-800 rounded text-teal-100 opacity-80 font-mono">v{APP_VERSION}</span>
                   <div className="ml-2 border-l border-teal-600 pl-2">
                     <QuotaDisplay session={session}/>
+                  </div>
+                  <div className="ml-2 border-l border-teal-600 pl-2">
+                    <AIUsageDisplay session={session} />
                   </div>
                 </div>
               </div>

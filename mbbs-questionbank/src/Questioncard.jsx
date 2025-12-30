@@ -9,10 +9,54 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
   const [selectedOption, setSelectedOption] = useState(null);
   const [saqInput, setSaqInput] = useState('');
 
+  // AI Cost
+const AI_MODELS = [
+  { 
+    id: 'gemini-2.5-flash-lite', 
+    name: '2.5 Flash Lite', 
+    cost: '~$0.005', 
+    label: 'Eco Mode', 
+    style: 'border-slate-200 hover:bg-slate-50' 
+  },
+  { 
+    id: 'gemini-2.5-flash', 
+    name: 'G2.5 Flash', 
+    cost: '~$0.03', 
+    label: 'Standard', 
+    style: 'border-violet-200 hover:bg-violet-50' 
+  },
+  { 
+    id: 'gemini-3-flash-preview', 
+    name: 'G3 Flash',
+    cost: '~$0.02', 
+    label: 'Next-Gen Fast', 
+    style: 'border-cyan-200 hover:bg-cyan-50' 
+  },
+  { 
+    id: 'gemini-2.5-pro', 
+    name: 'G2.5 Pro',
+    cost: '~$0.1', 
+    label: 'High Reasoning', 
+    style: 'border-blue-200 hover:bg-blue-50' 
+  },
+  { 
+    id: 'gemini-3-pro-preview', 
+    name: 'G3 Pro', 
+    cost: '~$0.12', 
+    label: 'Deepest Thought', 
+    style: 'border-fuchsia-300 bg-fuchsia-50/50 hover:bg-fuchsia-100' 
+  },
+];
+  
   // AI State
   const [analysisData, setAnalysisData] = useState(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzingModel, setAnalyzingModel] = useState(null);
   const [analysisError, setAnalysisError] = useState(null);
+  const [analysisCost, setAnalysisCost] = useState(null);
+  const [analysisMeta, setAnalysisMeta] = useState(null);
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
+  const [purchasedModels, setPurchasedModels] = useState([]);
+
 
   // --- HOLD TO REDO STATE ---
   const [isHolding, setIsHolding] = useState(false);
@@ -102,16 +146,20 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
   };
 
   // --- HELPERS ---
-  const handleRequestAI = async () => { 
-    if (analysisData) return; 
-    setIsAnalyzing(true);
+ const handleRequestAI = async (modelId) => { 
+    if (analyzingModel) return; // Allow re-clicking different models, but block double clicks
+    
+    setAnalyzingModel(modelId);
     setAnalysisError(null);
+    setAnalysisCost(null); 
+    
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) throw new Error("Please refresh the page, you appear to be logged out.");
 
-      const response = await fetch('https://qzoreybelgjynenkwobi.supabase.co/functions/v1/gemini-tutor', {
+      // POINTING TO GEMINI-TEST
+      const response = await fetch('https://qzoreybelgjynenkwobi.supabase.co/functions/v1/gemini-test', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -122,18 +170,29 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
           question: data.question,
           official_answer: data.official_answer,
           options: data.options,
-          type: data.type
+          type: data.type,
+          model: modelId
         })
       });
 
       const responseData = await response.json();
       if (!response.ok) throw new Error(responseData.error || "Server error");
+
       setAnalysisData(responseData.analysis); 
+      setAnalysisCost(responseData.cost); 
+      setAnalysisMeta(responseData.tokens);
+      setSelectedModel(modelId); // Track current view
+
+      // Mark this model as purchased locally so the button updates to "Free"
+      if (!purchasedModels.includes(modelId)) {
+        setPurchasedModels(prev => [...prev, modelId]);
+      }
+
     } catch (err) {
       console.error(err);
       setAnalysisError(err.message || "Unable to reach the AI Professor.");
     } finally {
-      setIsAnalyzing(false);
+      setAnalyzingModel(null);
     }
   };
   
@@ -349,26 +408,131 @@ const QuestionCard = ({ data, index, isCompleted, isFlagged, hasNotes, existingR
               </div>
             )}
 
-            <div className="border border-violet-100 rounded-lg overflow-hidden bg-white shadow-sm">
-                {analysisData && (
-                  <div className="p-5 bg-gradient-to-br from-white to-violet-50/30">
-                     <div className="flex items-center gap-2 mb-3 pb-3 border-b border-violet-100">
-                        <Sparkles className="w-4 h-4 text-violet-600" />
-                        <span className="font-bold text-sm text-violet-900 uppercase tracking-wide">AI Professor's Detailed Analysis</span>
-                     </div>
-                     <div className="text-slate-700 font-serif text-sm leading-relaxed">
-                       <ReactMarkdown components={{ h1: ({node, ...props}) => <h1 className="text-lg font-bold text-violet-900 mt-4 mb-2" {...props} />, h2: ({node, ...props}) => <h2 className="text-base font-bold text-violet-800 mt-4 mb-2 uppercase tracking-wide" {...props} />, h3: ({node, ...props}) => <h3 className="text-sm font-bold text-violet-700 mt-3 mb-1" {...props} />, p: ({node, ...props}) => <p className="mb-3" {...props} />, ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />, li: ({node, ...props}) => <li className="pl-1" {...props} />, strong: ({node, ...props}) => <strong className="font-bold text-violet-950" {...props} /> }}>{analysisData}</ReactMarkdown>
-                     </div>
+        <div className="border border-violet-100 rounded-lg overflow-hidden bg-white shadow-sm mt-4">
+          {/* 1. RESULT VIEW (Now always renders if data exists, but allows switching below) */}
+          {analysisData && (
+            <div className="p-5 bg-gradient-to-br from-white to-violet-50/30 animate-in fade-in duration-500">
+              
+              {/* HEADER */}
+              <div className="flex items-start justify-between mb-3 pb-3 border-b border-violet-100">
+                  <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-violet-600" />
+                      <span className="font-bold text-sm text-violet-900 uppercase tracking-wide">
+                          Analysis ({AI_MODELS.find(m => m.id === selectedModel)?.name})
+                      </span>
                   </div>
-                )}
-                {!analysisData && !isAnalyzing && (
-                  <button onClick={handleRequestAI} className="w-full p-4 bg-violet-50 hover:bg-violet-100 transition-colors flex items-center justify-center gap-2 group text-violet-700 font-medium">
-                    <div className="p-1 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform"><Sparkles className="w-4 h-4 text-violet-600" /></div>
-                    Detailed Explanation (Using Gemini 2.5 Flash)
-                  </button>
-                )}
-                {isAnalyzing && <div className="p-8 flex flex-col items-center justify-center text-center bg-violet-50/50"><Loader2 className="w-6 h-6 text-violet-600 animate-spin mb-2" /><p className="text-xs text-violet-600 font-bold uppercase tracking-wider animate-pulse">Consulting Professor AI...</p></div>}
-                {analysisError && <div className="p-3 bg-red-50 flex items-center justify-between text-xs text-red-600"><div className="flex items-center gap-2"><AlertCircle className="w-4 h-4" /><span>{analysisError}</span></div><button onClick={() => setAnalysisError(null)} className="underline hover:text-red-800">Dismiss</button></div>}
+                  
+                  {/* COST BADGE */}
+                  {analysisCost !== null && analysisCost !== undefined && !isNaN(analysisCost) && (
+                      <div className="flex flex-col items-end">
+                          <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-mono border ${
+                              analysisCost === 0 
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                              : 'bg-violet-100 text-violet-700 border-violet-200'
+                          }`}>
+                              {analysisCost === 0 ? (
+                                  <>
+                                      <span className="font-bold">PAID</span>
+                                      <span>(Free)</span>
+                                  </>
+                              ) : (
+                                  <>
+                                      <span className="font-bold">COST:</span>
+                                      <span>${Number(analysisCost).toFixed(5)}</span>
+                                  </>
+                              )}
+                          </div>
+                      </div>
+                  )}
+              </div>
+
+              {/* MARKDOWN CONTENT */}
+              <div className="text-slate-700 font-serif text-sm leading-relaxed min-h-[150px]">
+                <ReactMarkdown components={{ 
+                    h1: ({node, ...props}) => <h1 className="text-lg font-bold text-violet-900 mt-4 mb-2" {...props} />, 
+                    h2: ({node, ...props}) => <h2 className="text-base font-bold text-violet-800 mt-4 mb-2 uppercase tracking-wide" {...props} />, 
+                    h3: ({node, ...props}) => <h3 className="text-sm font-bold text-violet-700 mt-3 mb-1" {...props} />, 
+                    p: ({node, ...props}) => <p className="mb-3" {...props} />, 
+                    ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />, 
+                    li: ({node, ...props}) => <li className="pl-1" {...props} />, 
+                    strong: ({node, ...props}) => <strong className="font-bold text-violet-950" {...props} /> 
+                }}>{analysisData}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          {/* 2. SELECTION GRID (ALWAYS VISIBLE NOW) */}
+          <div className={`bg-slate-50/50 p-4 ${analysisData ? 'border-t border-violet-100' : ''}`}>
+              <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                      <Bot className="w-4 h-4 text-violet-500" />
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        {analysisData ? 'Switch Model / Compare' : 'Ask the Professor'}
+                      </span>
+                  </div>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+                  {AI_MODELS.map((model) => {
+                      const isThisLoading = analyzingModel === model.id;
+                      const isAnyLoading = analyzingModel !== null;
+                      const isCurrentView = selectedModel === model.id && analysisData;
+                      const isUnlocked = purchasedModels.includes(model.id);
+                      
+                      return (
+                          <button
+                              key={model.id}
+                              onClick={() => handleRequestAI(model.id)}
+                              disabled={isAnyLoading}
+                              className={`
+                                  relative flex flex-col items-center justify-center p-2 rounded-lg border transition-all duration-200 
+                                  ${model.style} 
+                                  ${isThisLoading ? 'bg-violet-100 ring-2 ring-violet-300 border-transparent' : ''}
+                                  ${isCurrentView ? 'ring-2 ring-violet-500 ring-offset-1 border-transparent bg-white' : 'bg-white'}
+                                  ${isAnyLoading && !isThisLoading ? 'opacity-40 cursor-not-allowed grayscale' : 'cursor-pointer hover:-translate-y-0.5 hover:shadow-sm'}
+                              `}
+                          >
+                              {isThisLoading ? (
+                                  <Loader2 className="w-5 h-5 text-violet-600 animate-spin my-1" />
+                              ) : (
+                                  <>
+                                      <span className="text-[10px] font-bold text-slate-700 text-center leading-tight mb-1">{model.name}</span>
+                                      <span className="text-[9px] text-slate-400 font-medium mb-1">{model.label}</span>
+                                      
+                                      {/* DYNAMIC COST LABEL */}
+                                      <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${
+                                          isUnlocked || isCurrentView
+                                          ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
+                                          : 'bg-slate-100 text-slate-600 border-slate-200'
+                                      }`}>
+                                          {isUnlocked ? 'Free' : model.cost}
+                                      </span>
+                                  </>
+                              )}
+                          </button>
+                      );
+                  })}
+              </div>
+              
+              {analyzingModel && (
+                  <div className="mt-3 text-center">
+                      <p className="text-xs text-violet-600 font-bold uppercase tracking-wider animate-pulse">
+                          Consulting {AI_MODELS.find(m => m.id === analyzingModel)?.name}...
+                      </p>
+                  </div>
+              )}
+          </div>
+
+          {/* 3. ERROR VIEW */}
+          {analysisError && (
+              <div className="p-3 bg-red-50 flex items-center justify-between text-xs text-red-600 border-t border-red-100 animate-in slide-in-from-top-2">
+                  <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{analysisError}</span>
+                  </div>
+                  <button onClick={() => setAnalysisError(null)} className="underline hover:text-red-800">Dismiss</button>
+              </div>
+          )}
             </div>
           </div>
         )}
