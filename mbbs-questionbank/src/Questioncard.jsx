@@ -337,7 +337,7 @@ const QuestionCard = ({
                         <div className="flex items-center gap-2">
                             <Sparkles className="w-4 h-4 text-violet-600" />
                             <span className="font-bold text-sm text-violet-900 uppercase tracking-wide">
-                                Analysis ({AI_MODELS.find(m => m.id === selectedModel)?.name})
+                                Analysis From Professor AI ({AI_MODELS.find(m => m.id === selectedModel)?.name})
                             </span>
                         </div>
                         {analysisCost !== null && analysisCost !== undefined && !isNaN(analysisCost) && (
