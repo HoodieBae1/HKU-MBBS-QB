@@ -21,13 +21,14 @@ const UserStats = ({ questions, userProgress, onFilterSelect }) => {
       const meta = metaMap.get(String(entry.question_id));
       if (!meta) return;
 
-      // --- STRICT FILTER ---
-      // Only count questions that have been explicitly graded.
-      // If score is null OR max_score is null/0, it means it's either:
-      // 1. Just flagged
-      // 2. Just notes (no grade)
-      // 3. Unmarked (Redone)
-      if (entry.score === null || entry.max_score === null || entry.max_score === 0) {
+      // --- FIX: STRICT GRADE CHECK ---
+      // We must explicitly ensure score is defined and not null.
+      const hasScore = entry.score !== null && entry.score !== undefined;
+      const hasMaxScore = entry.max_score !== null && entry.max_score !== undefined && entry.max_score > 0;
+
+      // If it doesn't have a score OR doesn't have a valid max score, skip it.
+      // This filters out: Drafts, Notes-only, and Flag-only entries.
+      if (!hasScore || !hasMaxScore) {
           return;
       }
 

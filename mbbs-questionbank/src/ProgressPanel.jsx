@@ -27,8 +27,11 @@ const ProgressPanel = ({ questions, userProgress, onFilterSelect }) => {
       const p = userProgress[String(q.unique_id)];
       
       // --- FIX: Strict Completion Check ---
-      // Ignore notes and text drafts. Only count if scored or option selected.
-      const isDone = p && (p.score !== null || p.selected_option !== null);
+      // We must explicitly check that values are NOT undefined
+      const hasScore = p?.score !== null && p?.score !== undefined;
+      const hasSelection = p?.selected_option !== null && p?.selected_option !== undefined;
+      
+      const isDone = hasScore || hasSelection;
 
       if (isDone) {
         hierarchy[tName].completed++;
