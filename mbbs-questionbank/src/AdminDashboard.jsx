@@ -1,13 +1,16 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from './supabase';
-import { Trophy, Users, BrainCircuit, X, Loader2, Target, ChevronDown, ChevronUp, BarChart3, Folder, FileText, RefreshCw, DollarSign } from 'lucide-react';
+import { Trophy, Users, BrainCircuit, X, Loader2, Target, ChevronDown, ChevronUp, BarChart3, Folder, FileText, RefreshCw, DollarSign, Coins, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 const AdminDashboard = ({ onClose, questions }) => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState([]);
-  const [summary, setSummary] = useState({ totalUsers: 0, totalAnswers: 0, totalAiCalls: 0 });
+  const [summary, setSummary] = useState({ totalUsers: 0, totalAnswers: 0, totalAiCalls: 0, totalAiSpentHKD: 0 });
   const [quotaData, setQuotaData] = useState({ totalDbBytes: 0, userBytesMap: {} });
   const [expandedUserId, setExpandedUserId] = useState(null);
+  
+  // Sorting State
+  const [sortConfig, setSortConfig] = useState({ key: 'accuracy', direction: 'desc' });
 
   const PRO_PLAN_COST_USD = 25;
   const USD_TO_HKD_RATE = 7.8;
@@ -26,6 +29,44 @@ const AdminDashboard = ({ onClose, questions }) => {
   useEffect(() => {
     fetchDashboardData();
   }, [questionMetaMap]);
+
+  // --- SORTING LOGIC ---
+  const sortedStats = useMemo(() => {
+    let sortableItems = [...stats];
+    if (sortConfig.key) {
+      sortableItems.sort((a, b) => {
+        let aVal = a[sortConfig.key];
+        let bVal = b[sortConfig.key];
+
+        // Handle text sorting (case insensitive)
+        if (typeof aVal === 'string') {
+            aVal = aVal.toLowerCase();
+            bVal = bVal.toLowerCase();
+        }
+
+        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [stats, sortConfig]);
+
+  const requestSort = (key) => {
+    let direction = 'desc';
+    if (sortConfig.key === key && sortConfig.direction === 'desc') {
+      direction = 'asc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (name) => {
+    if (sortConfig.key !== name) return <ArrowUpDown className="w-3 h-3 text-gray-300 opacity-50" />;
+    return sortConfig.direction === 'asc' 
+      ? <ArrowUp className="w-3 h-3 text-indigo-600" /> 
+      : <ArrowDown className="w-3 h-3 text-indigo-600" />;
+  };
+  // ---------------------
 
   const fetchAllRows = async (table, selectQuery) => {
     let allData = [];
@@ -59,11 +100,11 @@ const AdminDashboard = ({ onClose, questions }) => {
       const [profiles, rawProgress, aiLogs, quotaResult] = await Promise.all([
         fetchAllRows('profiles', 'id, email, display_name'),
         fetchAllRows('user_progress', 'user_id, score, max_score, question_id, selected_option, user_response'),
-        fetchAllRows('ai_usage_logs', 'user_id'),
+        fetchAllRows('ai_usage_logs', 'user_id, cost'),
         supabase.rpc('get_all_users_quota_stats') 
       ]);
 
-      const totalDbBytes = quotaResult.data?.total_db_bytes || 0;
+      const totalDbBytes = quotaResult.data?.total_db_bytes || 1; // Avoid divide by zero
       const userBytesMap = {};
       if (quotaResult.data?.users) {
         quotaResult.data.users.forEach(u => {
@@ -72,7 +113,7 @@ const AdminDashboard = ({ onClose, questions }) => {
       }
       setQuotaData({ totalDbBytes, userBytesMap });
 
-      // Valid Progress for Graded stats (must have content)
+      // Valid Progress for Graded stats
       const validProgress = rawProgress.filter(p => 
         p.score !== null || 
         p.selected_option !== null || 
@@ -80,21 +121,19 @@ const AdminDashboard = ({ onClose, questions }) => {
       );
 
       const userStats = profiles.map(user => {
-        // 1. All Entries (Attempted)
+        // 1. Attempts
         const allUserEntries = rawProgress.filter(p => p.user_id === user.id);
         const totalAttempted = allUserEntries.length;
 
-        // 2. Graded Entries (For Accuracy)
+        // 2. Accuracy
         const userGradedAnswers = validProgress.filter(p => p.user_id === user.id);
-        const userAiCalls = aiLogs.filter(l => l.user_id === user.id);
-
+        
         let totalGradedQuestions = 0;
         let sumScore = 0;
         let sumMaxScore = 0;
         
         userGradedAnswers.forEach(a => {
             if (a.score === null || a.max_score === null || a.max_score === 0) return;
-            
             sumScore += a.score;
             sumMaxScore += a.max_score;
             totalGradedQuestions++;
@@ -102,9 +141,17 @@ const AdminDashboard = ({ onClose, questions }) => {
 
         const accuracy = sumMaxScore > 0 ? Math.round((sumScore / sumMaxScore) * 100) : 0;
 
-        // 3. Hierarchy Breakdown
-        const hierarchy = {}; 
+        // 3. AI Stats (Values in DB are already HKD)
+        const userAiCalls = aiLogs.filter(l => l.user_id === user.id);
+        const aiCostHKD = userAiCalls.reduce((sum, log) => sum + (log.cost || 0), 0);
 
+        // 4. DB Stats (Convert Bytes Share to HKD from USD Plan)
+        const userBytes = userBytesMap[user.id] || 0;
+        const rawDbCostHKD = (userBytes / totalDbBytes) * PRO_PLAN_COST_USD * USD_TO_HKD_RATE;
+        const dbCostHKD = parseFloat(rawDbCostHKD);
+
+        // 5. Hierarchy Breakdown
+        const hierarchy = {}; 
         userGradedAnswers.forEach(ans => {
           const meta = questionMetaMap.get(String(ans.question_id)) || { topic: 'Unknown', subtopic: 'Unknown' };
           const { topic, subtopic } = meta;
@@ -141,23 +188,27 @@ const AdminDashboard = ({ onClose, questions }) => {
         return {
           id: user.id,
           email: user.email,
-          display_name: user.display_name,
-          totalAttempted, // NEW: Total entries in DB
+          display_name: user.display_name || '', // Ensure string for sorting
+          totalAttempted, 
           totalGraded: totalGradedQuestions,
           accuracy,
           aiUsageCount: userAiCalls.length,
+          aiCostHKD, // Direct HKD from DB
+          dbCostHKD, // Calculated HKD
           structuredStats
         };
       });
 
-      // Sort by accuracy, then by attempted count
-      userStats.sort((a, b) => b.accuracy - a.accuracy || b.totalAttempted - a.totalAttempted);
-
       setStats(userStats);
+      
+      // Totals (Summing direct HKD values)
+      const totalAiSpentHKD = aiLogs.reduce((acc, log) => acc + (log.cost || 0), 0);
+
       setSummary({ 
           totalUsers: profiles.length, 
-          totalAnswers: rawProgress.length, // Summary now reflects total attempts
-          totalAiCalls: aiLogs.length 
+          totalAnswers: rawProgress.length, 
+          totalAiCalls: aiLogs.length,
+          totalAiSpentHKD
       });
 
     } catch (error) {
@@ -179,13 +230,6 @@ const AdminDashboard = ({ onClose, questions }) => {
     if (score >= 70) return 'bg-green-500';
     if (score >= 40) return 'bg-yellow-400';
     return 'bg-red-400';
-  };
-
-  const calculateUserCost = (userId) => {
-    const userBytes = quotaData.userBytesMap[userId] || 0;
-    const totalBytes = quotaData.totalDbBytes || 1; 
-    const rawCostHKD = (userBytes / totalBytes) * PRO_PLAN_COST_USD * USD_TO_HKD_RATE;
-    return (Math.round(rawCostHKD * 10) / 10).toFixed(1);
   };
 
   if (loading) return <div className="fixed inset-0 z-[60] flex items-center justify-center bg-white/90"><Loader2 className="animate-spin w-8 h-8 text-indigo-600"/></div>;
@@ -217,7 +261,7 @@ const AdminDashboard = ({ onClose, questions }) => {
       <div className="max-w-7xl mx-auto p-6">
         
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center">
              <div className="flex items-center gap-2 text-gray-500 mb-1"><Users className="w-4 h-4" /><span className="text-xs font-bold uppercase">Total Users</span></div>
              <p className="text-3xl font-bold text-gray-800">{summary.totalUsers}</p>
@@ -230,32 +274,70 @@ const AdminDashboard = ({ onClose, questions }) => {
              <div className="flex items-center gap-2 text-gray-500 mb-1"><BrainCircuit className="w-4 h-4" /><span className="text-xs font-bold uppercase">AI Consultations</span></div>
              <p className="text-3xl font-bold text-violet-600">{summary.totalAiCalls}</p>
           </div>
+          <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center">
+             <div className="flex items-center gap-2 text-gray-500 mb-1"><Coins className="w-4 h-4" /><span className="text-xs font-bold uppercase">Total AI Spendings (HKD)</span></div>
+             <p className="text-3xl font-bold text-emerald-600">${summary.totalAiSpentHKD.toFixed(2)}</p>
+          </div>
         </div>
 
         {/* User Table */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
             <h2 className="font-bold text-gray-800">User Performance & Costs</h2>
-            <span className="text-xs text-gray-400">Sorted by Accuracy</span>
+            <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400">Sort by:</span>
+                <span className="text-xs font-bold text-indigo-600 uppercase bg-indigo-50 px-2 py-1 rounded">
+                    {sortConfig.key === 'display_name' ? 'Name' : 
+                     sortConfig.key === 'totalAttempted' ? 'Attempts' :
+                     sortConfig.key === 'totalGraded' ? 'Graded' :
+                     sortConfig.key === 'accuracy' ? 'Accuracy' :
+                     sortConfig.key === 'aiUsageCount' ? 'AI Usage' :
+                     sortConfig.key === 'aiCostHKD' ? 'AI Cost' :
+                     sortConfig.key === 'dbCostHKD' ? 'DB Cost' : ''} 
+                    {sortConfig.direction === 'asc' ? ' (Asc)' : ' (Desc)'}
+                </span>
+            </div>
           </div>
           
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="text-xs font-bold text-gray-500 uppercase bg-gray-50/50 border-b border-gray-100">
-                <th className="px-6 py-3 w-16">Rank</th>
-                <th className="px-6 py-3">User</th>
-                <th className="px-6 py-3 text-center">Attempted</th> {/* NEW COLUMN */}
-                <th className="px-6 py-3 text-center">Graded</th>
-                <th className="px-6 py-3 text-center">Accuracy</th>
-                <th className="px-6 py-3 text-center text-violet-600">AI Calls</th>
-                <th className="px-6 py-3 text-right text-emerald-600">Est. Cost</th>
-                <th className="px-6 py-3 text-right">Details</th>
+              <tr className="text-xs font-bold text-gray-500 uppercase bg-gray-50/50 border-b border-gray-100 cursor-pointer select-none">
+                <th className="px-6 py-3 w-16 cursor-default">Rank</th>
+                
+                <th className="px-6 py-3 hover:bg-gray-100 transition-colors" onClick={() => requestSort('display_name')}>
+                    <div className="flex items-center gap-1">User {getSortIcon('display_name')}</div>
+                </th>
+                
+                <th className="px-6 py-3 text-center hover:bg-gray-100 transition-colors" onClick={() => requestSort('totalAttempted')}>
+                    <div className="flex items-center justify-center gap-1">Attempted {getSortIcon('totalAttempted')}</div>
+                </th>
+                
+                <th className="px-6 py-3 text-center hover:bg-gray-100 transition-colors" onClick={() => requestSort('totalGraded')}>
+                    <div className="flex items-center justify-center gap-1">Graded {getSortIcon('totalGraded')}</div>
+                </th>
+                
+                <th className="px-6 py-3 text-center hover:bg-gray-100 transition-colors" onClick={() => requestSort('accuracy')}>
+                    <div className="flex items-center justify-center gap-1">Accuracy {getSortIcon('accuracy')}</div>
+                </th>
+                
+                <th className="px-6 py-3 text-center text-violet-600 hover:bg-gray-100 transition-colors" onClick={() => requestSort('aiUsageCount')}>
+                    <div className="flex items-center justify-center gap-1">AI Calls {getSortIcon('aiUsageCount')}</div>
+                </th>
+                
+                <th className="px-6 py-3 text-right text-violet-700 hover:bg-gray-100 transition-colors" onClick={() => requestSort('aiCostHKD')}>
+                    <div className="flex items-center justify-end gap-1">AI (HKD) {getSortIcon('aiCostHKD')}</div>
+                </th>
+                
+                <th className="px-6 py-3 text-right text-emerald-600 hover:bg-gray-100 transition-colors" onClick={() => requestSort('dbCostHKD')}>
+                    <div className="flex items-center justify-end gap-1">DB (HKD) {getSortIcon('dbCostHKD')}</div>
+                </th>
+                
+                <th className="px-6 py-3 text-right cursor-default">Details</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {stats.map((user, index) => {
+              {sortedStats.map((user, index) => {
                 const isExpanded = expandedUserId === user.id;
-                const costHKD = calculateUserCost(user.id);
                 
                 return (
                   <React.Fragment key={user.id}>
@@ -272,12 +354,10 @@ const AdminDashboard = ({ onClose, questions }) => {
                         <div className="text-xs text-gray-500">{user.email}</div>
                       </td>
 
-                      {/* ATTEMPTED COLUMN */}
                       <td className="px-6 py-4 text-center">
                         <span className="inline-block px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-semibold">{user.totalAttempted}</span>
                       </td>
 
-                      {/* GRADED COLUMN */}
                       <td className="px-6 py-4 text-center">
                         <span className="inline-block px-3 py-1 bg-gray-100 rounded-full text-sm font-semibold text-gray-700">{user.totalGraded}</span>
                       </td>
@@ -292,10 +372,18 @@ const AdminDashboard = ({ onClose, questions }) => {
                       </td>
                       <td className="px-6 py-4 text-center"><span className="font-mono font-bold text-violet-600">{user.aiUsageCount}</span></td>
                       
+                      {/* AI COST (HKD) */}
+                      <td className="px-6 py-4 text-right">
+                        <span className="font-mono font-bold text-violet-700">
+                           ${user.aiCostHKD.toFixed(2)}
+                        </span>
+                      </td>
+
+                      {/* DB COST (HKD) */}
                       <td className="px-6 py-4 text-right">
                          <div className="flex items-center justify-end gap-1 font-mono font-bold text-emerald-600 bg-emerald-50 py-1 px-2 rounded inline-block ml-auto">
                             <DollarSign className="w-3 h-3" />
-                            {costHKD} HKD
+                            {user.dbCostHKD.toFixed(1)}
                          </div>
                       </td>
 
@@ -309,7 +397,7 @@ const AdminDashboard = ({ onClose, questions }) => {
                     {/* Expanded Details Row */}
                     {isExpanded && (
                       <tr className="bg-indigo-50/30 animate-in fade-in duration-200">
-                        <td colSpan="8" className="px-6 py-6">
+                        <td colSpan="9" className="px-6 py-6">
                           <div className="bg-white rounded-lg border border-indigo-100 p-6 shadow-sm">
                             <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
                               <BarChart3 className="w-4 h-4 text-indigo-500" />
