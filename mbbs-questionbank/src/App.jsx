@@ -173,7 +173,6 @@ const App = () => {
   };
 
   const fetchUserProgress = async (userId) => {
-    // 1. Fetch Question Progress (SAQ/MCQ)
     const { data: progressData, error } = await supabase
       .from('user_progress')
       .select('id, question_id, notes, user_response, score, max_score, selected_option, is_flagged, created_at')
@@ -185,7 +184,6 @@ const App = () => {
       setUserProgress(progressMap);
     }
 
-    // 2. Fetch AI Usage History (To show 'Free' label on load)
     const { data: logData } = await supabase
         .from('ai_usage_logs')
         .select('question_id, model')
@@ -198,12 +196,11 @@ const App = () => {
             if (!historyMap[qid]) {
                 historyMap[qid] = { purchasedModels: [] };
             }
-            // Add model to purchased list if unique
             if (!historyMap[qid].purchasedModels.includes(log.model)) {
                 historyMap[qid].purchasedModels.push(log.model);
             }
         });
-        setAiState(historyMap); // Pre-fill AI state
+        setAiState(historyMap); 
     }
   };
 
@@ -608,6 +605,7 @@ const App = () => {
           q.question?.toLowerCase().includes(qLower) ||
           q.official_answer?.toLowerCase().includes(qLower) ||
           q.id?.toLowerCase().includes(qLower) ||
+          String(q.unique_id).toLowerCase().includes(qLower) || // Search by Unique ID
           q.ai_answer?.explanation?.toLowerCase().includes(qLower) ||
           (q.options && q.options.some(opt => opt.toLowerCase().includes(qLower)))
        );
@@ -634,6 +632,7 @@ const App = () => {
           q.question?.toLowerCase().includes(qLower) ||
           q.official_answer?.toLowerCase().includes(qLower) ||
           q.id?.toLowerCase().includes(qLower) ||
+          String(q.unique_id).toLowerCase().includes(qLower) || // Search by Unique ID
           q.ai_answer?.explanation?.toLowerCase().includes(qLower) ||
           (q.options && q.options.some(opt => opt.toLowerCase().includes(qLower)));
         if (!match) return false;
