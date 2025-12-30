@@ -7,6 +7,7 @@
       "title": "AI usage cost update, minor bug fixes and UI updates",
       "changes": [
         "Pricing: The AI usage is adding up and the project is running out of budget. Will need to start charging for each time you consult Professor AI. There is an estimated cost for each AI model option (price varies depending on input and output length) and your actual cost is displayed at the top. Press the button to reveal full AI usage history.",
+        "Refactor: Placed SAQ sub parts parts (a), (b), (c) ... into new lines instead of big paragraph chunk",
         "Bugfix: Fixed text disappearing in SAQ user input",
         "UI: Added Katex rendering so math and science notation can be rendered nicely",
         "UI: Added question unique ID (QUID) so that specific questions can be referenced quickly",

@@ -233,8 +233,8 @@ const QuestionCard = ({
           </button>
           
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-gray-400 font-mono">ID:{data.unique_id}</span>
             <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{data.id}</span>
+            <span className="text-[10px] text-gray-400 font-mono">QUID:{data.unique_id}</span>
           </div>
         </div>
       </div>
