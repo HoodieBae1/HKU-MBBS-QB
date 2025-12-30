@@ -1,25 +1,28 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from './supabase';
-import { Trophy, Users, BrainCircuit, X, Loader2, Target, ChevronDown, ChevronUp, BarChart3, Folder, FileText, RefreshCw, DollarSign, Coins, ArrowUpDown, ArrowUp, ArrowDown, Database, HardDrive, Calendar, Sparkles } from 'lucide-react';
+import { Trophy, Users, BrainCircuit, X, Loader2, Target, ChevronDown, ChevronUp, BarChart3, Folder, FileText, RefreshCw, DollarSign, Coins, ArrowUpDown, ArrowUp, ArrowDown, Database } from 'lucide-react';
 
 const AdminDashboard = ({ onClose, questions }) => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState([]);
   const [summary, setSummary] = useState({ totalUsers: 0, totalAnswers: 0, totalAiCalls: 0, totalAiSpentHKD: 0 });
   const [quotaData, setQuotaData] = useState({ totalDbBytes: 0, userBytesMap: {} });
-  const [allAiLogs, setAllAiLogs] = useState([]); // Store raw logs for the modal
   
   // UI State
   const [expandedUserId, setExpandedUserId] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false); // Loading state for expanding rows
   const [sortConfig, setSortConfig] = useState({ key: 'accuracy', direction: 'desc' });
   
   // Modal State
-  const [aiModalUser, setAiModalUser] = useState(null); // User object for AI modal
-  const [dbModalUser, setDbModalUser] = useState(null); // User object for DB modal
+  const [aiModalUser, setAiModalUser] = useState(null);
+  const [aiHistoryLoading, setAiHistoryLoading] = useState(false);
+  const [aiHistoryLogs, setAiHistoryLogs] = useState([]);
+  const [dbModalUser, setDbModalUser] = useState(null);
 
   const PRO_PLAN_COST_USD = 25;
   const USD_TO_HKD_RATE = 7.8;
 
+  // Memoize Question Metadata for efficient aggregation when user expands row
   const questionMetaMap = useMemo(() => {
     const map = new Map();
     questions.forEach(q => {
@@ -33,25 +36,171 @@ const AdminDashboard = ({ onClose, questions }) => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [questionMetaMap]);
+  }, []);
 
-  // --- SORTING LOGIC ---
+  // --- MAIN DATA FETCH (OPTIMIZED) ---
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+
+      // 1. Fetch Aggregated Stats via RPC (Server-side calculation)
+      const { data: userStatsRaw, error: statsError } = await supabase.rpc('get_admin_dashboard_stats');
+      if (statsError) throw statsError;
+
+      // 2. Fetch Quota Stats
+      const { data: quotaResult, error: quotaError } = await supabase.rpc('get_all_users_quota_stats');
+      if (quotaError) throw quotaError;
+
+      // Process Quota
+      const totalDbBytes = quotaResult?.total_db_bytes || 1;
+      const userBytesMap = {};
+      if (quotaResult?.users) {
+        quotaResult.users.forEach(u => { userBytesMap[u.user_id] = u.total_user_bytes; });
+      }
+      setQuotaData({ totalDbBytes, userBytesMap });
+
+      // Process User Stats
+      const processedStats = userStatsRaw.map(u => {
+        const accuracy = u.total_max_score > 0 ? Math.round((u.total_score / u.total_max_score) * 100) : 0;
+        
+        // Calculate DB Cost
+        const userBytes = userBytesMap[u.user_id] || 0;
+        const rawDbCostHKD = (userBytes / totalDbBytes) * PRO_PLAN_COST_USD * USD_TO_HKD_RATE;
+
+        return {
+            id: u.user_id,
+            email: u.email,
+            display_name: u.display_name,
+            totalAttempted: u.total_attempted,
+            totalGraded: u.total_graded,
+            accuracy,
+            aiUsageCount: u.ai_usage_count,
+            aiCostHKD: u.ai_cost_hkd,
+            dbCostHKD: parseFloat(rawDbCostHKD),
+            userBytes,
+            structuredStats: null // loaded on demand
+        };
+      });
+
+      setStats(processedStats);
+
+      // Calculate Summary
+      const totalAiSpentHKD = processedStats.reduce((acc, curr) => acc + (curr.aiCostHKD || 0), 0);
+      const totalAnswers = processedStats.reduce((acc, curr) => acc + (curr.totalAttempted || 0), 0);
+      const totalAiCalls = processedStats.reduce((acc, curr) => acc + (curr.aiUsageCount || 0), 0);
+
+      setSummary({ 
+          totalUsers: processedStats.length, 
+          totalAnswers, 
+          totalAiCalls, 
+          totalAiSpentHKD 
+      });
+
+    } catch (error) {
+      console.error("Dashboard Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- LAZY LOAD: DETAILED BREAKDOWN ---
+  const handleToggleRow = async (user) => {
+    if (expandedUserId === user.id) {
+        setExpandedUserId(null);
+        return;
+    }
+
+    setExpandedUserId(user.id);
+
+    // If we already loaded stats for this user, don't fetch again
+    if (user.structuredStats) return; 
+
+    try {
+        setLoadingDetails(true);
+        // Fetch only this user's progress
+        const { data: userProgress, error } = await supabase
+            .from('user_progress')
+            .select('score, max_score, question_id')
+            .eq('user_id', user.id)
+            .not('score', 'is', null); // Only graded items
+
+        if (error) throw error;
+
+        // Calculate Hierarchy in JS (Client Side is fine for 1 user)
+        const hierarchy = {}; 
+        userProgress.forEach(ans => {
+            const meta = questionMetaMap.get(String(ans.question_id)) || { topic: 'Unknown', subtopic: 'Unknown' };
+            const { topic, subtopic } = meta;
+
+            if (!hierarchy[topic]) hierarchy[topic] = { score: 0, maxScore: 0, count: 0, subtopics: {} };
+            if (!hierarchy[topic].subtopics[subtopic]) hierarchy[topic].subtopics[subtopic] = { score: 0, maxScore: 0, count: 0 };
+
+            hierarchy[topic].count += 1;
+            hierarchy[topic].score += ans.score;
+            hierarchy[topic].maxScore += ans.max_score;
+
+            hierarchy[topic].subtopics[subtopic].count += 1;
+            hierarchy[topic].subtopics[subtopic].score += ans.score;
+            hierarchy[topic].subtopics[subtopic].maxScore += ans.max_score;
+        });
+
+        const structuredStats = Object.entries(hierarchy).map(([tName, tData]) => {
+            const subList = Object.entries(tData.subtopics).map(([sName, sData]) => ({
+                name: sName,
+                total: sData.count,
+                accuracy: sData.maxScore > 0 ? Math.round((sData.score / sData.maxScore) * 100) : 0
+            })).sort((a, b) => b.accuracy - a.accuracy); 
+
+            return {
+                name: tName,
+                total: tData.count,
+                accuracy: tData.maxScore > 0 ? Math.round((tData.score / tData.maxScore) * 100) : 0,
+                subtopics: subList
+            };
+        }).sort((a, b) => b.accuracy - a.accuracy);
+
+        // Update Stats State with new data
+        setStats(prev => prev.map(u => u.id === user.id ? { ...u, structuredStats } : u));
+
+    } catch (err) {
+        console.error("Error loading details", err);
+    } finally {
+        setLoadingDetails(false);
+    }
+  };
+
+  // --- LAZY LOAD: AI HISTORY ---
+  const handleOpenAiHistory = async (user) => {
+      setAiModalUser(user);
+      setAiHistoryLoading(true);
+      setAiHistoryLogs([]);
+
+      const { data, error } = await supabase
+        .from('ai_usage_logs')
+        .select('id, cost, model, created_at, question_id')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (!error) {
+          setAiHistoryLogs(data);
+      }
+      setAiHistoryLoading(false);
+  };
+
+  // --- SORTING ---
   const sortedStats = useMemo(() => {
-    let sortableItems = [...stats];
+    let items = [...stats];
     if (sortConfig.key) {
-      sortableItems.sort((a, b) => {
+      items.sort((a, b) => {
         let aVal = a[sortConfig.key];
         let bVal = b[sortConfig.key];
-        if (typeof aVal === 'string') {
-            aVal = aVal.toLowerCase();
-            bVal = bVal.toLowerCase();
-        }
+        if (typeof aVal === 'string') { aVal = aVal.toLowerCase(); bVal = bVal.toLowerCase(); }
         if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
         if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
       });
     }
-    return sortableItems;
+    return items;
   }, [stats, sortConfig]);
 
   const requestSort = (key) => {
@@ -65,130 +214,8 @@ const AdminDashboard = ({ onClose, questions }) => {
     return sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 text-indigo-600" /> : <ArrowDown className="w-3 h-3 text-indigo-600" />;
   };
 
-  const fetchAllRows = async (table, selectQuery) => {
-    let allData = [];
-    let page = 0;
-    const pageSize = 1000;
-    let hasMore = true;
-    while (hasMore) {
-      const { data, error } = await supabase.from(table).select(selectQuery).range(page * pageSize, (page + 1) * pageSize - 1);
-      if (error) throw error;
-      if (data && data.length > 0) {
-        allData = [...allData, ...data];
-        if (data.length < pageSize) hasMore = false;
-        else page++;
-      } else {
-        hasMore = false;
-      }
-    }
-    return allData;
-  };
-
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const [profiles, rawProgress, aiLogs, quotaResult] = await Promise.all([
-        fetchAllRows('profiles', 'id, email, display_name'),
-        fetchAllRows('user_progress', 'user_id, score, max_score, question_id, selected_option, user_response'),
-        fetchAllRows('ai_usage_logs', 'id, user_id, cost, model, created_at, question_id'), // Added created_at/model for history
-        supabase.rpc('get_all_users_quota_stats') 
-      ]);
-
-      setAllAiLogs(aiLogs); // Store for modal usage
-
-      const totalDbBytes = quotaResult.data?.total_db_bytes || 1; 
-      const userBytesMap = {};
-      if (quotaResult.data?.users) {
-        quotaResult.data.users.forEach(u => { userBytesMap[u.user_id] = u.total_user_bytes; });
-      }
-      setQuotaData({ totalDbBytes, userBytesMap });
-
-      const validProgress = rawProgress.filter(p => p.score !== null || p.selected_option !== null || (p.user_response && p.user_response.length > 0));
-
-      const userStats = profiles.map(user => {
-        const allUserEntries = rawProgress.filter(p => p.user_id === user.id);
-        const userGradedAnswers = validProgress.filter(p => p.user_id === user.id);
-        
-        // AI Stats
-        const userAiCalls = aiLogs.filter(l => l.user_id === user.id);
-        const aiCostHKD = userAiCalls.reduce((sum, log) => sum + (log.cost || 0), 0);
-
-        // DB Stats
-        const userBytes = userBytesMap[user.id] || 0;
-        const rawDbCostHKD = (userBytes / totalDbBytes) * PRO_PLAN_COST_USD * USD_TO_HKD_RATE;
-        const dbCostHKD = parseFloat(rawDbCostHKD);
-
-        // Accuracy
-        let totalGradedQuestions = 0;
-        let sumScore = 0;
-        let sumMaxScore = 0;
-        userGradedAnswers.forEach(a => {
-            if (a.score === null || a.max_score === null || a.max_score === 0) return;
-            sumScore += a.score;
-            sumMaxScore += a.max_score;
-            totalGradedQuestions++;
-        });
-        const accuracy = sumMaxScore > 0 ? Math.round((sumScore / sumMaxScore) * 100) : 0;
-
-        // Hierarchy
-        const hierarchy = {}; 
-        userGradedAnswers.forEach(ans => {
-          const meta = questionMetaMap.get(String(ans.question_id)) || { topic: 'Unknown', subtopic: 'Unknown' };
-          const { topic, subtopic } = meta;
-          if (ans.score === null || ans.max_score === null || ans.max_score === 0) return;
-          if (!hierarchy[topic]) hierarchy[topic] = { score: 0, maxScore: 0, count: 0, subtopics: {} };
-          if (!hierarchy[topic].subtopics[subtopic]) hierarchy[topic].subtopics[subtopic] = { score: 0, maxScore: 0, count: 0 };
-          hierarchy[topic].count += 1;
-          hierarchy[topic].score += ans.score;
-          hierarchy[topic].maxScore += ans.max_score;
-          hierarchy[topic].subtopics[subtopic].count += 1;
-          hierarchy[topic].subtopics[subtopic].score += ans.score;
-          hierarchy[topic].subtopics[subtopic].maxScore += ans.max_score;
-        });
-
-        const structuredStats = Object.entries(hierarchy).map(([tName, tData]) => {
-          const subList = Object.entries(tData.subtopics).map(([sName, sData]) => ({
-            name: sName,
-            total: sData.count,
-            accuracy: sData.maxScore > 0 ? Math.round((sData.score / sData.maxScore) * 100) : 0
-          })).sort((a, b) => b.accuracy - a.accuracy); 
-          return {
-            name: tName,
-            total: tData.count,
-            accuracy: tData.maxScore > 0 ? Math.round((tData.score / tData.maxScore) * 100) : 0,
-            subtopics: subList
-          };
-        }).sort((a, b) => b.accuracy - a.accuracy); 
-
-        return {
-          id: user.id,
-          email: user.email,
-          display_name: user.display_name || '',
-          totalAttempted: allUserEntries.length, 
-          totalGraded: totalGradedQuestions,
-          accuracy,
-          aiUsageCount: userAiCalls.length,
-          aiCostHKD,
-          dbCostHKD,
-          userBytes, // Passed for DB Modal
-          structuredStats
-        };
-      });
-
-      setStats(userStats);
-      const totalAiSpentHKD = aiLogs.reduce((acc, log) => acc + (log.cost || 0), 0);
-      setSummary({ totalUsers: profiles.length, totalAnswers: rawProgress.length, totalAiCalls: aiLogs.length, totalAiSpentHKD });
-
-    } catch (error) {
-      console.error("Dashboard Error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const toggleRow = (userId) => setExpandedUserId(expandedUserId === userId ? null : userId);
+  // --- HELPERS ---
   const formatDate = (iso) => new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-  
   const getScoreColor = (score) => {
     if (score >= 70) return 'text-green-700 bg-green-100 border-green-200';
     if (score >= 40) return 'text-yellow-700 bg-yellow-100 border-yellow-200';
@@ -200,11 +227,9 @@ const AdminDashboard = ({ onClose, questions }) => {
     return 'bg-red-400';
   };
 
-  // --- SUB-COMPONENTS FOR MODALS ---
-  const UserAIHistoryModal = ({ user, onClose }) => {
+  // --- SUB-COMPONENTS ---
+  const UserAIHistoryModal = ({ user, onClose, logs, isLoading }) => {
     if (!user) return null;
-    const userLogs = allAiLogs.filter(log => log.user_id === user.id).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
     return (
         <div className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95">
@@ -215,27 +240,31 @@ const AdminDashboard = ({ onClose, questions }) => {
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-violet-200 rounded-full text-violet-700"><X className="w-5 h-5"/></button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-0">
-                    <table className="w-full text-sm text-left">
-                        <thead className="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0 border-b border-gray-200">
-                            <tr>
-                                <th className="px-6 py-3">Time</th>
-                                <th className="px-6 py-3">Question</th>
-                                <th className="px-6 py-3">Model</th>
-                                <th className="px-6 py-3 text-right">Cost (HKD)</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {userLogs.length === 0 ? <tr><td colSpan="4" className="px-6 py-8 text-center text-gray-400">No usage recorded</td></tr> : userLogs.map(log => (
-                                <tr key={log.id} className="hover:bg-slate-50">
-                                    <td className="px-6 py-3 text-gray-500 font-mono text-xs">{formatDate(log.created_at)}</td>
-                                    <td className="px-6 py-3 font-bold text-gray-700">{log.question_id}</td>
-                                    <td className="px-6 py-3"><span className="px-2 py-1 bg-slate-100 border rounded text-xs">{log.model || 'Unknown'}</span></td>
-                                    <td className="px-6 py-3 text-right font-mono text-gray-900">${(log.cost || 0).toFixed(4)}</td>
+                <div className="flex-1 overflow-y-auto p-0 relative">
+                    {isLoading ? (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/80"><Loader2 className="animate-spin text-violet-600"/></div>
+                    ) : (
+                        <table className="w-full text-sm text-left">
+                            <thead className="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0 border-b border-gray-200">
+                                <tr>
+                                    <th className="px-6 py-3">Time</th>
+                                    <th className="px-6 py-3">Question</th>
+                                    <th className="px-6 py-3">Model</th>
+                                    <th className="px-6 py-3 text-right">Cost (HKD)</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {logs.length === 0 ? <tr><td colSpan="4" className="px-6 py-8 text-center text-gray-400">No usage recorded</td></tr> : logs.map(log => (
+                                    <tr key={log.id} className="hover:bg-slate-50">
+                                        <td className="px-6 py-3 text-gray-500 font-mono text-xs">{formatDate(log.created_at)}</td>
+                                        <td className="px-6 py-3 font-bold text-gray-700">{log.question_id}</td>
+                                        <td className="px-6 py-3"><span className="px-2 py-1 bg-slate-100 border rounded text-xs">{log.model || 'Unknown'}</span></td>
+                                        <td className="px-6 py-3 text-right font-mono text-gray-900">${(log.cost || 0).toFixed(4)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
                 <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 text-right">
                     <span className="text-xs font-bold text-violet-600 mr-2">TOTAL SPENT:</span>
@@ -258,7 +287,6 @@ const AdminDashboard = ({ onClose, questions }) => {
                     </div>
                     <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full"><X className="w-5 h-5 text-gray-400"/></button>
                 </div>
-                
                 <div className="space-y-4">
                     <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
                         <div className="flex justify-between text-sm text-emerald-800 mb-1"><span>User Storage</span><span className="font-mono font-bold">{(user.userBytes / 1024).toFixed(2)} KB</span></div>
@@ -268,12 +296,10 @@ const AdminDashboard = ({ onClose, questions }) => {
                         </div>
                         <p className="text-[10px] text-emerald-600 mt-2 text-right">User consumes ~{((user.userBytes / quotaData.totalDbBytes) * 100).toFixed(4)}% of DB</p>
                     </div>
-
                     <div className="flex justify-between items-center py-3 border-t border-gray-100">
                         <span className="text-sm text-gray-600">Pro Plan Allocation</span>
                         <span className="font-mono font-bold text-gray-900">${(PRO_PLAN_COST_USD * USD_TO_HKD_RATE).toFixed(0)} HKD</span>
                     </div>
-                    
                     <div className="flex justify-between items-center py-4 border-t border-gray-200 bg-gray-50 -mx-6 px-6 -mb-6 rounded-b-xl">
                         <span className="text-sm font-bold text-gray-700">Estimated User Cost</span>
                         <div className="text-right">
@@ -292,8 +318,7 @@ const AdminDashboard = ({ onClose, questions }) => {
   return (
     <div className="fixed inset-0 z-[60] bg-slate-100 overflow-auto animate-in slide-in-from-bottom duration-300">
       
-      {/* --- MODALS --- */}
-      <UserAIHistoryModal user={aiModalUser} onClose={() => setAiModalUser(null)} />
+      <UserAIHistoryModal user={aiModalUser} logs={aiHistoryLogs} isLoading={aiHistoryLoading} onClose={() => setAiModalUser(null)} />
       <UserDBStatsModal user={dbModalUser} onClose={() => setDbModalUser(null)} />
 
       {/* Header */}
@@ -372,7 +397,7 @@ const AdminDashboard = ({ onClose, questions }) => {
                 
                 return (
                   <React.Fragment key={user.id}>
-                    {/* User Row - NO GLOBAL CLICK HANDLER */}
+                    {/* User Row */}
                     <tr className={`transition-colors ${isExpanded ? 'bg-indigo-50/50' : 'hover:bg-slate-50'}`}>
                       <td className="px-6 py-4">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${index === 0 ? 'bg-yellow-100 text-yellow-700' : index === 1 ? 'bg-gray-200 text-gray-600' : index === 2 ? 'bg-orange-100 text-orange-700' : 'text-gray-400 bg-gray-100'}`}>{index + 1}</div>
@@ -393,8 +418,8 @@ const AdminDashboard = ({ onClose, questions }) => {
                         <span className="inline-block px-3 py-1 bg-gray-100 rounded-full text-sm font-semibold text-gray-700">{user.totalGraded}</span>
                       </td>
 
-                      {/* ACCURACY (CLICKABLE) */}
-                      <td className="px-6 py-4 text-center cursor-pointer hover:bg-indigo-100/50 transition-colors rounded-lg" onClick={() => toggleRow(user.id)}>
+                      {/* ACCURACY (CLICKABLE -> EXPAND) */}
+                      <td className="px-6 py-4 text-center cursor-pointer hover:bg-indigo-100/50 transition-colors rounded-lg" onClick={() => handleToggleRow(user)}>
                         <div className="flex items-center justify-center gap-2">
                            <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                              <div className={`h-full rounded-full ${getBarColor(user.accuracy)}`} style={{width: `${user.accuracy}%`}}></div>
@@ -403,19 +428,19 @@ const AdminDashboard = ({ onClose, questions }) => {
                         </div>
                       </td>
 
-                      {/* AI CALLS (CLICKABLE) */}
-                      <td className="px-6 py-4 text-center cursor-pointer hover:bg-violet-100/50 transition-colors rounded-lg" onClick={() => setAiModalUser(user)}>
+                      {/* AI CALLS (CLICKABLE -> AI MODAL) */}
+                      <td className="px-6 py-4 text-center cursor-pointer hover:bg-violet-100/50 transition-colors rounded-lg" onClick={() => handleOpenAiHistory(user)}>
                         <span className="font-mono font-bold text-violet-600 border-b border-dashed border-violet-300">{user.aiUsageCount}</span>
                       </td>
                       
-                      {/* AI COST (CLICKABLE) */}
-                      <td className="px-6 py-4 text-right cursor-pointer hover:bg-violet-100/50 transition-colors rounded-lg" onClick={() => setAiModalUser(user)}>
+                      {/* AI COST (CLICKABLE -> AI MODAL) */}
+                      <td className="px-6 py-4 text-right cursor-pointer hover:bg-violet-100/50 transition-colors rounded-lg" onClick={() => handleOpenAiHistory(user)}>
                         <span className="font-mono font-bold text-violet-700 border-b border-dashed border-violet-300">
                            ${user.aiCostHKD.toFixed(2)}
                         </span>
                       </td>
 
-                      {/* DB COST (CLICKABLE) */}
+                      {/* DB COST (CLICKABLE -> DB MODAL) */}
                       <td className="px-6 py-4 text-right cursor-pointer hover:bg-emerald-100/50 transition-colors rounded-lg" onClick={() => setDbModalUser(user)}>
                          <div className="flex items-center justify-end gap-1 font-mono font-bold text-emerald-600 bg-emerald-50 py-1 px-2 rounded inline-block ml-auto border border-transparent hover:border-emerald-200">
                             <DollarSign className="w-3 h-3" />
@@ -424,7 +449,7 @@ const AdminDashboard = ({ onClose, questions }) => {
                       </td>
 
                       <td className="px-6 py-4 text-right">
-                        <button onClick={() => toggleRow(user.id)} className="text-gray-400 hover:text-indigo-600 transition-colors">
+                        <button onClick={() => handleToggleRow(user)} className="text-gray-400 hover:text-indigo-600 transition-colors">
                           {isExpanded ? <ChevronUp className="w-5 h-5"/> : <ChevronDown className="w-5 h-5"/>}
                         </button>
                       </td>
@@ -434,13 +459,17 @@ const AdminDashboard = ({ onClose, questions }) => {
                     {isExpanded && (
                       <tr className="bg-indigo-50/30 animate-in fade-in duration-200">
                         <td colSpan="9" className="px-6 py-6">
-                          <div className="bg-white rounded-lg border border-indigo-100 p-6 shadow-sm">
+                          <div className="bg-white rounded-lg border border-indigo-100 p-6 shadow-sm min-h-[100px]">
                             <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
                               <BarChart3 className="w-4 h-4 text-indigo-500" />
                               <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Detailed Breakdown (Graded Only)</h3>
                             </div>
 
-                            {user.structuredStats.length === 0 ? (
+                            {loadingDetails ? (
+                                <div className="flex items-center justify-center h-20 text-gray-400">
+                                    <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading breakdown...
+                                </div>
+                            ) : !user.structuredStats || user.structuredStats.length === 0 ? (
                               <p className="text-gray-400 text-sm italic">No graded data available yet.</p>
                             ) : (
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
