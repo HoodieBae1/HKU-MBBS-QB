@@ -65,7 +65,12 @@ const App = () => {
   const [modalViewMode, setModalViewMode] = useState('FULL'); 
 
   const [filtersOpen, setFiltersOpen] = useStickyState(true, 'app_filtersOpen');
-  const [searchQuery, setSearchQuery] = useStickyState('', 'app_searchQuery');
+  
+  // --- SEARCH STATES ---
+  // searchInput: Updates instantly (Visual)
+  // searchQuery: Updates after delay (Logic)
+  const [searchInput, setSearchInput] = useState(''); 
+  const [searchQuery, setSearchQuery] = useState('');
   
   const [selectedTopic, setSelectedTopic] = useStickyState('All', 'app_selectedTopic');
   const [selectedSubtopic, setSelectedSubtopic] = useStickyState('All', 'app_selectedSubtopic');
@@ -83,6 +88,15 @@ const App = () => {
   const [modalInitialData, setModalInitialData] = useState(null); 
 
   const [showHistory, setShowHistory] = useState(false);
+
+  // --- DEBOUNCE LOGIC ---
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+    }, 300); // Wait 300ms after last keystroke before filtering
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -116,7 +130,8 @@ const App = () => {
           topic: q.topic?.trim() || 'Uncategorized', 
           subtopic: q.subtopic?.trim() || 'General', 
           type: q.type || 'SAQ',
-          options: Array.isArray(q.options) ? q.options : []
+          options: Array.isArray(q.options) ? q.options : [],
+          randomSeed: Math.random() // Stable random seed for sorting
         })) : [];
         setQuestions(cleanData);
         setLoading(false);
@@ -253,17 +268,14 @@ const App = () => {
     setShowUserStats(false); setShowProgressPanel(false);
   };
 
-  // --- NEW HELPER: CLEAN HTML CONTENT ---
-  // Returns NULL if string contains only HTML tags, whitespace, or non-breaking spaces
+  // --- HTML CLEANER ---
   const cleanHtmlContent = (html) => {
     if (!html) return null;
-    // 1. Remove HTML tags
-    // 2. Remove &nbsp; entities
-    // 3. Trim whitespace
     const textOnly = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
     return textOnly.length === 0 ? null : html;
   };
 
+  // --- HANDLERS (Flag, Completion, Redo) ---
   const handleToggleFlag = async (questionData, currentDraftText) => {
     if (!session) return;
     const idString = String(questionData.unique_id);
@@ -271,7 +283,6 @@ const App = () => {
     const newFlagStatus = !currentProgress.is_flagged;
 
     const rawText = currentDraftText !== undefined ? currentDraftText : (currentProgress.user_response || null);
-    // Sanitize before saving
     const textToSave = cleanHtmlContent(rawText);
 
     const payload = {
@@ -404,7 +415,6 @@ const App = () => {
         ? (pendingMCQSelection ?? modalInitialData?.selected_option) 
         : null;
     
-    // Use Helper to clean Notes and Response before saving
     const cleanedNotes = cleanHtmlContent(modalData.notes);
     const cleanedResponse = cleanHtmlContent(modalData.user_response);
 
@@ -468,7 +478,9 @@ const App = () => {
 
   const checkIsFlagged = (id) => userProgress[String(id)]?.is_flagged === true;
 
+  // --- FILTER & SORTING ---
   const filterCounts = useMemo(() => {
+    // IMPORTANT: Use searchQuery (the debounced value) NOT searchInput
     const qLower = searchQuery.toLowerCase().trim();
     const baseSet = questions.filter(q => {
        if (selectedType !== 'All' && q.type !== selectedType) return false;
@@ -490,9 +502,10 @@ const App = () => {
         }
     });
     return { tCounts, sCounts, totalMatchingSearch: baseSet.length };
-  }, [questions, searchQuery, selectedType, selectedTopic]);
+  }, [questions, searchQuery, selectedType, selectedTopic]); // Dependency on searchQuery
 
   const filteredQuestions = useMemo(() => {
+    // IMPORTANT: Use searchQuery (the debounced value)
     const qLower = searchQuery.toLowerCase().trim();
     let result = questions.filter(q => {
       if (selectedTopic !== 'All' && q.topic !== selectedTopic) return false;
@@ -511,9 +524,12 @@ const App = () => {
     });
 
     return result.sort((a, b) => {
+      
+      if (sortOrder === 'Random') {
+          return a.randomSeed - b.randomSeed;
+      }
+
       if (sortOrder === 'Notes') {
-        // --- UPDATED SORT LOGIC ---
-        // Strip HTML before determining if notes exist
         const hasNotes = (qItem) => {
             const p = userProgress[String(qItem.unique_id)];
             if (!p || !p.notes) return false;
@@ -554,12 +570,30 @@ const App = () => {
         }
         return a.unique_id - b.unique_id;
       }
+
       if (sortOrder === 'Oldest' || sortOrder === 'Newest') {
-        return sortOrder === 'Newest' ? (b.unique_id - a.unique_id) : (a.unique_id - b.unique_id);
+        const getYearFromId = (idStr) => {
+            if (!idStr || !idStr.startsWith('M')) return 0;
+            const yy = parseInt(idStr.substring(1, 3), 10);
+            if (isNaN(yy)) return 0;
+            return yy < 50 ? 2000 + yy : 1900 + yy;
+        };
+
+        const yearA = getYearFromId(a.id);
+        const yearB = getYearFromId(b.id);
+
+        if (yearA !== yearB) {
+            return sortOrder === 'Newest' ? yearB - yearA : yearA - yearB;
+        }
+        
+        return sortOrder === 'Newest' 
+            ? b.id.localeCompare(a.id, undefined, { numeric: true }) 
+            : a.id.localeCompare(b.id, undefined, { numeric: true });
       }
+
       return a.unique_id - b.unique_id;
     });
-  }, [questions, selectedTopic, selectedSubtopic, selectedType, sortOrder, userProgress, searchQuery]);
+  }, [questions, selectedTopic, selectedSubtopic, selectedType, sortOrder, userProgress, searchQuery]); // Dependency on searchQuery
 
   if (!session) return <Auth />;
   if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
@@ -673,9 +707,9 @@ const App = () => {
                 <div className={`grid transition-all duration-300 ease-in-out overflow-hidden ${filtersOpen ? 'grid-rows-[1fr] opacity-100 mt-4 pb-2' : 'grid-rows-[0fr] opacity-0 mt-0 pb-0'}`}>
                   <div className="min-h-0 flex flex-col gap-3">
                     <div className="relative w-full">
-                        <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
+                        <input type="text" placeholder="Search..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
                         <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
-                        {searchQuery && <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>}
+                        {searchInput && <button onClick={() => setSearchInput('')} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>}
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <div className="relative">
@@ -703,7 +737,8 @@ const App = () => {
                             <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="w-full pl-3 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white">
                               <option value="Newest">Newest First</option>
                               <option value="Oldest">Oldest First</option>
-                              <option value="Notes">With Notes First</option> {/* NEW OPTION */}
+                              <option value="Notes">With Notes First</option>
+                              <option value="Random">Random Order</option>
                               <option value="Incorrect">Incorrect First</option>
                               <option value="Completed">Completed First</option>
                               <option value="Unfinished">Unfinished First</option>
@@ -746,7 +781,7 @@ const App = () => {
                 const isCompleted = checkIsCompleted(q.unique_id);
                 const isFlagged = checkIsFlagged(q.unique_id);
                 const progress = userProgress[String(q.unique_id)];
-                // UPDATED: Check for *clean* notes
+                // Check clean notes here too for the Has Notes button state
                 const hasNotes = progress?.notes && cleanHtmlContent(progress.notes) !== null;
                 const existingResponse = progress?.user_response || '';
                 const score = progress?.score;
