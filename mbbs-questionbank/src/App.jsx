@@ -15,7 +15,7 @@ import RecruiterDashboard from './RecruiterDashboard';
 import FeedbackModal from './FeedbackModal';
 import QuotaDisplay from './QuotaDisplay';
 import ReleaseNotesModal from './ReleaseNotesModal';
-import AIUsageDisplay from './AIUsageDisplay';
+import AIUsageDisplay from './AIUsageDisplay'; 
 import { APP_VERSION } from './appVersion';
 
 function useStickyState(defaultValue, key) {
@@ -47,6 +47,11 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // --- UI STATE PERSISTENCE ---
+  const [viewState, setViewState] = useState({}); 
+  const [aiState, setAiState] = useState({}); 
+  // ---------------------------------
+
   const [isAdmin, setIsAdmin] = useState(false);
   const [isRecruiter, setIsRecruiter] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
@@ -67,9 +72,6 @@ const App = () => {
 
   const [filtersOpen, setFiltersOpen] = useStickyState(true, 'app_filtersOpen');
   
-  // --- SEARCH STATES ---
-  // searchInput: Updates instantly (Visual)
-  // searchQuery: Updates after delay (Logic)
   const [searchInput, setSearchInput] = useState(''); 
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -90,11 +92,10 @@ const App = () => {
 
   const [showHistory, setShowHistory] = useState(false);
 
-  // --- DEBOUNCE LOGIC ---
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearchQuery(searchInput);
-    }, 300); // Wait 300ms after last keystroke before filtering
+    }, 300); 
 
     return () => clearTimeout(timer);
   }, [searchInput]);
@@ -132,7 +133,7 @@ const App = () => {
           subtopic: q.subtopic?.trim() || 'General', 
           type: q.type || 'SAQ',
           options: Array.isArray(q.options) ? q.options : [],
-          randomSeed: Math.random() // Stable random seed for sorting
+          randomSeed: Math.random() 
         })) : [];
         setQuestions(cleanData);
         setLoading(false);
@@ -172,15 +173,37 @@ const App = () => {
   };
 
   const fetchUserProgress = async (userId) => {
-    const { data, error } = await supabase
+    // 1. Fetch Question Progress (SAQ/MCQ)
+    const { data: progressData, error } = await supabase
       .from('user_progress')
       .select('id, question_id, notes, user_response, score, max_score, selected_option, is_flagged, created_at')
       .eq('user_id', userId);
 
     if (!error) {
       const progressMap = {};
-      data.forEach(row => { progressMap[String(row.question_id)] = row; });
+      progressData.forEach(row => { progressMap[String(row.question_id)] = row; });
       setUserProgress(progressMap);
+    }
+
+    // 2. Fetch AI Usage History (To show 'Free' label on load)
+    const { data: logData } = await supabase
+        .from('ai_usage_logs')
+        .select('question_id, model')
+        .eq('user_id', userId);
+
+    if (logData) {
+        const historyMap = {};
+        logData.forEach(log => {
+            const qid = String(log.question_id);
+            if (!historyMap[qid]) {
+                historyMap[qid] = { purchasedModels: [] };
+            }
+            // Add model to purchased list if unique
+            if (!historyMap[qid].purchasedModels.includes(log.model)) {
+                historyMap[qid].purchasedModels.push(log.model);
+            }
+        });
+        setAiState(historyMap); // Pre-fill AI state
     }
   };
 
@@ -269,14 +292,104 @@ const App = () => {
     setShowUserStats(false); setShowProgressPanel(false);
   };
 
-  // --- HTML CLEANER ---
   const cleanHtmlContent = (html) => {
     if (!html) return null;
     const textOnly = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
     return textOnly.length === 0 ? null : html;
   };
 
-  // --- HANDLERS (Flag, Completion, Redo) ---
+  // --- HANDLERS FOR PERSISTENCE ---
+  const handleViewStateChange = (uniqueId, key, value) => {
+    setViewState(prev => ({
+      ...prev,
+      [uniqueId]: {
+        ...prev[uniqueId],
+        [key]: value
+      }
+    }));
+  };
+
+  const handleTextChange = (questionId, newText) => {
+    setUserProgress(prev => {
+        const idStr = String(questionId);
+        const existing = prev[idStr] || {};
+        return {
+            ...prev,
+            [idStr]: {
+                ...existing,
+                question_id: idStr, 
+                user_response: newText
+            }
+        };
+    });
+  };
+
+  const handleAIRequest = async (questionData, modelId) => {
+    const idStr = String(questionData.unique_id);
+    if (aiState[idStr]?.loadingModel) return;
+
+    setAiState(prev => ({
+        ...prev,
+        [idStr]: {
+            ...prev[idStr],
+            loadingModel: modelId,
+            error: null
+        }
+    }));
+
+    try {
+        if (!session) throw new Error("Please login.");
+
+        const response = await fetch('https://qzoreybelgjynenkwobi.supabase.co/functions/v1/gemini-test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+                question_id: questionData.unique_id,
+                question: questionData.question,
+                official_answer: questionData.official_answer,
+                options: questionData.options,
+                type: questionData.type,
+                model: modelId
+            })
+        });
+
+        const responseData = await response.json();
+        if (!response.ok) throw new Error(responseData.error || "Server error");
+
+        setAiState(prev => {
+            const currentEntry = prev[idStr] || {};
+            const prevPurchased = currentEntry.purchasedModels || [];
+            
+            return {
+                ...prev,
+                [idStr]: {
+                    ...currentEntry,
+                    loadingModel: null,
+                    data: responseData.analysis,
+                    cost: responseData.cost,
+                    meta: responseData.tokens,
+                    selectedModel: modelId,
+                    purchasedModels: prevPurchased.includes(modelId) ? prevPurchased : [...prevPurchased, modelId]
+                }
+            };
+        });
+
+    } catch (err) {
+        console.error(err);
+        setAiState(prev => ({
+            ...prev,
+            [idStr]: {
+                ...prev[idStr],
+                loadingModel: null,
+                error: err.message || "AI Error"
+            }
+        }));
+    }
+  };
+
   const handleToggleFlag = async (questionData, currentDraftText) => {
     if (!session) return;
     const idString = String(questionData.unique_id);
@@ -453,6 +566,7 @@ const App = () => {
 
     if (!existingEntry) return;
 
+    // Reset score and selection, keep notes/response
     const payload = {
         ...existingEntry,
         user_id: session.user.id, 
@@ -460,28 +574,32 @@ const App = () => {
         score: null,
         max_score: null,
         selected_option: null,
-        user_response: null, 
-        notes: existingEntry.notes,
+        // user_response: null, 
         is_flagged: existingEntry.is_flagged
     };
 
     setUserProgress(prev => ({ ...prev, [idString]: payload }));
     await supabase.from('user_progress').upsert(payload, { onConflict: 'user_id,question_id' });
+    
+    // Also reset view state
+    handleViewStateChange(idString, 'isRevealed', false);
   };
 
   const handleLogout = async () => { await supabase.auth.signOut(); };
 
+  // --- COMPLETION CHECK ---
   const checkIsCompleted = (id) => {
     const p = userProgress[String(id)];
     if (!p) return false;
-    return p.score !== null || p.selected_option !== null;
+    const hasScore = p.score !== null && p.score !== undefined;
+    const hasSelection = p.selected_option !== null && p.selected_option !== undefined;
+    return hasScore || hasSelection;
   };
+  // --------------------------------
 
   const checkIsFlagged = (id) => userProgress[String(id)]?.is_flagged === true;
 
-  // --- FILTER & SORTING ---
   const filterCounts = useMemo(() => {
-    // IMPORTANT: Use searchQuery (the debounced value) NOT searchInput
     const qLower = searchQuery.toLowerCase().trim();
     const baseSet = questions.filter(q => {
        if (selectedType !== 'All' && q.type !== selectedType) return false;
@@ -503,10 +621,9 @@ const App = () => {
         }
     });
     return { tCounts, sCounts, totalMatchingSearch: baseSet.length };
-  }, [questions, searchQuery, selectedType, selectedTopic]); // Dependency on searchQuery
+  }, [questions, searchQuery, selectedType, selectedTopic]);
 
   const filteredQuestions = useMemo(() => {
-    // IMPORTANT: Use searchQuery (the debounced value)
     const qLower = searchQuery.toLowerCase().trim();
     let result = questions.filter(q => {
       if (selectedTopic !== 'All' && q.topic !== selectedTopic) return false;
@@ -594,7 +711,7 @@ const App = () => {
 
       return a.unique_id - b.unique_id;
     });
-  }, [questions, selectedTopic, selectedSubtopic, selectedType, sortOrder, userProgress, searchQuery]); // Dependency on searchQuery
+  }, [questions, selectedTopic, selectedSubtopic, selectedType, sortOrder, userProgress, searchQuery]);
 
   if (!session) return <Auth />;
   if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
@@ -615,7 +732,7 @@ const App = () => {
         isOpen={showFeedbackModal} 
         onClose={() => setShowFeedbackModal(false)} 
         user={session?.user} 
-        isAdmin={isAdmin} // <--- Add this prop
+        isAdmin={isAdmin}
       />
       
       {showPasswordResetModal && (
@@ -661,11 +778,9 @@ const App = () => {
                 <div className="flex items-center gap-2 text-[10px] text-teal-200 uppercase tracking-wider">
                   <span>Question Bank</span>
                   <span className="px-1.5 py-0.5 bg-teal-800 rounded text-teal-100 opacity-80 font-mono">v{APP_VERSION}</span>
-                  <div className="ml-2 border-l border-teal-600 pl-2">
+                  <div className="ml-2 border-l border-teal-600 pl-2 flex gap-2">
                     <QuotaDisplay session={session}/>
-                  </div>
-                  <div className="ml-2 border-l border-teal-600 pl-2">
-                    <AIUsageDisplay session={session} />
+                    <AIUsageDisplay session={session}/>
                   </div>
                 </div>
               </div>
@@ -787,14 +902,20 @@ const App = () => {
             initialTopMostItemIndex={initialScrollIndex}
             rangeChanged={({ startIndex }) => { window.localStorage.setItem('app_scrollIndex', startIndex); }}
             itemContent={(index, q) => {
+                const idStr = String(q.unique_id);
                 const isCompleted = checkIsCompleted(q.unique_id);
                 const isFlagged = checkIsFlagged(q.unique_id);
-                const progress = userProgress[String(q.unique_id)];
-                // Check clean notes here too for the Has Notes button state
+                const progress = userProgress[idStr];
+                
                 const hasNotes = progress?.notes && cleanHtmlContent(progress.notes) !== null;
                 const existingResponse = progress?.user_response || '';
                 const score = progress?.score;
                 const maxScore = progress?.max_score;
+
+                // --- PERSISTENT STATE ---
+                const isRevealedOverride = viewState[idStr]?.isRevealed || false;
+                const currentAiState = aiState[idStr] || {};
+                // -----------------------------
 
                 return (
                     <div className="pb-6">
@@ -802,6 +923,7 @@ const App = () => {
                           key={q.unique_id} 
                           data={q} 
                           index={index} 
+                          
                           isCompleted={isCompleted} 
                           isFlagged={isFlagged}
                           hasNotes={hasNotes}
@@ -809,6 +931,15 @@ const App = () => {
                           score={score}
                           maxScore={maxScore}
                           initialSelection={progress ? progress.selected_option : null}
+
+                          // --- PASSED STATE & HANDLERS ---
+                          isRevealedOverride={isRevealedOverride}
+                          onToggleReveal={(val) => handleViewStateChange(idStr, 'isRevealed', val)}
+                          onTextChange={(val) => handleTextChange(idStr, val)}
+                          aiState={currentAiState} 
+                          onRequestAI={(modelId) => handleAIRequest(q, modelId)}
+                          // -------------------------------
+                          
                           onToggleComplete={(mcqSelection, saqResponse, viewMode) => handleInitiateCompletion(q, mcqSelection, saqResponse, viewMode)} 
                           onReviewNotes={(draft, viewMode) => handleReviewNotes(q, draft, viewMode)}
                           onToggleFlag={(draft) => handleToggleFlag(q, draft)}
