@@ -14,28 +14,28 @@ const AI_MODELS = [
   },
   { 
     id: 'gemini-2.5-flash', 
-    name: '2.5 Flash', 
+    name: 'G2.5 Flash', 
     cost: '~$0.03', 
     label: 'Standard', 
     style: 'border-violet-200 hover:bg-violet-50' 
   },
   { 
     id: 'gemini-3-flash-preview', 
-    name: '3 Flash',
+    name: 'G3 Flash',
     cost: '~$0.02', 
     label: 'Next-Gen Fast', 
     style: 'border-cyan-200 hover:bg-cyan-50' 
   },
   { 
     id: 'gemini-2.5-pro', 
-    name: '2.5 Pro',
+    name: 'G2.5 Pro',
     cost: '~$0.1', 
     label: 'High Reasoning', 
     style: 'border-blue-200 hover:bg-blue-50' 
   },
   { 
     id: 'gemini-3-pro-preview', 
-    name: '3 Pro', 
+    name: 'G3 Pro', 
     cost: '~$0.12', 
     label: 'Deepest Thought', 
     style: 'border-fuchsia-300 bg-fuchsia-50/50 hover:bg-fuchsia-100' 
@@ -266,7 +266,15 @@ const QuestionCard = ({
             </div>
           </button>
           
-          <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{data.id}</span>
+          {/* Question ID + Code Display */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
+                {data.id}
+            </span>
+            <span className="text-[10px] text-gray-400 font-mono">
+                QUID:{data.unique_id}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -337,7 +345,7 @@ const QuestionCard = ({
                         <div className="flex items-center gap-2">
                             <Sparkles className="w-4 h-4 text-violet-600" />
                             <span className="font-bold text-sm text-violet-900 uppercase tracking-wide">
-                                Analysis From Professor AI ({AI_MODELS.find(m => m.id === selectedModel)?.name})
+                                Analysis ({AI_MODELS.find(m => m.id === selectedModel)?.name})
                             </span>
                         </div>
                         {analysisCost !== null && analysisCost !== undefined && !isNaN(analysisCost) && (
@@ -368,7 +376,7 @@ const QuestionCard = ({
                         <div className="flex items-center gap-2">
                             <Bot className="w-4 h-4 text-violet-500" />
                             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                               {analysisData ? 'Switch Model / Compare' : 'Ask Professor AI'}
+                               {analysisData ? 'Switch Model / Compare' : 'Ask the Professor'}
                             </span>
                         </div>
                     </div>
