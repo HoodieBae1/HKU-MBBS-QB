@@ -610,7 +610,12 @@ const App = () => {
     <div className={`min-h-screen bg-slate-50 text-slate-900 font-sans pb-20 relative transition-[margin] duration-300 ease-in-out ${modalOpen ? 'md:mr-[600px]' : 'mr-0'}`}>
       <UpdateManager />
       <ReleaseNotesModal isOpen={showReleaseModal} onClose={handleCloseReleaseNotes} data={releaseNoteData} />
-      <FeedbackModal isOpen={showFeedbackModal} onClose={() => setShowFeedbackModal(false)} user={session?.user} />
+      <FeedbackModal 
+        isOpen={showFeedbackModal} 
+        onClose={() => setShowFeedbackModal(false)} 
+        user={session?.user} 
+        isAdmin={isAdmin} // <--- Add this prop
+      />
       
       {showPasswordResetModal && (
          <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
