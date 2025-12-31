@@ -35,7 +35,7 @@ const AI_MODELS = [
   },
   { 
     id: 'gemini-2.5-pro', 
-    name: '2.5 Pro',
+    name: '2.5 Pro', 
     cost: '~$0.1', 
     label: 'High Reasoning', 
     style: 'border-blue-200 hover:bg-blue-50' 
@@ -54,7 +54,7 @@ const QuestionCard = ({
     existingResponse, score, maxScore, initialSelection,
     onToggleComplete, onToggleFlag, onReviewNotes, onRedo,
     isRevealedOverride, onToggleReveal, onTextChange,
-    aiState, onRequestAI  
+    aiState, onRequestAI, aiEnabled 
 }) => {
   
   const [selectedOption, setSelectedOption] = useState(null);
@@ -297,6 +297,7 @@ const QuestionCard = ({
               </div>
             )}
 
+            {(aiEnabled || analysisData) && (
             <div className="border border-violet-100 rounded-lg overflow-hidden bg-white shadow-sm mt-4">
                 
                 {analysisData && (
@@ -318,7 +319,6 @@ const QuestionCard = ({
                      </div>
                      <div className="text-slate-700 font-serif text-sm leading-relaxed min-h-[150px]">
                        
-                       {/* --- 2. PASS PLUGINS HERE --- */}
                        <ReactMarkdown 
                             remarkPlugins={[remarkMath]}
                             rehypePlugins={[rehypeKatex]}
@@ -334,12 +334,12 @@ const QuestionCard = ({
                        >
                            {analysisData}
                        </ReactMarkdown>
-                       {/* --------------------------- */}
 
                      </div>
                   </div>
                 )}
 
+                {aiEnabled ? (
                 <div className={`bg-slate-50/50 p-4 ${analysisData ? 'border-t border-violet-100' : ''}`}>
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
@@ -394,6 +394,13 @@ const QuestionCard = ({
                         </div>
                     )}
                 </div>
+                ) : (
+                    analysisData && (
+                        <div className="bg-slate-50 p-2 text-center border-t border-violet-100">
+                            <p className="text-[10px] text-gray-400 italic">AI features are currently disabled.</p>
+                        </div>
+                    )
+                )}
 
                 {analysisError && (
                     <div className="p-3 bg-red-50 flex items-center justify-between text-xs text-red-600 border-t border-red-100 animate-in slide-in-from-top-2">
@@ -402,6 +409,7 @@ const QuestionCard = ({
                     </div>
                 )}
             </div>
+            )}
           </div>
         )}
       </div>

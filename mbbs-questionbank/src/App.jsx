@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy, BarChart3, PieChart, StickyNote, Users, MessageCircleWarning, KeyRound, Download } from 'lucide-react';
+import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy, BarChart3, PieChart, StickyNote, Users, MessageCircleWarning, KeyRound, Download, Zap, ZapOff } from 'lucide-react';
 import { Virtuoso } from 'react-virtuoso';
 import { supabase } from './supabase';
 import QuestionCard from './QuestionCard';
@@ -50,7 +50,10 @@ const App = () => {
   // --- UI STATE PERSISTENCE ---
   const [viewState, setViewState] = useState({}); 
   const [aiState, setAiState] = useState({}); 
-  // ---------------------------------
+  
+  // --- NEW: AI ENABLED TOGGLE ---
+  const [aiEnabled, setAiEnabled] = useStickyState(true, 'app_ai_enabled');
+  // ------------------------------
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [isRecruiter, setIsRecruiter] = useState(false);
@@ -337,7 +340,7 @@ const App = () => {
     try {
         if (!session) throw new Error("Please login.");
 
-        const response = await fetch('https://qzoreybelgjynenkwobi.supabase.co/functions/v1/gemini-tutor', {
+        const response = await fetch('https://qzoreybelgjynenkwobi.supabase.co/functions/v1/gemini-test', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -777,9 +780,27 @@ const App = () => {
                 <div className="flex items-center gap-2 text-[10px] text-teal-200 uppercase tracking-wider">
                   <span>Question Bank</span>
                   <span className="px-1.5 py-0.5 bg-teal-800 rounded text-teal-100 opacity-80 font-mono">v{APP_VERSION}</span>
-                  <div className="ml-2 border-l border-teal-600 pl-2 flex gap-2">
+                  <div className="ml-2 border-l border-teal-600 pl-2 flex gap-2 items-center">
                     <QuotaDisplay session={session}/>
                     <AIUsageDisplay session={session}/>
+                    
+                    {/* --- AI TOGGLE BUTTON --- */}
+                    <button 
+                        onClick={() => setAiEnabled(!aiEnabled)}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-full border transition-all ${
+                            aiEnabled 
+                            ? 'bg-violet-600 border-violet-400 text-white hover:bg-violet-500' 
+                            : 'bg-slate-800 border-slate-600 text-slate-400 hover:bg-slate-700'
+                        }`}
+                        title={aiEnabled ? "AI Features Enabled" : "AI Features Disabled (Safe Mode)"}
+                    >
+                        {aiEnabled ? <Zap className="w-3 h-3 fill-current" /> : <ZapOff className="w-3 h-3" />}
+                        <span className="text-[9px] font-bold uppercase tracking-wider hidden sm:inline">
+                            {aiEnabled ? 'PROF. AI' : 'PROF. AI'}
+                        </span>
+                    </button>
+                    {/* ------------------------ */}
+
                   </div>
                 </div>
               </div>
@@ -937,6 +958,7 @@ const App = () => {
                           onTextChange={(val) => handleTextChange(idStr, val)}
                           aiState={currentAiState} 
                           onRequestAI={(modelId) => handleAIRequest(q, modelId)}
+                          aiEnabled={aiEnabled} // <--- PASSED HERE
                           // -------------------------------
                           
                           onToggleComplete={(mcqSelection, saqResponse, viewMode) => handleInitiateCompletion(q, mcqSelection, saqResponse, viewMode)} 
