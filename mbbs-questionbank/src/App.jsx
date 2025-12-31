@@ -341,7 +341,7 @@ const App = () => {
     try {
         if (!session) throw new Error("Please login.");
 
-        const response = await fetch('https://qzoreybelgjynenkwobi.supabase.co/functions/v1/gemini-test', {
+        const response = await fetch('https://qzoreybelgjynenkwobi.supabase.co/functions/v1/gemini-tutor', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
