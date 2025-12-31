@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { X, Search, BookOpen, Filter, StickyNote, ChevronDown, ChevronUp, ArrowRight, MessageSquare, PenTool } from 'lucide-react';
-// We removed ReactMarkdown as we are now using raw HTML from Quill
 
 const NotesPanel = ({ onClose, questions, userProgress }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -8,12 +7,25 @@ const NotesPanel = ({ onClose, questions, userProgress }) => {
   const [selectedSubtopic, setSelectedSubtopic] = useState('All');
   const [expandedId, setExpandedId] = useState(null);
 
+  // --- HELPER TO CHECK FOR EMPTY HTML ---
+  const hasRealContent = (html) => {
+    if (!html) return false;
+    // 1. If it has an image tag, it counts as content
+    if (html.includes('<img')) return true;
+    // 2. Strip all HTML tags to check for actual text
+    const textOnly = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+    return textOnly.length > 0;
+  };
+
   // 1. Aggregate Questions with their Notes
   const allNotes = useMemo(() => {
     return questions
       .filter(q => {
         const progress = userProgress[String(q.unique_id)];
-        return progress && progress.notes && progress.notes.trim().length > 0;
+        
+        // UPDATED FILTER LOGIC:
+        // Only return if progress exists AND hasRealContent returns true
+        return progress && hasRealContent(progress.notes);
       })
       .map(q => ({
         ...q,
@@ -40,6 +52,7 @@ const NotesPanel = ({ onClose, questions, userProgress }) => {
       const matchSubtopic = selectedSubtopic === 'All' || item.subtopic === selectedSubtopic;
       
       const qLower = searchQuery.toLowerCase();
+      
       // Note: searching inside HTML strings is imperfect but sufficient for basic text matching
       const matchSearch = !searchQuery || 
         item.userNote.toLowerCase().includes(qLower) ||
@@ -213,15 +226,17 @@ const NotesPanel = ({ onClose, questions, userProgress }) => {
                              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                                 <ArrowRight className="w-3 h-3" /> Original Question ({item.type})
                              </h4>
-                             <div className="text-gray-800 font-medium mb-4 text-sm leading-relaxed whitespace-pre-line">
-                                {item.question}
-                             </div>
+                             {/* UPDATED: Handle HTML in Question */}
+                             <div 
+                                className="text-gray-800 font-medium mb-4 text-sm leading-relaxed whitespace-pre-line html-content"
+                                dangerouslySetInnerHTML={{ __html: item.question }}
+                             />
                              {item.options && item.options.length > 0 && (
                                 <ul className="space-y-1 mb-4">
                                   {item.options.map((opt, i) => (
                                     <li key={i} className="text-xs text-gray-500 flex gap-2">
                                       <span className="font-mono font-bold bg-white border border-gray-200 px-1.5 rounded">{String.fromCharCode(65 + i)}</span>
-                                      {opt}
+                                      <span dangerouslySetInnerHTML={{ __html: opt }} />
                                     </li>
                                   ))}
                                 </ul>
@@ -231,9 +246,11 @@ const NotesPanel = ({ onClose, questions, userProgress }) => {
                           {/* Answer Column */}
                           <div className="bg-white border border-gray-200 rounded-lg p-5">
                              <h4 className="text-xs font-bold text-teal-600 uppercase tracking-widest mb-3">Official Answer</h4>
-                             <div className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-                                {item.official_answer}
-                             </div>
+                             {/* UPDATED: Handle HTML in Official Answer */}
+                             <div 
+                                className="text-sm text-gray-600 leading-relaxed whitespace-pre-line html-content"
+                                dangerouslySetInnerHTML={{ __html: item.official_answer }}
+                             />
                              
                              {/* AI Explanation Snippet (if available) */}
                              {item.ai_answer && (
