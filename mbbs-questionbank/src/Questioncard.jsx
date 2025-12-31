@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react'; 
 import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, Square, StickyNote, Flag, Sparkles, Loader2, AlertCircle, RotateCcw } from 'lucide-react';
-import { supabase } from './supabase'; 
 import ReactMarkdown from 'react-markdown'; 
 import RichTextEditor from './RichTextEditor'; 
+import DOMPurify from 'dompurify'; // <--- IMPORT THIS
 
 // --- 1. IMPORT KATEX & PLUGINS ---
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css'; // <--- Crucial for styling
+import 'katex/dist/katex.min.css'; 
 // ---------------------------------
 
-// --- DEFINE MODELS ---
+// ... (Keep your AI_MODELS constant here exactly as before) ...
 const AI_MODELS = [
   { 
     id: 'gemini-2.5-flash-lite', 
@@ -93,7 +93,6 @@ const QuestionCard = ({
             setLocalInput(existingResponse);
         }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingResponse]); 
 
   const handleSaqChange = (val) => {
@@ -186,10 +185,24 @@ const QuestionCard = ({
       return 'bg-white text-gray-400 border-gray-200 hover:text-teal-600 hover:border-teal-300 cursor-pointer';
   };
 
+  // --- HELPER: SAFE HTML ---
+  // We enable ADD_ATTR to allow 'target' if you use links, but importantly
+  // we are sanitizing the input before rendering.
+  const createSafeMarkup = (htmlContent) => {
+    return { 
+        __html: DOMPurify.sanitize(htmlContent, { 
+            ADD_ATTR: ['target', 'class'], // Allow class for styling if needed
+            USE_PROFILES: { html: true } 
+        }) 
+    };
+  };
+  // -------------------------
+
   return (
     <div className={`rounded-xl shadow-sm border overflow-hidden transition-all duration-300 ${getCardBackground()} ${isFlagged ? 'ring-2 ring-orange-300 ring-offset-2' : ''}`}>
        
        <div className="bg-slate-50/50 px-5 py-3 border-b border-gray-100 flex justify-between items-center">
+         {/* ... Header Content (Topic/Subtopic etc) ... */}
          <div className="flex gap-2 text-xs font-semibold">
           <span className="px-2 py-1 bg-teal-100 text-teal-700 rounded border border-teal-200">
             {data.topic}
@@ -240,9 +253,18 @@ const QuestionCard = ({
       </div>
 
       <div className="p-5">
-        <h3 className="text-lg text-gray-800 font-medium leading-relaxed whitespace-pre-line mb-6">
+        <h3 className="text-lg text-gray-800 font-medium leading-relaxed mb-6">
           <span className="font-bold text-gray-400 mr-2">Q{index + 1}.</span>
-          {data.question}
+          {/* 
+              BACKWARDS COMPATIBILITY NOTE:
+              We keep 'whitespace-pre-line' here. This ensures that old questions 
+              which use "\n" for newlines still render correctly, even inside 
+              dangerouslySetInnerHTML.
+          */}
+          <span 
+            className="whitespace-pre-line [&_img]:max-w-full [&_img]:rounded-lg [&_img]:mt-2 [&_img]:border [&_img]:border-gray-200" 
+            dangerouslySetInnerHTML={createSafeMarkup(data.question)} 
+          />
         </h3>
 
         {isMCQ && data.options && (
@@ -255,7 +277,14 @@ const QuestionCard = ({
                 className={`w-full text-left px-4 py-3 border rounded-lg transition-all duration-200 ${getOptionStyle(i)}`}
               >
                 <span className="mr-3 font-mono text-xs uppercase text-gray-500">{String.fromCharCode(65 + i)}</span>
-                {opt}
+                {/* 
+                   Render MCQ options as Safe HTML too. 
+                   Keeps 'whitespace-pre-line' for backward compatibility.
+                */}
+                <span 
+                    className="whitespace-pre-line"
+                    dangerouslySetInnerHTML={createSafeMarkup(opt)}
+                />
               </button>
             ))}
           </div>
@@ -276,7 +305,16 @@ const QuestionCard = ({
                  <CheckCircle2 className="w-4 h-4" />
                  Goddisk Answer
                </div>
-               <p className="text-emerald-900 whitespace-pre-line leading-relaxed">{data.official_answer}</p>
+               
+               {/* 
+                   Official Answer Safe Render. 
+                   Keeps 'whitespace-pre-line' for backward compatibility.
+               */}
+               <div 
+                 className="text-emerald-900 leading-relaxed whitespace-pre-line [&_img]:max-w-full [&_img]:rounded-lg [&_img]:mt-2"
+                 dangerouslySetInnerHTML={createSafeMarkup(data.official_answer)}
+               />
+               
              </div>
             
              {data.ai_answer && (
