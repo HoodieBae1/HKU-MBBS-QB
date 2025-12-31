@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabase';
-import { Users, Mail, Search, Edit2, Save, X, UserPlus, Loader2, ShieldAlert, RefreshCw, Send } from 'lucide-react';
+import { Users, Mail, Search, Edit2, Save, X, UserPlus, Loader2, ShieldAlert, RefreshCw, Send, Filter } from 'lucide-react';
 
 const RecruiterDashboard = ({ onClose }) => {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentUserRole, setCurrentUserRole] = useState(null);
   
   // Edit State
   const [editingId, setEditingId] = useState(null);
@@ -27,8 +28,27 @@ const RecruiterDashboard = ({ onClose }) => {
 
   const fetchProfiles = async () => {
     setLoading(true);
-    // Fetch profiles with inviter info
-    const { data, error } = await supabase
+    
+    // 1. Get Current User and their Role
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+        setLoading(false);
+        return;
+    }
+
+    // Fetch the current user's profile to check their role
+    const { data: myProfile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+    const role = myProfile?.role;
+    setCurrentUserRole(role);
+
+    // 2. Build Query
+    let query = supabase
       .from('profiles')
       .select(`
         *,
@@ -38,6 +58,16 @@ const RecruiterDashboard = ({ onClose }) => {
         )
       `)
       .order('created_at', { ascending: false });
+
+    // 3. APPLY RESTRICTION: 
+    // If user is NOT an admin AND NOT a superrecruiter, only show users they invited.
+    const hasFullAccess = role === 'admin' || role === 'superrecruiter';
+    
+    if (!hasFullAccess) {
+        query = query.eq('invited_by', user.id);
+    }
+    
+    const { data, error } = await query;
     
     if (!error) setProfiles(data);
     setLoading(false);
@@ -143,6 +173,8 @@ const RecruiterDashboard = ({ onClose }) => {
     p.display_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const isRestrictedUser = currentUserRole && currentUserRole !== 'admin' && currentUserRole !== 'superrecruiter';
+
   return (
     <div className="fixed inset-0 z-[60] bg-slate-100 overflow-auto animate-in slide-in-from-bottom duration-300">
       
@@ -172,13 +204,22 @@ const RecruiterDashboard = ({ onClose }) => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
             </div>
-            <button 
-                onClick={() => setShowInviteModal(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-sm transition-colors"
-            >
-                <UserPlus className="w-4 h-4" />
-                Invite New User
-            </button>
+            
+            <div className="flex items-center gap-3">
+                {isRestrictedUser && !loading && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-100">
+                        <Filter className="w-3 h-3" />
+                        Showing only your recruits
+                    </div>
+                )}
+                <button 
+                    onClick={() => setShowInviteModal(true)}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-sm transition-colors"
+                >
+                    <UserPlus className="w-4 h-4" />
+                    Invite New User
+                </button>
+            </div>
         </div>
 
         {/* Users Table */}
@@ -221,6 +262,7 @@ const RecruiterDashboard = ({ onClose }) => {
                                 <td className="px-6 py-4">
                                     <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                                         user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                                        user.role === 'superrecruiter' ? 'bg-pink-100 text-pink-700' :
                                         user.role === 'recruiter' ? 'bg-indigo-100 text-indigo-700' :
                                         'bg-gray-100 text-gray-600'
                                     }`}>

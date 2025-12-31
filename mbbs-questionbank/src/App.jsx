@@ -213,6 +213,7 @@ const App = () => {
         .from('profiles').select('role').eq('id', userId).single();
       if (!error) {
           if (data?.role === 'admin') { setIsAdmin(true); setIsRecruiter(true); }
+          if (data?.role === 'superrecruiter') { setIsRecruiter(true); }
           if (data?.role === 'recruiter') { setIsRecruiter(true); }
       }
     } catch (e) { console.error("Role check failed", e); }

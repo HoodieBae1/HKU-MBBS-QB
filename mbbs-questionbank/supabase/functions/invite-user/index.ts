@@ -39,7 +39,7 @@ serve(async (req) => {
       .eq('id', user.id)
       .single()
 
-    const allowedRoles = ['recruiter', 'admin'];
+    const allowedRoles = ['superrecruiter', 'recruiter', 'admin'];
     
     if (!profile || !allowedRoles.includes(profile.role)) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), { 
