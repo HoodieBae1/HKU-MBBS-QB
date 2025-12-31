@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.2.1",
+  "currentVersion": "3.2.2",
   "history": [
+    {
+      "version": "3.2.2",
+      "date": "2025-12-31",
+      "title": "Professor AI feature toggle, added image to question",
+      "changes": [
+        "Feature: Added toggle button at the top to show toggle Professor AI usage",
+        "Questions: Added image to question. Images are added manually so report any questions that need images added",
+        "Bugfix: Fixed notes panel showing cards with empty notes",
+        "System: Backend improvements to roles and permissions"
+      ]
+    },
     {
       "version": "3.2.1",
       "date": "2025-12-31",
