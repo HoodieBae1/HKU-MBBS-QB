@@ -36,7 +36,7 @@ const AI_MODELS = [
   { 
     id: 'gemini-2.5-pro', 
     name: '2.5 Pro', 
-    cost: '~$0.1', 
+    cost: '~$0.10', 
     label: 'High Reasoning', 
     style: 'border-blue-200 hover:bg-blue-50' 
   },
