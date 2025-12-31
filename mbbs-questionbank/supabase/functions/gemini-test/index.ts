@@ -41,8 +41,24 @@ serve(async (req) => {
     const modelKey = model || 'gemini-2.5-flash';
     const supabaseAdmin = createClient(sbUrl!, sbService!, { auth: { persistSession: false } })
 
+    // --- PREPARE PROMPT (We do this early now to measure input size for legacy cache) ---
+    const promptText = `
+        You are an expert medical professor at HKU (University of Hong Kong).
+        Analyze this medical finals question.
+
+        Question: "${question}"
+        ${type === 'MCQ' ? `Options: \n${options.map((o: any, i: number) => `${String.fromCharCode(65+i)}. ${o}`).join('\n')}` : ''}
+        Official Answer: "${official_answer}"
+
+        Provide a response with this exact structure:
+        1. **Official Answer Analysis**: Agree or disagree with the official answer.
+        2. **Pathophysiology/Mechanism**: Explain your thought process into why the answer is correct or incorrect.
+        3. **Why others are wrong** (If MCQ): Brief dismissal of distractors.
+        4. **Clinical Pearl**: A high-yield fact or mnemonic.
+        
+        Keep it concise, professional, and academic. Use bullet points and ordered lists to help with communication if needed.`;
+
     // --- STEP 1: CHECK IF USER HAS ALREADY PAID FOR THIS ---
-    // We check the logs to see if this user has ever requested this specific Q with this specific Model
     const { data: existingLog } = await supabaseAdmin
       .from('ai_usage_logs')
       .select('id')
@@ -67,7 +83,6 @@ serve(async (req) => {
     let finalCost = 0
     let tokens = { input: 0, output: 0, thinking: 0 }
     
-    // Helper to calculate cost based on current pricing
     const calculateCost = (inTok: number, outTok: number) => {
        const p = MODEL_PRICING[modelKey] || DEFAULT_PRICING;
        return ((inTok / 1_000_000) * p.input) + ((outTok / 1_000_000) * p.output);
@@ -75,22 +90,41 @@ serve(async (req) => {
 
     if (cachedData) {
         analysisText = cachedData.analysis_text;
-        tokens = { 
-            input: cachedData.input_tokens || 0, 
-            output: cachedData.output_tokens || 0,
-            thinking: cachedData.thinking_tokens || 0
-        };
+        
+        // --- LOGIC FIX FOR LEGACY CACHE ---
+        // If cache exists but has 0 tokens, we ESTIMATE them so we can bill the user.
+        // Rule of thumb: 1 token ~= 4 characters
+        const savedInput = cachedData.input_tokens || 0;
+        const savedOutput = cachedData.output_tokens || 0;
+
+        if (savedInput === 0 || savedOutput === 0) {
+            // Estimate!
+            tokens.input = Math.ceil(promptText.length / 4);
+            tokens.output = Math.ceil(analysisText.length / 4);
+            tokens.thinking = 0;
+
+            // Optional: Update the cache so next time it's accurate
+            // We do this without await so we don't slow down the response
+            supabaseAdmin.from('ai_analysis_cache').update({
+                input_tokens: tokens.input,
+                output_tokens: tokens.output
+            }).eq('id', cachedData.id).then();
+
+        } else {
+            tokens = { 
+                input: savedInput, 
+                output: savedOutput,
+                thinking: cachedData.thinking_tokens || 0
+            };
+        }
 
         if (hasPaidBefore) {
-            // SCENARIO A: Cached & User Paid Before -> FREE
             source = 'purchased_cache';
             finalCost = 0;
         } else {
-            // SCENARIO B: Cached & New to User -> BILL THEM
             source = 'global_cache_billed';
             finalCost = calculateCost(tokens.input, tokens.output);
             
-            // Log the "virtual" cost so they aren't charged next time
             await supabaseAdmin.from('ai_usage_logs').insert({
                 user_id: user.id,
                 question_id: String(question_id),
@@ -107,23 +141,8 @@ serve(async (req) => {
         const genAI = new GoogleGenerativeAI(geminiKey!)
         const aiModel = genAI.getGenerativeModel({ model: modelKey })
         
-        let prompt = `
-        You are an expert medical professor at HKU (University of Hong Kong).
-        Analyze this medical finals question.
-
-        Question: "${question}"
-        ${type === 'MCQ' ? `Options: \n${options.map((o: any, i: number) => `${String.fromCharCode(65+i)}. ${o}`).join('\n')}` : ''}
-        Official Answer: "${official_answer}"
-
-        Provide a response with this exact structure:
-        1. **Official Answer Analysis**: Agree or disagree with the official answer.
-        2. **Pathophysiology/Mechanism**: Explain your thought process into why the answer is correct or incorrect.
-        3. **Why others are wrong** (If MCQ): Brief dismissal of distractors.
-        4. **Clinical Pearl**: A high-yield fact or mnemonic.
-        
-        Keep it concise, professional, and academic. Use bullet points and ordered lists to help with communication if needed.`;
-
-        const result = await aiModel.generateContent(prompt)
+        // Use the promptText we defined at the top
+        const result = await aiModel.generateContent(promptText)
         const response = await result.response;
         analysisText = response.text();
         source = 'api';
@@ -135,7 +154,6 @@ serve(async (req) => {
 
         finalCost = calculateCost(tokens.input, tokens.output);
 
-        // Save Cache
         await supabaseAdmin.from('ai_analysis_cache').upsert({
             question_id: String(question_id),
             analysis_text: analysisText,
@@ -145,7 +163,6 @@ serve(async (req) => {
             thinking_tokens: tokens.thinking
         }, { onConflict: 'question_id, model_used'})
 
-        // Log Usage
         await supabaseAdmin.from('ai_usage_logs').insert({
             user_id: user.id,
             question_id: String(question_id),
