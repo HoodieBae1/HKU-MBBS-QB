@@ -1,6 +1,14 @@
 {
-  "currentVersion": "3.2.0",
+  "currentVersion": "3.2.1",
   "history": [
+    {
+      "version": "3.2.1",
+      "date": "2025-12-31",
+      "title": "Questions minor visual update",
+      "changes": [
+        "Bugfix: Minor update on questions rendering visuals"
+      ]
+    },
     {
       "version": "3.2.0",
       "date": "2025-12-31",
