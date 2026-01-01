@@ -153,14 +153,22 @@ const App = () => {
   useEffect(() => {
     const checkVersion = async () => {
       const lastSeenVersion = localStorage.getItem('app_last_seen_version');
+      
+      // optimization: only fetch if string comparison shows we are on a new version locally
+      // (This handles the case where the update happened, page reloaded, and now we need to show notes)
       if (lastSeenVersion !== APP_VERSION) {
         try {
-          const res = await fetch(`/version.json?t=${new Date().getTime()}`);
-          const data = await res.json();
-          const currentNotes = data.history.find(h => h.version === APP_VERSION);
-          if (currentNotes) {
-            setReleaseNoteData(currentNotes);
-            setShowReleaseModal(true);
+          // REMOVE ?t=... timestamp. 
+          // Rely on standard browser caching for this specific file fetch.
+          const res = await fetch('/version.json');
+          
+          if(res.ok) {
+            const data = await res.json();
+            const currentNotes = data.history.find(h => h.version === APP_VERSION);
+            if (currentNotes) {
+              setReleaseNoteData(currentNotes);
+              setShowReleaseModal(true);
+            }
           }
         } catch (e) {
           console.error("Failed to fetch release notes", e);
