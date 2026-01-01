@@ -1,6 +1,14 @@
 {
-  "currentVersion": "3.2.2",
+  "currentVersion": "3.2.3",
   "history": [
+    {
+      "version": "3.2.3",
+      "date": "2026-1-1",
+      "title": "Happy New Year! Changes on EMQ classification",
+      "changes": [
+        "Questions: The program mistakenly classified EMQ as short answers before. Changed the question database so that EMQs are now classified as MCQs."
+      ]
+    },
     {
       "version": "3.2.2",
       "date": "2025-12-31",
