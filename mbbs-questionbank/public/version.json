@@ -1,6 +1,14 @@
 {
-  "currentVersion": "3.2.4",
+  "currentVersion": "3.2.5",
   "history": [
+    {
+      "version": "3.2.5",
+      "date": "2026-1-1",
+      "title": "Fixed remaining incorrectly formatted EMQ questions",
+      "changes": [
+        "Questions: Fixed MCQs that were originally EMQs and had dirty question text ie. QUID 3380"
+      ]
+    },
     {
       "version": "3.2.4",
       "date": "2026-1-1",
