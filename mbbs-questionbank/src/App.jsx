@@ -6,7 +6,7 @@ import QuestionCard from './QuestionCard';
 import CompletionModal from './CompletionModal';
 import Auth from './Auth';
 import VersionHistory from './VersionHistory';
-import UpdateManager from './UpdateManager';
+import VersionSupervisor from './VersionSupervisor';
 import AdminDashboard from './AdminDashboard';
 import UserStats from './UserStats';
 import NotesPanel from './NotesPanel';
@@ -778,7 +778,7 @@ const App = () => {
 
   return (
     <div className={`min-h-screen bg-slate-50 text-slate-900 font-sans pb-20 relative transition-[margin] duration-300 ease-in-out ${modalOpen ? 'md:mr-[600px]' : 'mr-0'}`}>
-      <UpdateManager />
+       <VersionSupervisor />
       <ReleaseNotesModal isOpen={showReleaseModal} onClose={handleCloseReleaseNotes} data={releaseNoteData} />
       <FeedbackModal 
         isOpen={showFeedbackModal} 
