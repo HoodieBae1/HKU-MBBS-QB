@@ -176,34 +176,75 @@ const App = () => {
   };
 
   const fetchUserProgress = async (userId) => {
-    const { data: progressData, error } = await supabase
-      .from('user_progress')
-      .select('id, question_id, notes, user_response, score, max_score, selected_option, is_flagged, created_at')
-      .eq('user_id', userId);
+    try {
+      let allProgressData = [];
+      let from = 0;
+      const batchSize = 1000; 
+      let done = false;
 
-    if (!error) {
+      // 1. Loop until we have fetched all rows
+      while (!done) {
+        const { data, error } = await supabase
+          .from('user_progress')
+          .select('id, question_id, notes, user_response, score, max_score, selected_option, is_flagged, created_at')
+          .eq('user_id', userId)
+          .range(from, from + batchSize - 1); // Ask for a specific range of rows
+
+        if (error) {
+          console.error("Error fetching progress chunk:", error);
+          break; // Stop if there is a database error
+        }
+
+        if (data && data.length > 0) {
+          // Add this chunk to our main list
+          allProgressData = [...allProgressData, ...data];
+          
+          // Prepare the start point for the next loop
+          from += batchSize;
+
+          // Optimization: If we received FEWER rows than the batch size, 
+          // we know we have reached the end of the table.
+          if (data.length < batchSize) {
+            done = true;
+          }
+        } else {
+          // No data returned, we are finished
+          done = true;
+        }
+      }
+
+      // 2. Process all the data we collected
       const progressMap = {};
-      progressData.forEach(row => { progressMap[String(row.question_id)] = row; });
+      allProgressData.forEach(row => { 
+          progressMap[String(row.question_id)] = row; 
+      });
       setUserProgress(progressMap);
-    }
 
-    const { data: logData } = await supabase
-        .from('ai_usage_logs')
-        .select('question_id, model')
-        .eq('user_id', userId);
+      // --- HANDLE AI LOGS (We should apply the same logic here eventually) ---
+      // For now, we will leave AI logs as a simple fetch since they are likely smaller, 
+      // but if AI usage grows, apply the same 'while' loop logic as above.
+      const { data: logData } = await supabase
+          .from('ai_usage_logs')
+          .select('question_id, model')
+          .eq('user_id', userId)
+          .limit(2000); // Increased limit just in case
 
-    if (logData) {
-        const historyMap = {};
-        logData.forEach(log => {
-            const qid = String(log.question_id);
-            if (!historyMap[qid]) {
-                historyMap[qid] = { purchasedModels: [] };
-            }
-            if (!historyMap[qid].purchasedModels.includes(log.model)) {
-                historyMap[qid].purchasedModels.push(log.model);
-            }
-        });
-        setAiState(historyMap); 
+      if (logData) {
+          const historyMap = {};
+          logData.forEach(log => {
+              const qid = String(log.question_id);
+              if (!historyMap[qid]) {
+                  historyMap[qid] = { purchasedModels: [] };
+              }
+              if (!historyMap[qid].purchasedModels.includes(log.model)) {
+                  historyMap[qid].purchasedModels.push(log.model);
+              }
+          });
+          setAiState(historyMap); 
+      }
+
+    } catch (err) {
+      console.error("Unexpected error in fetchUserProgress:", err);
     }
   };
 
