@@ -1,6 +1,15 @@
 {
-  "currentVersion": "3.2.3",
+  "currentVersion": "3.2.4",
   "history": [
+    {
+      "version": "3.2.4",
+      "date": "2026-1-1",
+      "title": "Minor backend changes for scalability",
+      "changes": [
+        "System: Handle users with more than 1000 questions completed by fetching via pagination. Increased max row reads to 10000 as a fallback",
+        "System: Refactored version management to optimise edge function calls"
+      ]
+    },
     {
       "version": "3.2.3",
       "date": "2026-1-1",
