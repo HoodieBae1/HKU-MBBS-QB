@@ -4,15 +4,13 @@ import { supabase } from './supabase';
 
 const AIUsageDisplay = ({ session, userProfile }) => {
   const [logs, setLogs] = useState([]);
-  const [stats, setStats] = useState({ totalCost: 0, count: 0, byModel: {} });
+  const [stats, setStats] = useState({ totalCreditsSpent: 0, totalRealCost: 0, count: 0, byModel: {} });
   const [loading, setLoading] = useState(true);
   const [showTooltip, setShowTooltip] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const isStandard = userProfile?.subscription_tier === 'standard';
   const creditBalance = userProfile?.ai_credit_balance || 0;
-  
-  // Standard users see 20x prices. Legacy see 1x (Real) prices.
   const multiplier = isStandard ? 20 : 1;
 
   useEffect(() => {
@@ -49,17 +47,45 @@ const AIUsageDisplay = ({ session, userProfile }) => {
     });
   };
 
-  const calculateStats = (data) => {
-    const totalCost = data.reduce((acc, curr) => acc + (curr.cost || 0), 0);
-    const count = data.length;
-    
-    const byModel = data.reduce((acc, curr) => {
-      const modelName = curr.model || 'Unknown';
-      acc[modelName] = (acc[modelName] || 0) + 1;
-      return acc;
-    }, {});
+  // --- HELPER: Identify if a log entry was free for the user ---
+  const checkIsFree = (log) => {
+      // 1. Explicit DB cost is 0 (Legacy / Early logs)
+      if (log.cost === 0) return true;
+      
+      // 2. Check Result Source strings from Backend Script
+      const s = log.result_source || '';
+      return (
+          s === 'trial_free' || 
+          s.startsWith('purchased_') // Covers: purchased_re_read, purchased_cache, purchased_cache_view, purchased_regenerated
+      );
+  };
 
-    setStats({ totalCost, count, byModel });
+  const calculateStats = (data) => {
+    let totalRealCost = 0;
+    let totalCreditsSpent = 0;
+    const byModel = {};
+
+    data.forEach(log => {
+        const isFree = checkIsFree(log);
+        const rawCost = log.cost || 0;
+
+        // Analytics for Models
+        const modelName = log.model || 'Unknown';
+        byModel[modelName] = (byModel[modelName] || 0) + 1;
+
+        // Summation
+        if (!isFree) {
+            totalRealCost += rawCost;
+            totalCreditsSpent += (rawCost * multiplier);
+        }
+    });
+
+    setStats({ 
+        totalRealCost, 
+        totalCreditsSpent, // This is what the Standard User paid
+        count: data.length, 
+        byModel 
+    });
   };
 
   const formatDate = (isoString) => {
@@ -72,9 +98,6 @@ const AIUsageDisplay = ({ session, userProfile }) => {
   // 1. STANDARD USER VIEW (Wallet + Credits)
   // ==========================================
   if (isStandard) {
-      // Calculate Total Spent in Credits (Real * 20)
-      const totalSpentCredits = stats.totalCost * multiplier;
-
       return (
         <>
           <div className="relative z-50">
@@ -95,36 +118,51 @@ const AIUsageDisplay = ({ session, userProfile }) => {
           {/* Wallet History Modal */}
           {isModalOpen && (
             <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-                <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95">
+                <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95">
+                    
                     <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
                         <h2 className="font-bold text-gray-800 flex items-center gap-2"><Wallet className="w-5 h-5 text-green-600"/> Wallet History</h2>
                         <button onClick={() => setIsModalOpen(false)}><X className="w-5 h-5 text-gray-500 hover:text-gray-800" /></button>
                     </div>
+
                     <div className="p-4 bg-blue-50 border-b border-blue-100 flex justify-between items-center">
                         <div><p className="text-xs font-bold text-blue-600 uppercase">Current Balance</p><p className="text-2xl font-mono font-bold text-blue-900">${Number(creditBalance).toFixed(2)}</p></div>
-                        <div className="text-right"><p className="text-xs font-bold text-gray-500 uppercase">Total Spent</p><p className="text-lg font-mono text-gray-700">${totalSpentCredits.toFixed(2)}</p></div>
+                        {/* Use the specifically calculated credits spent */}
+                        <div className="text-right"><p className="text-xs font-bold text-gray-500 uppercase">Total Spent</p><p className="text-lg font-mono text-gray-700">${stats.totalCreditsSpent.toFixed(2)}</p></div>
                     </div>
+
                     <div className="flex-1 overflow-y-auto">
                         <table className="w-full text-sm text-left">
-                            <thead className="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0"><tr><th className="px-6 py-3">Time</th><th className="px-6 py-3">Action</th><th className="px-6 py-3 text-right">Amount</th></tr></thead>
+                            <thead className="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0 border-b border-gray-200">
+                                <tr>
+                                    <th className="px-6 py-3 font-semibold"><div className="flex items-center gap-1"><Calendar className="w-3 h-3"/> Time</div></th>
+                                    <th className="px-6 py-3 font-semibold"><div className="flex items-center gap-1"><FileText className="w-3 h-3"/> Question ID</div></th>
+                                    <th className="px-6 py-3 font-semibold"><div className="flex items-center gap-1"><Sparkles className="w-3 h-3"/> Model</div></th>
+                                    <th className="px-6 py-3 font-semibold text-right"><div className="flex items-center justify-end gap-1"><Coins className="w-3 h-3"/> Cost</div></th>
+                                </tr>
+                            </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {logs.map((log, index) => {
-                                    // LOGIC: The last 2 items in the array are the First 2 items chronologically
-                                    // This assumes we fetched all logs.
-                                    const isOldestTwo = index >= logs.length - 2;
-                                    
+                                {logs.map((log) => {
+                                    const isFree = checkIsFree(log);
+                                    const chargeAmount = (log.cost || 0) * multiplier;
+
                                     return (
                                       <tr key={log.id} className="hover:bg-slate-50">
-                                          <td className="px-6 py-3 font-mono text-xs text-gray-500">{new Date(log.created_at).toLocaleString()}</td>
-                                          <td className="px-6 py-3"><div className="flex flex-col"><span className="font-bold text-gray-700">AI Consultation</span><span className="text-[10px] text-gray-400">{log.model}</span></div></td>
+                                          <td className="px-6 py-3 font-mono text-xs text-gray-500 whitespace-nowrap">{formatDate(log.created_at)}</td>
+                                          <td className="px-6 py-3 font-bold text-indigo-600">{log.question_id}</td>
+                                          <td className="px-6 py-3">
+                                              <span className="px-2 py-1 bg-slate-100 border border-slate-200 rounded text-slate-600 text-xs font-medium">
+                                                  {log.model}
+                                              </span>
+                                          </td>
                                           <td className="px-6 py-3 text-right font-mono">
-                                              {isOldestTwo ? (
-                                                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded border border-indigo-100">
-                                                      Free Trial
+                                              {isFree ? (
+                                                  <span className={`text-[10px] font-bold px-2 py-1 rounded border ${log.result_source === 'trial_free' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                                                      {log.result_source === 'trial_free' ? 'Free Trial' : 'Free / Cached'}
                                                   </span>
                                               ) : (
-                                                  <span className="text-red-600">
-                                                      -${(log.cost * multiplier).toFixed(2)}
+                                                  <span className="text-red-600 font-medium">
+                                                      -${chargeAmount.toFixed(2)}
                                                   </span>
                                               )}
                                           </td>
@@ -156,11 +194,11 @@ const AIUsageDisplay = ({ session, userProfile }) => {
           <Coins className="w-4 h-4 text-yellow-300 group-hover:scale-110 transition-transform" />
           <div className="flex flex-col items-start leading-none">
             <span className="text-[10px] text-indigo-200 uppercase font-bold tracking-wider group-hover:text-white">AI Cost</span>
-            <span className="text-xs font-mono text-white font-bold">${stats.totalCost.toFixed(5)}</span>
+            <span className="text-xs font-mono text-white font-bold">${stats.totalRealCost.toFixed(5)}</span>
           </div>
         </button>
 
-        {/* Original Tooltip */}
+        {/* Tooltip */}
         <div className={`absolute top-full right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200 p-4 transition-all duration-200 origin-top-right z-50 ${showTooltip && !isModalOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
           <div className="flex items-start gap-3 mb-3">
             <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600"><Info className="w-5 h-5" /></div>
@@ -174,12 +212,12 @@ const AIUsageDisplay = ({ session, userProfile }) => {
             {Object.entries(stats.byModel).map(([model, count]) => (
               <div key={model} className="flex justify-between text-xs text-gray-500"><span className="truncate max-w-[150px]">{model}</span><span className="font-mono">{count}</span></div>
             ))}
-            <div className="pt-2 mt-2 border-t border-gray-200 flex justify-between text-xs font-bold text-indigo-700"><span>Total Estimated Cost</span><span>${stats.totalCost.toFixed(5)}</span></div>
+            <div className="pt-2 mt-2 border-t border-gray-200 flex justify-between text-xs font-bold text-indigo-700"><span>Total Estimated Cost</span><span>${stats.totalRealCost.toFixed(5)}</span></div>
           </div>
         </div>
       </div>
 
-      {/* Original Modal */}
+      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
@@ -191,9 +229,9 @@ const AIUsageDisplay = ({ session, userProfile }) => {
                     <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500"><X className="w-5 h-5" /></button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-white border-b border-gray-100">
-                    <div className="p-4 rounded-lg bg-indigo-50 border border-indigo-100"><p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-1">Total Spent</p><p className="text-2xl font-mono font-bold text-indigo-900">${stats.totalCost.toFixed(5)}</p></div>
+                    <div className="p-4 rounded-lg bg-indigo-50 border border-indigo-100"><p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-1">Total Spent</p><p className="text-2xl font-mono font-bold text-indigo-900">${stats.totalRealCost.toFixed(5)}</p></div>
                     <div className="p-4 rounded-lg bg-slate-50 border border-slate-100"><p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Interactions</p><p className="text-2xl font-mono font-bold text-slate-700">{stats.count}</p></div>
-                    <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-100"><p className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">Free (Cached) Hits</p><p className="text-2xl font-mono font-bold text-emerald-700">{logs.filter(l => l.cost === 0).length}</p></div>
+                    <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-100"><p className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">Free (Cached) Hits</p><p className="text-2xl font-mono font-bold text-emerald-700">{logs.filter(checkIsFree).length}</p></div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-0">
                     <table className="w-full text-sm text-left">
@@ -206,17 +244,19 @@ const AIUsageDisplay = ({ session, userProfile }) => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {logs.map((log) => (
+                            {logs.map((log) => {
+                                const isFree = checkIsFree(log);
+                                return (
                                 <tr key={log.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-3 text-gray-600 whitespace-nowrap font-mono text-xs">{formatDate(log.created_at)}</td>
                                     <td className="px-6 py-3 font-bold text-indigo-600">{log.question_id}</td>
                                     <td className="px-6 py-3"><span className="px-2 py-1 bg-slate-100 border border-slate-200 rounded text-slate-600 text-xs font-medium">{log.model}</span></td>
                                     <td className="px-6 py-3 text-right">
-                                        {log.cost === 0 ? <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold border border-emerald-200">Free</span> 
+                                        {isFree ? <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold border border-emerald-200">Free</span> 
                                         : <span className="font-mono font-medium text-gray-900">${Number(log.cost).toFixed(5)}</span>}
                                     </td>
                                 </tr>
-                            ))}
+                            )})}
                         </tbody>
                     </table>
                 </div>

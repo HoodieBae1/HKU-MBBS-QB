@@ -26,7 +26,8 @@ const QuestionCard = ({
     isLocked = false,
     userProfile = null,
     aiUsageCount = 0,
-    isGuest = false // <--- NEW PROP
+    isGuest = false,
+    onUnlock
 }) => {
   
   const [selectedOption, setSelectedOption] = useState(null);
@@ -184,7 +185,12 @@ const QuestionCard = ({
              <div className="w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center mb-4 shadow-xl"><Lock className="w-8 h-8" /></div>
              <h3 className="text-xl font-bold text-slate-800 mb-2">Question Locked</h3>
              <p className="text-gray-600 max-w-sm mb-6">You have reached the limit of the Free Trial (10 MCQs / 5 SAQs). Upgrade to continue practicing.</p>
-             <button className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg shadow-lg transition-transform active:scale-95">Unlock Full Access</button>
+             <button 
+                onClick={onUnlock} 
+                className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg shadow-lg transition-transform active:scale-95"
+             >
+                Unlock Full Access
+             </button>
           </div>
        )}
 
