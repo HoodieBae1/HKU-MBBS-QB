@@ -13,11 +13,26 @@ const QuotaDisplay = ({ userProfile, stats }) => {
   const isTrial = userProfile?.subscription_status === 'trial';
 
   // ==========================================
-  // 1. STANDARD USER VIEW (New Logic)
+  // 1. STANDARD USER VIEW (Fixed Logic)
   // ==========================================
   if (isStandard) {
     const limit = isTrial ? HARD_LIMIT_BYTES_TRIAL : (userProfile?.db_storage_limit || HARD_LIMIT_BYTES_PAID);
-    const usagePercent = Math.min(100, (safeStats.userBytes / limit) * 100);
+    const rawPercent = (safeStats.userBytes / limit) * 100;
+    
+    // FIX 1: Ensure max is 100, but don't lose precision yet
+    const usagePercent = Math.min(100, rawPercent);
+    
+    // FIX 2: Visual Width Logic
+    // If user has bytes but % is tiny, show at least 2% width so the bar appears
+    const visualWidth = (safeStats.userBytes > 0 && usagePercent < 2) 
+      ? 2 
+      : usagePercent;
+
+    // FIX 3: Better Label
+    // If between 0 and 1, show "< 1%", otherwise round normally
+    const percentLabel = (usagePercent > 0 && usagePercent < 1) 
+      ? '< 1' 
+      : Math.round(usagePercent);
     
     // Formatting
     const limitLabel = isTrial ? '50 KB' : '50 MB';
@@ -34,15 +49,19 @@ const QuotaDisplay = ({ userProfile, stats }) => {
         <div className="flex items-center gap-2 px-2 py-0.5 rounded border border-white/10 bg-black/20 text-[10px] font-mono group relative">
           <Database className="w-4 h-3 opacity-70" />
           <div className="flex flex-col w-20">
-            <div className="flex justify-between mb-0.5 px-0.5"><span>DB Quota</span><span>{Math.round(usagePercent)}%</span></div>
+            {/* Display formatted label */}
+            <div className="flex justify-between mb-0.5 px-0.5"><span>DB Quota</span><span>{percentLabel}%</span></div>
             <div className="w-full h-1.5 bg-black/30 rounded-full overflow-hidden">
-               <div className={`h-full transition-all duration-1000 ${colorClass}`} style={{ width: `${usagePercent}%` }} />
+               {/* Use visualWidth instead of raw math */}
+               <div className={`h-full transition-all duration-1000 ${colorClass}`} style={{ width: `${visualWidth}%` }} />
             </div>
           </div>
           {/* Simple Tooltip for Standard */}
           <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-48 bg-slate-800 text-white p-2 rounded shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none z-50 text-[10px]">
              <p className="font-bold text-teal-400 mb-1">{isTrial ? 'Trial Storage (Tiny)' : 'Pro Storage'}</p>
              <p>{usedLabel} / {limitLabel}</p>
+             {/* Helpful debug text for user */}
+             <p className="text-gray-500 mt-1">{(usagePercent).toFixed(4)}% used</p>
           </div>
         </div>
       </div>
