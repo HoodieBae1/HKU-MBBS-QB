@@ -7,6 +7,22 @@ import { APP_VERSION } from './appVersion';
 const CHECK_INTERVAL = 2 * 60 * 1000;
 let lastCheckTime = 0;
 
+// --- HELPER: Returns TRUE if remoteVersion > localVersion ---
+const isVersionNewer = (remoteVersion, localVersion) => {
+  if (!remoteVersion || !localVersion) return false;
+  
+  const remote = remoteVersion.split('.').map(Number);
+  const local = localVersion.split('.').map(Number);
+  
+  for (let i = 0; i < Math.max(remote.length, local.length); i++) {
+    const r = remote[i] || 0;
+    const l = local[i] || 0;
+    if (r > l) return true;  // Remote is newer -> Update Required
+    if (r < l) return false; // Local is newer (Dev/Preview) -> No Update
+  }
+  return false; // Equal
+};
+
 const VersionSupervisor = () => {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [newVersion, setNewVersion] = useState(null);
@@ -24,7 +40,9 @@ const VersionSupervisor = () => {
 
       if (data) {
         lastCheckTime = now;
-        if (data.value !== APP_VERSION) {
+        
+        // FIXED LOGIC: Only show if DB version is strictly newer
+        if (isVersionNewer(data.value, APP_VERSION)) {
           setNewVersion(data.value);
           setUpdateAvailable(true);
         }
@@ -38,18 +56,19 @@ const VersionSupervisor = () => {
     // 1. Check on mount
     checkVersionFromDB(true);
 
-    // 2. Check on Focus (Wake up from sleep / tab switch)
+    // 2. Check on Focus
     const onFocus = () => checkVersionFromDB(false);
     window.addEventListener('focus', onFocus);
 
-    // 3. Realtime Listener (Instant trigger)
+    // 3. Realtime Listener
     const channel = supabase
       .channel('version-check')
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'app_config', filter: 'key=eq.min_required_version' },
         (payload) => {
-          if (payload.new.value !== APP_VERSION) {
+          // FIXED LOGIC: Only show if new DB value is strictly newer
+          if (isVersionNewer(payload.new.value, APP_VERSION)) {
             setNewVersion(payload.new.value);
             setUpdateAvailable(true);
           }
@@ -73,17 +92,12 @@ const VersionSupervisor = () => {
   if (!updateAvailable) return null;
 
   return (
-    // Background: Semi-transparent slate with blur
     <div className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-500">
       
-      {/* Card Container */}
       <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 fade-in duration-300 border border-white/20">
         
-        {/* Header with Gradient */}
         <div className="bg-gradient-to-br from-teal-600 to-teal-700 p-6 text-center relative overflow-hidden">
-          {/* Decorative background element */}
           <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-white/5 rotate-12 pointer-events-none"></div>
-          
           <div className="relative z-10">
             <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner ring-1 ring-white/30">
               <Sparkles className="w-8 h-8 text-white fill-white/20" />
@@ -92,13 +106,11 @@ const VersionSupervisor = () => {
           </div>
         </div>
 
-        {/* Content Body */}
         <div className="p-6">
           <p className="text-gray-500 text-center text-sm mb-6 leading-relaxed">
             A new version has been deployed. Please update to ensure data consistency.
           </p>
 
-          {/* Version Comparison Pill */}
           <div className="flex items-center justify-between gap-2 mb-6 bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-inner">
              <div className="text-center flex-1">
                 <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Current</span>
