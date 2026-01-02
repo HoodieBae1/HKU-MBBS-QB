@@ -1,6 +1,15 @@
 {
-  "currentVersion": "3.2.5",
+  "currentVersion": "4.0.0",
   "history": [
+    {
+      "version": "4.0.0",
+      "date": "2026-1-2",
+      "title": "Added streaks feature and daily stats, opened app to public",
+      "changes": [
+        "Feature: Added feature to keep a streak like snapchat of how many days you have been doing practice questions. Includes daily questions completed and the accuracy of today.",
+        "Major Update: To ensure I have time to continue updating the app and make improvements, I have opened the app open to public. If this app has helped you please kindly help by sharing this app to your groups!"
+      ]
+    },
     {
       "version": "3.2.5",
       "date": "2026-1-1",
