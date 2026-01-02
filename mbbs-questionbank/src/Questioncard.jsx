@@ -1,52 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react'; 
-import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, Square, StickyNote, Flag, Sparkles, Loader2, AlertCircle, RotateCcw } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, Square, StickyNote, Flag, Sparkles, Loader2, AlertCircle, RotateCcw, Lock } from 'lucide-react';
 import ReactMarkdown from 'react-markdown'; 
 import RichTextEditor from './RichTextEditor'; 
-import DOMPurify from 'dompurify'; // <--- IMPORT THIS
+import DOMPurify from 'dompurify'; 
 
 // --- 1. IMPORT KATEX & PLUGINS ---
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css'; 
-// ---------------------------------
 
-// ... (Keep your AI_MODELS constant here exactly as before) ...
 const AI_MODELS = [
-  { 
-    id: 'gemini-2.5-flash-lite', 
-    name: '2.5 Flash Lite', 
-    cost: '~$0.005', 
-    label: 'Eco Mode', 
-    style: 'border-slate-200 hover:bg-slate-50' 
-  },
-  { 
-    id: 'gemini-2.5-flash', 
-    name: '2.5 Flash', 
-    cost: '~$0.03', 
-    label: 'Standard', 
-    style: 'border-violet-200 hover:bg-violet-50' 
-  },
-  { 
-    id: 'gemini-3-flash-preview', 
-    name: '3 Flash',
-    cost: '~$0.02', 
-    label: 'Next-Gen Fast', 
-    style: 'border-cyan-200 hover:bg-cyan-50' 
-  },
-  { 
-    id: 'gemini-2.5-pro', 
-    name: '2.5 Pro', 
-    cost: '~$0.10', 
-    label: 'High Reasoning', 
-    style: 'border-blue-200 hover:bg-blue-50' 
-  },
-  { 
-    id: 'gemini-3-pro-preview', 
-    name: '3 Pro', 
-    cost: '~$0.12', 
-    label: 'Deepest Thought', 
-    style: 'border-fuchsia-300 bg-fuchsia-50/50 hover:bg-fuchsia-100' 
-  },
+  { id: 'gemini-2.5-flash-lite', name: '2.5 Flash Lite', baseCost: 0.005, label: 'Eco Mode', style: 'border-slate-200 hover:bg-slate-50' },
+  { id: 'gemini-2.5-flash', name: '2.5 Flash', baseCost: 0.03, label: 'Standard', style: 'border-violet-200 hover:bg-violet-50' },
+  { id: 'gemini-3-flash-preview', name: '3 Flash', baseCost: 0.02, label: 'Next-Gen Fast', style: 'border-cyan-200 hover:bg-cyan-50' },
+  { id: 'gemini-2.5-pro', name: '2.5 Pro', baseCost: 0.10, label: 'High Reasoning', style: 'border-blue-200 hover:bg-blue-50' },
+  { id: 'gemini-3-pro-preview', name: '3 Pro', baseCost: 0.12, label: 'Deepest Thought', style: 'border-fuchsia-300 bg-fuchsia-50/50 hover:bg-fuchsia-100' },
 ];
 
 const QuestionCard = ({ 
@@ -54,7 +22,10 @@ const QuestionCard = ({
     existingResponse, score, maxScore, initialSelection,
     onToggleComplete, onToggleFlag, onReviewNotes, onRedo,
     isRevealedOverride, onToggleReveal, onTextChange,
-    aiState, onRequestAI, aiEnabled 
+    aiState, onRequestAI, aiEnabled,
+    aiUsageCount = 0,
+    isLocked = false,
+    userProfile = null
 }) => {
   
   const [selectedOption, setSelectedOption] = useState(null);
@@ -78,6 +49,10 @@ const QuestionCard = ({
 
   const isMCQ = data.type === 'MCQ';
   const isRevealed = isCompleted || isRevealedOverride || false;
+
+  const isStandardUser = userProfile?.subscription_tier === 'standard';
+  const isTrial = isStandardUser && userProfile?.subscription_status === 'trial';
+  const costMultiplier = isStandardUser ? 20 : 1; 
 
   useEffect(() => {
     if (initialSelection !== undefined && initialSelection !== null) {
@@ -104,11 +79,12 @@ const QuestionCard = ({
   };
   
   const toggleReveal = () => {
+      if (isLocked) return;
       onToggleReveal(!isRevealed);
   };
 
   const handleMCQSelect = (idx) => {
-    if (isCompleted) return; 
+    if (isCompleted || isLocked) return; 
     if (selectedOption !== null) return; 
     setSelectedOption(idx);
     onToggleReveal(true);
@@ -116,7 +92,7 @@ const QuestionCard = ({
   };
 
   const startHold = () => {
-    if (!isCompleted) return; 
+    if (!isCompleted || isLocked) return; 
     setIsHolding(true);
     setHoldProgress(0);
     const startTime = Date.now();
@@ -149,6 +125,7 @@ const QuestionCard = ({
   };
 
   const handleMainButtonClick = () => {
+    if (isLocked) return;
     if (!isCompleted && !isMCQ) {
          if (debouncedUpdateRef.current) clearTimeout(debouncedUpdateRef.current);
          onTextChange(localInput);
@@ -173,36 +150,50 @@ const QuestionCard = ({
 
   const isFullMarks = score === (maxScore || (isMCQ ? 1 : 0));
   
+  // --- UPDATED: Added min-h-[320px] when Locked ---
   const getCardBackground = () => {
+      if (isLocked) return 'bg-gray-50 border-gray-200 min-h-[320px]'; 
       if (!isCompleted) return 'bg-white border-gray-200';
       if (isFullMarks) return 'bg-green-50/50 border-green-200 opacity-75'; 
       return 'bg-red-50/50 border-red-200 opacity-75'; 
   };
 
   const getDoneButtonStyle = () => {
+      if (isLocked) return 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed';
       if (isCompleted) return 'bg-green-100 text-green-700 border-green-200 cursor-pointer';
       if (isMCQ) return 'bg-white text-gray-300 border-gray-200 cursor-default';
       return 'bg-white text-gray-400 border-gray-200 hover:text-teal-600 hover:border-teal-300 cursor-pointer';
   };
 
-  // --- HELPER: SAFE HTML ---
-  // We enable ADD_ATTR to allow 'target' if you use links, but importantly
-  // we are sanitizing the input before rendering.
   const createSafeMarkup = (htmlContent) => {
     return { 
         __html: DOMPurify.sanitize(htmlContent, { 
-            ADD_ATTR: ['target', 'class'], // Allow class for styling if needed
+            ADD_ATTR: ['target', 'class'], 
             USE_PROFILES: { html: true } 
         }) 
     };
   };
-  // -------------------------
 
   return (
-    <div className={`rounded-xl shadow-sm border overflow-hidden transition-all duration-300 ${getCardBackground()} ${isFlagged ? 'ring-2 ring-orange-300 ring-offset-2' : ''}`}>
+    <div className={`relative rounded-xl shadow-sm border overflow-hidden transition-all duration-300 ${getCardBackground()} ${isFlagged ? 'ring-2 ring-orange-300 ring-offset-2' : ''}`}>
        
+       {/* --- LOCKED OVERLAY --- */}
+       {isLocked && (
+          <div className="absolute inset-0 z-30 bg-white/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center select-none">
+             <div className="w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center mb-4 shadow-xl">
+                <Lock className="w-8 h-8" />
+             </div>
+             <h3 className="text-xl font-bold text-slate-800 mb-2">Question Locked</h3>
+             <p className="text-gray-600 max-w-sm mb-6">
+                You have reached the limit of the Free Trial (10 MCQs / 5 SAQs). Upgrade to continue practicing.
+             </p>
+             <button className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg shadow-lg transition-transform active:scale-95">
+                Unlock Full Access
+             </button>
+          </div>
+       )}
+
        <div className="bg-slate-50/50 px-5 py-3 border-b border-gray-100 flex justify-between items-center">
-         {/* ... Header Content (Topic/Subtopic etc) ... */}
          <div className="flex gap-2 text-xs font-semibold">
           <span className="px-2 py-1 bg-teal-100 text-teal-700 rounded border border-teal-200">
             {data.topic}
@@ -255,19 +246,21 @@ const QuestionCard = ({
       <div className="p-5">
         <h3 className="text-lg text-gray-800 font-medium leading-relaxed mb-6">
           <span className="font-bold text-gray-400 mr-2">Q{index + 1}.</span>
-          {/* 
-              BACKWARDS COMPATIBILITY NOTE:
-              We keep 'whitespace-pre-line' here. This ensures that old questions 
-              which use "\n" for newlines still render correctly, even inside 
-              dangerouslySetInnerHTML.
-          */}
-          <span 
-            className="whitespace-pre-line [&_img]:max-w-full [&_img]:rounded-lg [&_img]:mt-2 [&_img]:border [&_img]:border-gray-200" 
-            dangerouslySetInnerHTML={createSafeMarkup(data.question)} 
-          />
+          
+          {isLocked ? (
+             <span className="blur-sm select-none opacity-50">
+               This question content is hidden because you have reached your trial limit. 
+               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+             </span>
+          ) : (
+             <span 
+                className="whitespace-pre-line [&_img]:max-w-full [&_img]:rounded-lg [&_img]:mt-2 [&_img]:border [&_img]:border-gray-200" 
+                dangerouslySetInnerHTML={createSafeMarkup(data.question)} 
+             />
+          )}
         </h3>
 
-        {isMCQ && data.options && (
+        {isMCQ && data.options && !isLocked && (
           <div className="flex flex-col gap-3">
             {data.options.map((opt, i) => (
               <button
@@ -277,10 +270,6 @@ const QuestionCard = ({
                 className={`w-full text-left px-4 py-3 border rounded-lg transition-all duration-200 ${getOptionStyle(i)}`}
               >
                 <span className="mr-3 font-mono text-xs uppercase text-gray-500">{String.fromCharCode(65 + i)}</span>
-                {/* 
-                   Render MCQ options as Safe HTML too. 
-                   Keeps 'whitespace-pre-line' for backward compatibility.
-                */}
                 <span 
                     className="whitespace-pre-line"
                     dangerouslySetInnerHTML={createSafeMarkup(opt)}
@@ -290,7 +279,7 @@ const QuestionCard = ({
           </div>
         )}
 
-        {!isMCQ && (
+        {!isMCQ && !isLocked && (
             <div className="mb-4">
                 <div className={`${isCompleted ? '' : ''}`}> 
                     <RichTextEditor value={localInput} onChange={handleSaqChange} placeholder="Type your answer here..." readOnly={false} />
@@ -298,23 +287,17 @@ const QuestionCard = ({
             </div>
         )}
         
-        {isRevealed && (
+        {isRevealed && !isLocked && (
           <div className="mt-6 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                <div className="flex items-center gap-2 mb-2 text-emerald-800 font-bold text-sm uppercase tracking-wide">
                  <CheckCircle2 className="w-4 h-4" />
                  Goddisk Answer
                </div>
-               
-               {/* 
-                   Official Answer Safe Render. 
-                   Keeps 'whitespace-pre-line' for backward compatibility.
-               */}
                <div 
                  className="text-emerald-900 leading-relaxed whitespace-pre-line [&_img]:max-w-full [&_img]:rounded-lg [&_img]:mt-2"
                  dangerouslySetInnerHTML={createSafeMarkup(data.official_answer)}
                />
-               
              </div>
             
              {data.ai_answer && (
@@ -350,13 +333,15 @@ const QuestionCard = ({
                         {analysisCost !== null && analysisCost !== undefined && !isNaN(analysisCost) && (
                             <div className="flex flex-col items-end">
                                 <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-mono border ${analysisCost === 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-violet-100 text-violet-700 border-violet-200'}`}>
-                                    {analysisCost === 0 ? <><span className="font-bold">PAID</span><span>(Free)</span></> : <><span className="font-bold">COST:</span><span>${Number(analysisCost).toFixed(5)}</span></>}
+                                    {analysisCost === 0 ? <><span className="font-bold">PAID</span><span>(Free)</span></> : <><span className="font-bold">COST:</span><span>${Number(analysisCost * costMultiplier).toFixed(5)}</span></>}
                                 </div>
+                                {isStandardUser && (
+                                    <span className="text-[9px] text-gray-400 mt-0.5">Deducted from credits</span>
+                                )}
                             </div>
                         )}
                      </div>
                      <div className="text-slate-700 font-serif text-sm leading-relaxed min-h-[150px]">
-                       
                        <ReactMarkdown 
                             remarkPlugins={[remarkMath]}
                             rehypePlugins={[rehypeKatex]}
@@ -372,7 +357,6 @@ const QuestionCard = ({
                        >
                            {analysisData}
                        </ReactMarkdown>
-
                      </div>
                   </div>
                 )}
@@ -395,7 +379,24 @@ const QuestionCard = ({
                             const isCurrentView = selectedModel === model.id && analysisData;
                             const isUnlocked = purchasedModels.includes(model.id);
                             
-                            return (
+                            const isTrialFree = isTrial && aiUsageCount < 2;
+              
+                            let costText = '';
+                            let badgeStyle = 'bg-slate-100 text-slate-600 border-slate-200'; // Default Gray
+
+                            if (isUnlocked) {
+                                costText = 'Free (Cached)';
+                                badgeStyle = 'bg-emerald-100 text-emerald-700 border-emerald-200';
+                            } else if (isTrialFree) {
+                                costText = 'Trial (Free)';
+                                badgeStyle = 'bg-indigo-100 text-indigo-700 border-indigo-200 ring-1 ring-indigo-200';
+                            } else {
+                                // Paid / Legacy / Trial Limit Reached
+                                const rawCost = model.baseCost * costMultiplier;
+                                costText = `~$${rawCost.toFixed(isStandardUser ? 2 : 3)}`;
+                            }
+                            
+                    return (
                                 <button
                                     key={model.id}
                                     onClick={() => onRequestAI(model.id)}
@@ -412,10 +413,19 @@ const QuestionCard = ({
                                         <Loader2 className="w-5 h-5 text-violet-600 animate-spin my-1" />
                                     ) : (
                                         <>
-                                            <span className="text-[10px] font-bold text-slate-700 text-center leading-tight mb-1">{model.name}</span>
-                                            <span className="text-[9px] text-slate-400 font-medium mb-1">{model.label}</span>
-                                            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${isUnlocked || isCurrentView ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
-                                                {isUnlocked ? 'Free' : model.cost}
+                                            {/* 1. Name */}
+                                            <span className="text-[10px] font-bold text-slate-700 text-center leading-tight mb-1">
+                                                {model.name}
+                                            </span>
+                                            
+                                            {/* 2. Label (RESTORED) */}
+                                            <span className="text-[9px] text-slate-400 font-medium mb-1">
+                                                {model.label}
+                                            </span>
+                                            
+                                            {/* 3. Cost Badge (UPDATED) */}
+                                            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${badgeStyle}`}>
+                                                {costText}
                                             </span>
                                         </>
                                     )}
@@ -452,7 +462,7 @@ const QuestionCard = ({
         )}
       </div>
 
-      {!isMCQ && (
+      {!isMCQ && !isLocked && (
         <button 
           onClick={toggleReveal}
           className="w-full py-3 bg-gray-50 border-t border-gray-100 text-sm font-semibold text-gray-600 hover:text-teal-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
