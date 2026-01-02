@@ -32,9 +32,9 @@ const QuotaDisplay = ({ userProfile, stats }) => {
     return (
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-2 px-2 py-0.5 rounded border border-white/10 bg-black/20 text-[10px] font-mono group relative">
-          <Database className="w-3 h-3 opacity-70" />
-          <div className="flex flex-col w-16">
-            <div className="flex justify-between mb-0.5 px-0.5"><span>DB</span><span>{Math.round(usagePercent)}%</span></div>
+          <Database className="w-4 h-3 opacity-70" />
+          <div className="flex flex-col w-20">
+            <div className="flex justify-between mb-0.5 px-0.5"><span>DB Quota</span><span>{Math.round(usagePercent)}%</span></div>
             <div className="w-full h-1.5 bg-black/30 rounded-full overflow-hidden">
                <div className={`h-full transition-all duration-1000 ${colorClass}`} style={{ width: `${usagePercent}%` }} />
             </div>

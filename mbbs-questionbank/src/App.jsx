@@ -44,6 +44,7 @@ import AIUsageDisplay from "./AIUsageDisplay";
 import LimitModal from "./LimitModal";
 import { APP_VERSION } from "./appVersion";
 import DailyStatsDisplay from './DailyStatsDisplay';
+import LegacyUserModal from './LegacyUserModal';
 
 const AI_COST_MAP = {
 	"gemini-2.5-flash-lite": 0.005,
@@ -125,6 +126,7 @@ const App = () => {
 
 	const [searchInput, setSearchInput] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
+  const [showLegacyModal, setShowLegacyModal] = useState(false);
 
 	const [selectedTopic, setSelectedTopic] = useStickyState(
 		"All",
@@ -237,6 +239,25 @@ const App = () => {
 		checkVersion();
 	}, []);
 
+  useEffect(() => {
+    // 1. Ensure profile is loaded and user is Legacy
+    if (userProfile && userProfile.subscription_tier === 'legacy_friend') {
+        
+        // 2. Check Local Storage to see if they've seen this specific popup version
+        const hasSeen = window.localStorage.getItem('app_legacy_welcome_seen_v1');
+        
+        if (!hasSeen) {
+            setShowLegacyModal(true);
+        }
+    }
+  }, [userProfile]);
+
+  const handleCloseLegacyModal = () => {
+      // 3. Save to Local Storage so it doesn't show again
+      window.localStorage.setItem('app_legacy_welcome_seen_v1', 'true');
+      setShowLegacyModal(false);
+  };
+
 	const handleCloseReleaseNotes = () => {
 		localStorage.setItem("app_last_seen_version", APP_VERSION);
 		setShowReleaseModal(false);
@@ -311,7 +332,7 @@ const App = () => {
 			const { data, error } = await supabase
 				.from("profiles")
 				.select(
-					"role, subscription_tier, subscription_status, ai_credit_balance, db_storage_limit"
+					"role, subscription_tier, subscription_status, ai_credit_balance, db_storage_limit, display_name"
 				)
 				.eq("id", userId)
 				.single();
@@ -1110,6 +1131,12 @@ const App = () => {
 					</div>{" "}
 				</div>
 			)}
+
+    <LegacyUserModal 
+    isOpen={showLegacyModal} 
+    onClose={handleCloseLegacyModal}
+    userProfile={userProfile} // <--- ADD THIS PROP
+    />
 
 			{/* --- NEW: LOGIN MODAL FOR GUESTS --- */}
 			{showLoginModal && (
