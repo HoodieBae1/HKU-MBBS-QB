@@ -828,7 +828,7 @@ const App = () => {
               <div>
                 <h1 className="text-lg font-bold">HKU M26 MBBS Finals</h1>
                 <div className="flex items-center gap-2 text-[10px] text-teal-200 uppercase tracking-wider">
-                  <span>Question Bank</span>
+                  <span>Question Bank TEsting</span>
                   <span className="px-1.5 py-0.5 bg-teal-800 rounded text-teal-100 opacity-80 font-mono">v{APP_VERSION}</span>
                   <div className="ml-2 border-l border-teal-600 pl-2 flex gap-2 items-center">
                     <QuotaDisplay session={session}/>
