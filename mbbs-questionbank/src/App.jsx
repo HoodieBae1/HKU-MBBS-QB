@@ -43,6 +43,7 @@ import ReleaseNotesModal from "./ReleaseNotesModal";
 import AIUsageDisplay from "./AIUsageDisplay";
 import LimitModal from "./LimitModal";
 import { APP_VERSION } from "./appVersion";
+import DailyStatsDisplay from './DailyStatsDisplay';
 
 const AI_COST_MAP = {
 	"gemini-2.5-flash-lite": 0.005,
@@ -1249,6 +1250,7 @@ const App = () => {
 											<Trophy className="w-5 h-5 text-yellow-300" />
 										</button>
 									)}
+                  <DailyStatsDisplay userProgress={userProgress} />
 									<button
 										onClick={() => setShowNotesPanel(true)}
 										className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1"
