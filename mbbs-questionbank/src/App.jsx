@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy, BarChart3, PieChart, StickyNote, Users, MessageCircleWarning, KeyRound, Download, Zap, ZapOff, Lock } from 'lucide-react';
+import { Filter, BookOpen, Stethoscope, Loader2, ArrowUpDown, LogOut, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, GitCommit, Trophy, BarChart3, PieChart, StickyNote, Users, MessageCircleWarning, KeyRound, Download, Zap, ZapOff, Lock, ArrowRight } from 'lucide-react';
 import { Virtuoso } from 'react-virtuoso';
 import { supabase } from './supabase';
 import QuestionCard from './QuestionCard';
@@ -53,18 +53,15 @@ const App = () => {
   const [session, setSession] = useState(null);
   const [userProfile, setUserProfile] = useState(null); 
   const [profileLoading, setProfileLoading] = useState(true); 
-  const [quotaStats, setQuotaStats] = useState({ totalBytes: 0, userBytes: 0 });
+  const [quotaStats, setQuotaStats] = useState({ totalBytes: 0, userBytes: 0, details: { progress: 0, ai_cache: 0 } });
 
   const [questions, setQuestions] = useState([]);
   const [userProgress, setUserProgress] = useState({});
   const [aiUsageCount, setAiUsageCount] = useState(0);
   
-  const [limitModal, setLimitModal] = useState({ 
-    isOpen: false, 
-    type: 'TRIAL_LIMIT', 
-    required: 0,
-    balance: 0 
-  });
+  // --- NEW STATES ---
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [limitModal, setLimitModal] = useState({ isOpen: false, type: 'TRIAL_LIMIT', required: 0, balance: 0 });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -282,7 +279,7 @@ const App = () => {
         setQuotaStats({
             totalBytes: data.total_bytes || 0,
             userBytes: data.user_bytes || 0,
-            details: data.details || { progress: 0, ai_cache: 0 } // <--- ADDED THIS
+            details: data.details || { progress: 0, ai_cache: 0 }
         });
       }
     } catch (e) { console.error("Quota fetch failed", e); }
@@ -319,6 +316,9 @@ const App = () => {
   };
 
   const handleDownloadData = async () => {
+    // --- GUEST BLOCK ---
+    if (!session) { setShowLoginModal(true); return; }
+
     if (!questions.length || !session) return;
     const exportData = questions.map(q => {
         const progress = userProgress[String(q.unique_id)];
@@ -374,10 +374,7 @@ const App = () => {
 
   const cleanHtmlContent = (html) => {
     if (!html) return null;
-    // If it has an image tag, it is valid content, return it as is.
-    if (html.includes('<img')) return html;
-    
-    // Otherwise, strip tags to check if there is actual text
+    if (html.includes('<img')) return html; // Allow images
     const textOnly = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
     return textOnly.length === 0 ? null : html;
   };
@@ -387,6 +384,9 @@ const App = () => {
   };
 
   const handleTextChange = (questionId, newText) => {
+    // --- GUEST BLOCK ---
+    if (!session) { setShowLoginModal(true); return; }
+
     setUserProgress(prev => {
         const idStr = String(questionId);
         const existing = prev[idStr] || {};
@@ -395,34 +395,28 @@ const App = () => {
   };
 
   const handleAIRequest = async (questionData, modelId) => {
+    // --- GUEST BLOCK ---
+    if (!session) { setShowLoginModal(true); return; }
+
     const idStr = String(questionData.unique_id);
-    
-    // Check if we already paid for this model on this question
     const isCached = aiState[idStr]?.purchasedModels?.includes(modelId);
 
-    // 1. GATEKEEPER (Skipped if Cached)
+    // GATEKEEPER
     if (!isCached && userProfile?.subscription_tier === 'standard') {
         const isTrial = userProfile.subscription_status === 'trial';
         const balance = userProfile.ai_credit_balance || 0;
         
-        // Trial Block: Max 2 uses
         if (isTrial && aiUsageCount >= 2) {
             setLimitModal({ isOpen: true, type: 'TRIAL_LIMIT' }); 
             return;
         }
         
-        // Paid Block: Precise Balance Check
         if (!isTrial) {
             const baseCost = AI_COST_MAP[modelId] || 0.03; 
             const requiredCredits = baseCost * 20;
-
+            // Overdraft logic: block only if ALREADY negative
             if (balance < 0) {
-                setLimitModal({ 
-                    isOpen: true, 
-                    type: 'LOW_BALANCE',
-                    required: requiredCredits.toFixed(3),
-                    balance: Number(balance).toFixed(2)
-                });
+                setLimitModal({ isOpen: true, type: 'LOW_BALANCE', required: requiredCredits.toFixed(3), balance: Number(balance).toFixed(2) });
                 return;
             }
         }
@@ -433,8 +427,6 @@ const App = () => {
     setAiState(prev => ({ ...prev, [idStr]: { ...prev[idStr], loadingModel: modelId, error: null } }));
 
     try {
-        if (!session) throw new Error("Please login.");
-
         const response = await fetch('https://qzoreybelgjynenkwobi.supabase.co/functions/v1/gemini-tutor', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
@@ -454,7 +446,6 @@ const App = () => {
         fetchUserProfile(session.user.id);
         fetchQuotaStats(session.user.id); 
         
-        // Only increment usage count if it wasn't cached (i.e., a new paid hit)
         if (!isCached) {
             setAiUsageCount(prev => prev + 1);
         }
@@ -487,7 +478,8 @@ const App = () => {
   };
 
   const handleToggleFlag = async (questionData, currentDraftText) => {
-    if (!session) return;
+    // --- GUEST BLOCK ---
+    if (!session) { setShowLoginModal(true); return; }
     
     // --- STORAGE CHECK ---
     const idString = String(questionData.unique_id);
@@ -533,7 +525,9 @@ const App = () => {
   };
 
   const handleInitiateCompletion = async (questionData, mcqSelection, saqResponse, viewMode = 'FULL') => {
-    if (!session) return;
+    // --- GUEST BLOCK ---
+    if (!session) { setShowLoginModal(true); return; }
+
     const idString = String(questionData.unique_id);
     const existingEntry = userProgress[idString];
     const isCurrentlyCompleted = existingEntry && (existingEntry.score !== null || existingEntry.selected_option !== null);
@@ -596,6 +590,9 @@ const App = () => {
   };
 
   const handleReviewNotes = (questionData, draftSaqResponse, viewMode = 'FULL') => {
+    // --- GUEST BLOCK ---
+    if (!session) { setShowLoginModal(true); return; }
+
     const idString = String(questionData.unique_id);
     const existingData = userProgress[idString];
     setPendingQuestion(questionData);
@@ -627,7 +624,7 @@ const App = () => {
 
         if ((quotaStats.userBytes + estimatedPayloadSize) > limit) {
             setLimitModal({ isOpen: true, type: 'STORAGE_LIMIT' });
-            return; // Exit, modal remains open
+            return; 
         }
     }
     // -----------------------------------
@@ -651,7 +648,7 @@ const App = () => {
 
     const payload = { user_id: session.user.id, question_id: idString, notes: cleanedNotes, user_response: cleanedResponse, score: finalScore, max_score: modalData.max_score, selected_option: finalSelection, is_flagged: currentProgress.is_flagged || false };
 
-    setModalOpen(false); // Close if passed
+    setModalOpen(false); 
     setPendingQuestion(null);
     setPendingMCQSelection(null);
 
@@ -686,7 +683,8 @@ const App = () => {
   const filterCounts = useMemo(() => { const qLower = searchQuery.toLowerCase().trim(); const baseSet = questions.filter(q => { if (selectedType !== 'All' && q.type !== selectedType) return false; if (!qLower) return true; return (q.question?.toLowerCase().includes(qLower) || q.official_answer?.toLowerCase().includes(qLower) || q.id?.toLowerCase().includes(qLower) || String(q.unique_id).toLowerCase().includes(qLower) || q.ai_answer?.explanation?.toLowerCase().includes(qLower) || (q.options && q.options.some(opt => opt.toLowerCase().includes(qLower)))); }); const tCounts = {}; baseSet.forEach(q => { tCounts[q.topic] = (tCounts[q.topic] || 0) + 1; }); const sCounts = {}; baseSet.forEach(q => { if (selectedTopic === 'All' || q.topic === selectedTopic) { sCounts[q.subtopic] = (sCounts[q.subtopic] || 0) + 1; } }); return { tCounts, sCounts, totalMatchingSearch: baseSet.length }; }, [questions, searchQuery, selectedType, selectedTopic]);
   const filteredQuestions = useMemo(() => { const qLower = searchQuery.toLowerCase().trim(); let result = questions.filter(q => { if (selectedTopic !== 'All' && q.topic !== selectedTopic) return false; if (selectedSubtopic !== 'All' && q.subtopic !== selectedSubtopic) return false; if (selectedType !== 'All' && q.type !== selectedType) return false; if (qLower) { const match = q.question?.toLowerCase().includes(qLower) || q.official_answer?.toLowerCase().includes(qLower) || q.id?.toLowerCase().includes(qLower) || String(q.unique_id).toLowerCase().includes(qLower) || q.ai_answer?.explanation?.toLowerCase().includes(qLower) || (q.options && q.options.some(opt => opt.toLowerCase().includes(qLower))); if (!match) return false; } return true; }); return result.sort((a, b) => { if (sortOrder === 'Random') return a.randomSeed - b.randomSeed; if (sortOrder === 'Notes') { const hasNotes = (qItem) => { const p = userProgress[String(qItem.unique_id)]; if (!p || !p.notes) return false; return cleanHtmlContent(p.notes) !== null; }; const aNotes = hasNotes(a); const bNotes = hasNotes(b); if (aNotes !== bNotes) return aNotes ? -1 : 1; return a.unique_id - b.unique_id; } if (sortOrder === 'Incorrect') { const getIncorrectStatus = (qItem) => { const p = userProgress[String(qItem.unique_id)]; if (!p || p.score === null || p.score === undefined) return false; let max = p.max_score; if ((!max) && qItem.type === 'MCQ') max = 1; if (!max) return false; return p.score < max; }; const aInc = getIncorrectStatus(a); const bInc = getIncorrectStatus(b); if (aInc !== bInc) return aInc ? -1 : 1; return a.unique_id - b.unique_id; } if (sortOrder === 'Flagged') { const isAFlagged = checkIsFlagged(a.unique_id); const isBFlagged = checkIsFlagged(b.unique_id); if (isAFlagged !== isBFlagged) return isAFlagged ? -1 : 1; return a.unique_id - b.unique_id; } if (sortOrder === 'Completed' || sortOrder === 'Unfinished') { const isADone = checkIsCompleted(a.unique_id); const isBDone = checkIsCompleted(b.unique_id); if (isADone !== isBDone) { if (sortOrder === 'Completed') return isADone ? -1 : 1; if (sortOrder === 'Unfinished') return isADone ? 1 : -1; } return a.unique_id - b.unique_id; } if (sortOrder === 'Oldest' || sortOrder === 'Newest') { const getYearFromId = (idStr) => { if (!idStr || !idStr.startsWith('M')) return 0; const yy = parseInt(idStr.substring(1, 3), 10); if (isNaN(yy)) return 0; return yy < 50 ? 2000 + yy : 1900 + yy; }; const yearA = getYearFromId(a.id); const yearB = getYearFromId(b.id); if (yearA !== yearB) return sortOrder === 'Newest' ? yearB - yearA : yearA - yearB; return sortOrder === 'Newest' ? b.id.localeCompare(a.id, undefined, { numeric: true }) : a.id.localeCompare(b.id, undefined, { numeric: true }); } return a.unique_id - b.unique_id; }); }, [questions, selectedTopic, selectedSubtopic, selectedType, sortOrder, userProgress, searchQuery]);
 
-  if (!session) return <Auth />;
+  const isGuest = !session;
+
   if (loading || profileLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
   if (error) return <div>{error}</div>;
 
@@ -702,6 +700,16 @@ const App = () => {
       <ReleaseNotesModal isOpen={showReleaseModal} onClose={handleCloseReleaseNotes} data={releaseNoteData} />
       <FeedbackModal isOpen={showFeedbackModal} onClose={() => setShowFeedbackModal(false)} user={session?.user} isAdmin={isAdmin} />
       {showPasswordResetModal && ( <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"> <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95"> <div className="flex flex-col items-center text-center mb-6"> <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-3"><KeyRound className="w-6 h-6 text-teal-600" /></div> <h2 className="text-xl font-bold text-gray-800">Set New Password</h2> <p className="text-sm text-gray-500">Please enter your new password below.</p> </div> <input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-teal-500" /> <button onClick={handleUpdatePassword} disabled={resetLoading} className="w-full py-3 bg-teal-700 text-white font-bold rounded-lg hover:bg-teal-800 transition-colors flex justify-center">{resetLoading ? <Loader2 className="animate-spin" /> : "Save New Password"}</button> </div> </div> )}
+
+      {/* --- NEW: LOGIN MODAL FOR GUESTS --- */}
+      {showLoginModal && (
+         <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in-95">
+            <div className="w-full max-w-md relative">
+               <button onClick={() => setShowLoginModal(false)} className="absolute -top-12 right-0 text-white/50 hover:text-white"><X className="w-8 h-8"/></button>
+               <Auth onSuccess={() => setShowLoginModal(false)} />
+            </div>
+         </div>
+      )}
 
       <LimitModal 
           isOpen={limitModal.isOpen} 
@@ -728,28 +736,42 @@ const App = () => {
                 <div className="flex items-center gap-2 text-[10px] text-teal-200 uppercase tracking-wider">
                   <span>Question Bank</span>
                   <span className="px-1.5 py-0.5 bg-teal-800 rounded text-teal-100 opacity-80 font-mono">v{APP_VERSION}</span>
-                  {userProfile?.subscription_tier === 'standard' && ( <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold border ${userProfile.subscription_status === 'active' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-blue-100 text-blue-700 border-blue-200'}`}> {userProfile.subscription_status === 'active' ? 'PAID USER' : 'TRIAL MODE'} </span> )}
-                  <div className="ml-2 border-l border-teal-600 pl-2 flex gap-2 items-center">
-                    <QuotaDisplay stats={quotaStats} userProfile={userProfile} /> 
-                    <AIUsageDisplay session={session} userProfile={userProfile} />
-                    <button onClick={() => setAiEnabled(!aiEnabled)} className={`flex items-center gap-1 px-2 py-1 rounded-full border transition-all ${aiEnabled ? 'bg-violet-600 border-violet-400 text-white hover:bg-violet-500' : 'bg-slate-800 border-slate-600 text-slate-400 hover:bg-slate-700'}`} title={aiEnabled ? "AI Features Enabled" : "AI Features Disabled"}>
-                        {aiEnabled ? <Zap className="w-3 h-3 fill-current" /> : <ZapOff className="w-3 h-3" />}
-                        <span className="text-[9px] font-bold uppercase tracking-wider hidden sm:inline">{aiEnabled ? 'PROF. AI' : 'PROF. AI'}</span>
-                    </button>
-                  </div>
+                  
+                  {isGuest && ( <span className="px-1.5 py-0.5 rounded text-[9px] font-bold border bg-gray-600 text-gray-200 border-gray-500"> GUEST PREVIEW </span> )}
+                  
+                  {!isGuest && userProfile?.subscription_tier === 'standard' && ( <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold border ${userProfile.subscription_status === 'active' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-blue-100 text-blue-700 border-blue-200'}`}> {userProfile.subscription_status === 'active' ? 'PAID USER' : 'TRIAL MODE'} </span> )}
+                  
+                  {!isGuest && (
+                    <div className="ml-2 border-l border-teal-600 pl-2 flex gap-2 items-center">
+                        <QuotaDisplay stats={quotaStats} userProfile={userProfile} /> 
+                        <AIUsageDisplay session={session} userProfile={userProfile} />
+                        <button onClick={() => setAiEnabled(!aiEnabled)} className={`flex items-center gap-1 px-2 py-1 rounded-full border transition-all ${aiEnabled ? 'bg-violet-600 border-violet-400 text-white hover:bg-violet-500' : 'bg-slate-800 border-slate-600 text-slate-400 hover:bg-slate-700'}`} title={aiEnabled ? "AI Features Enabled" : "AI Features Disabled"}>
+                            {aiEnabled ? <Zap className="w-3 h-3 fill-current" /> : <ZapOff className="w-3 h-3" />}
+                        </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-             {/* Menu Buttons */}
+             
+             {/* HEADER RIGHT SIDE */}
              <div className="flex items-center gap-2">
-                {isRecruiter && (<button onClick={() => setShowRecruiterDash(true)} className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition shadow-sm border border-indigo-400 mr-2" title="Recruiter Dashboard"><Users className="w-5 h-5" /></button>)}
-                {isAdmin && (<button onClick={() => setShowDashboard(true)} className="p-2 bg-indigo-800 hover:bg-indigo-900 text-white rounded-full transition shadow-sm border border-indigo-500 mr-2"><Trophy className="w-5 h-5 text-yellow-300" /></button>)}
-                <button onClick={() => setShowNotesPanel(true)} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1" title="My Notes"><StickyNote className="w-5 h-5" /></button>
-                <button onClick={handleDownloadData} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white" title="Download My Data"><Download className="w-5 h-5" /></button>
-                <button onClick={() => setShowFeedbackModal(true)} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1" title="Report Bug / Suggestion"><MessageCircleWarning className="w-5 h-5" /></button>
-                <button onClick={() => setShowHistory(true)} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1"><GitCommit className="w-5 h-5" /></button>
-                <div className="hidden md:block text-right border-l border-teal-600 pl-4 ml-2"><p className="text-xs text-teal-100">Logged in as</p><p className="text-xs font-bold">{session.user.email}</p></div>
-                <button onClick={handleLogout} className="p-2 hover:bg-teal-600 rounded-full transition ml-1"><LogOut className="w-5 h-5" /></button>
+                {isGuest ? (
+                    <button onClick={() => setShowLoginModal(true)} className="bg-white text-teal-700 hover:bg-teal-50 px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition-colors flex items-center gap-2">
+                        Sign In / Sign Up <ArrowRight className="w-4 h-4" />
+                    </button>
+                ) : (
+                    <>
+                        {isRecruiter && (<button onClick={() => setShowRecruiterDash(true)} className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition shadow-sm border border-indigo-400 mr-2" title="Recruiter Dashboard"><Users className="w-5 h-5" /></button>)}
+                        {isAdmin && (<button onClick={() => setShowDashboard(true)} className="p-2 bg-indigo-800 hover:bg-indigo-900 text-white rounded-full transition shadow-sm border border-indigo-500 mr-2"><Trophy className="w-5 h-5 text-yellow-300" /></button>)}
+                        <button onClick={() => setShowNotesPanel(true)} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1" title="My Notes"><StickyNote className="w-5 h-5" /></button>
+                        <button onClick={handleDownloadData} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white" title="Download My Data"><Download className="w-5 h-5" /></button>
+                        <button onClick={() => setShowFeedbackModal(true)} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1" title="Report Bug / Suggestion"><MessageCircleWarning className="w-5 h-5" /></button>
+                        <button onClick={() => setShowHistory(true)} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1"><GitCommit className="w-5 h-5" /></button>
+                        <div className="hidden md:block text-right border-l border-teal-600 pl-4 ml-2"><p className="text-xs text-teal-100">Logged in as</p><p className="text-xs font-bold">{session.user.email}</p></div>
+                        <button onClick={handleLogout} className="p-2 hover:bg-teal-600 rounded-full transition ml-1"><LogOut className="w-5 h-5" /></button>
+                    </>
+                )}
              </div>
           </div>
         </header>
@@ -812,11 +834,12 @@ const App = () => {
           <Virtuoso
             useWindowScroll
             data={filteredQuestions}
-            context={{ usageStats, userProfile, userProgress, aiState, viewState, aiEnabled, aiUsageCount }}
+            // --- UPDATED: PASS isGuest to context ---
+            context={{ usageStats, userProfile, userProgress, aiState, viewState, aiEnabled, aiUsageCount, isGuest }}
             initialTopMostItemIndex={initialScrollIndex}
             rangeChanged={({ startIndex }) => { window.localStorage.setItem('app_scrollIndex', startIndex); }}
             itemContent={(index, q, context) => {
-                const { usageStats, userProfile, userProgress, aiState, viewState, aiEnabled, aiUsageCount } = context;
+                const { usageStats, userProfile, userProgress, aiState, viewState, aiEnabled, aiUsageCount, isGuest } = context;
                 const idStr = String(q.unique_id);
                 const p = userProgress[idStr];
                 const isCompleted = p && ((p.score !== null && p.score !== undefined) || (p.selected_option !== null && p.selected_option !== undefined));
@@ -829,6 +852,9 @@ const App = () => {
                 const currentAiState = aiState[idStr] || {};
                 
                 let isLocked = false;
+                // Only lock for standard users in trial mode. Guests can see questions (read-only) but cannot interact.
+                // If you want Guests to have locks too, remove the userProfile check.
+                // Assuming "Freemium" means guests can browse everything but do nothing.
                 if (userProfile && userProfile.subscription_tier === 'standard' && userProfile.subscription_status === 'trial') {
                     if (!isCompleted) {
                         if (q.type === 'MCQ' && usageStats.mcqCount >= 10) isLocked = true;
@@ -858,6 +884,10 @@ const App = () => {
                           isLocked={isLocked}
                           userProfile={userProfile}
                           aiUsageCount={aiUsageCount} 
+                          
+                          // --- NEW: Pass Guest Status ---
+                          isGuest={isGuest}
+                          // -----------------------------
                           
                           onToggleComplete={(mcqSelection, saqResponse, viewMode) => handleInitiateCompletion(q, mcqSelection, saqResponse, viewMode)} 
                           onReviewNotes={(draft, viewMode) => handleReviewNotes(q, draft, viewMode)}
