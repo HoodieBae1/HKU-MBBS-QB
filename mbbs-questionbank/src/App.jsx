@@ -865,7 +865,7 @@ const App = () => {
                 <button onClick={() => setShowNotesPanel(true)} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1" title="My Notes"><StickyNote className="w-5 h-5" /></button>
                 <button onClick={handleDownloadData} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white" title="Download My Data"><Download className="w-5 h-5" /></button>
                 <button onClick={() => setShowFeedbackModal(true)} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1" title="Report Bug / Suggestion"><MessageCircleWarning className="w-5 h-5" /></button>
-                <button onClick={() => setShowHistory(true)} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1"><GitCommit className="w-5 h-5" /></button>
+                <button onClick={() => setShowHistory(true)} className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1" title="Version History"><GitCommit className="w-5 h-5" /></button>
                 <div className="hidden md:block text-right border-l border-teal-600 pl-4 ml-2">
                     <p className="text-xs text-teal-100">Logged in as</p>
                     <p className="text-xs font-bold">{session.user.email}</p>
