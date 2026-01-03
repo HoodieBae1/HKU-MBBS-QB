@@ -1256,19 +1256,23 @@ const App = () => {
 											GUEST PREVIEW{" "}
 										</span>
 									)}
-
-									{!isGuest && userProfile?.subscription_tier === 'standard' && (
-										<button
-											onClick={() => setLimitModal({ isOpen: true, type: 'TRIAL_LIMIT' })} 
-											className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition-colors cursor-pointer ${
-												userProfile.subscription_status === 'active'
-													? 'bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200'
-													: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200'
-											}`}
-										>
-											{userProfile.subscription_status === 'active' ? 'PREMIUM' : 'TRIAL'}
-										</button>
-									)}
+                  
+                  {!isGuest && userProfile?.subscription_tier === 'standard' && (
+                      <button
+                          onClick={() => setLimitModal({ 
+                              isOpen: true, 
+                              // LOGIC CHANGE: Check status to determine modal type
+                              type: userProfile.subscription_status === 'active' ? 'PREMIUM_INFO' : 'TRIAL_LIMIT' 
+                          })} 
+                          className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition-colors cursor-pointer ${
+                              userProfile.subscription_status === 'active'
+                                  ? 'bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200'
+                                  : 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200'
+                          }`}
+                      >
+                          {userProfile.subscription_status === 'active' ? 'PREMIUM' : 'TRIAL'}
+                      </button>
+                  )}
 
 									{!isGuest && (
 										<div className="ml-2 border-l border-teal-600 pl-2 flex gap-2 items-center">
