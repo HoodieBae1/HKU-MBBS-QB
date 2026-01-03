@@ -125,7 +125,7 @@ const App = () => {
 	const [modalViewMode, setModalViewMode] = useState("FULL");
 
 	const [filtersOpen, setFiltersOpen] = useStickyState(true, "app_filtersOpen");
-  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  	const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
 	const [searchInput, setSearchInput] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
@@ -155,8 +155,10 @@ const App = () => {
 	const [showHistory, setShowHistory] = useState(false);
 	const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-	// FIX: Use ref to track the last user ID to prevent unnecessary re-renders/scroll resets
 	const lastUserId = useRef(null);
+
+	// --- NEW: Ref to track previous status for auto-upgrade detection ---
+	const prevStatusRef = useRef(null); 
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
@@ -165,12 +167,59 @@ const App = () => {
 		return () => clearTimeout(timer);
 	}, [searchInput]);
 
+	// ------------------------------------------------------------
+	// START: POLLING & AUTO-REFRESH LOGIC
+	// ------------------------------------------------------------
+	
+	// 1. Background Polling (Every 5 minutes)
+	// Triggers ONLY if user is logged in AND not yet active.
+	useEffect(() => {
+		if (!session || userProfile?.subscription_status === 'active') return;
+
+		// console.log("Background Polling Active: Checking payment status every 5 mins...");
+		const intervalId = setInterval(() => {
+			if (session?.user?.id) {
+				fetchUserProfile(session.user.id);
+			}
+		}, 5 * 60 * 1000); // 5 minutes in milliseconds
+
+		return () => clearInterval(intervalId);
+	}, [session, userProfile?.subscription_status]);
+
+	// 2. State Transition Logic
+	// Detects if status flipped from (not active) -> (active) and opens modal
+	useEffect(() => {
+		const prevStatus = prevStatusRef.current;
+		const currentStatus = userProfile?.subscription_status;
+
+		if (userProfile) {
+			// Logic: If we had a previous status (so not a fresh page load),
+			// AND it wasn't active, AND it is now active...
+			if (prevStatus && prevStatus !== 'active' && currentStatus === 'active') {
+				// Force open the Success Modal
+				setLimitModal({
+					isOpen: true,
+					type: 'PREMIUM_INFO',
+					required: 0,
+					balance: 0
+				});
+				// Optional: if Payment modal was open, close it
+				setShowPaymentModal(false);
+			}
+			// Update the ref for the next comparison
+			prevStatusRef.current = currentStatus;
+		}
+	}, [userProfile]);
+	
+	// ------------------------------------------------------------
+	// END: POLLING LOGIC
+	// ------------------------------------------------------------
+
 	useEffect(() => {
 		// 1. Initial Session Check
 		supabase.auth.getSession().then(({ data: { session } }) => {
 			setSession(session);
 			if (session) {
-				// Initialize the Ref so we don't trigger loading on the immediate auth change
 				lastUserId.current = session.user.id;
 				fetchUserProgress(session.user.id);
 				fetchUserProfile(session.user.id);
@@ -189,17 +238,11 @@ const App = () => {
 			
 			if (session) {
 				const currentUserId = session.user.id;
-
-				// KEY FIX: Compare current User ID with the last one we saw.
-				// If it is the same user, this is just a tab-focus or token refresh.
-				// DO NOT enable profileLoading, or the app unmounts and resets scroll.
 				if (lastUserId.current === currentUserId) {
-					// Silent Update: Fetch data to keep fresh, but don't show spinner
 					fetchUserProgress(currentUserId);
 					fetchUserProfile(currentUserId);
 					fetchQuotaStats(currentUserId);
 				} else {
-					// New User or First Load: Show Spinner
 					lastUserId.current = currentUserId;
 					setProfileLoading(true);
 					fetchUserProgress(currentUserId);
@@ -207,10 +250,10 @@ const App = () => {
 					fetchQuotaStats(currentUserId);
 				}
 			} else {
-				// Logged Out
 				lastUserId.current = null;
 				setUserProgress({});
 				setUserProfile(null);
+				prevStatusRef.current = null; // Reset polling ref on logout
 				setProfileLoading(false);
 				setIsAdmin(false);
 				setIsRecruiter(false);
@@ -378,9 +421,6 @@ const App = () => {
 		} catch (e) {
 			console.error("Profile fetch failed", e);
 		} finally {
-			// This sets loading to false. 
-			// If we are doing a silent update, it goes from false -> false (No Re-render).
-			// If we are doing a fresh login, it goes from true -> false (Reveals content).
 			setProfileLoading(false);
 		}
 	};

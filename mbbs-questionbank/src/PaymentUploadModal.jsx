@@ -69,7 +69,7 @@ const PaymentUploadModal = ({ user, planName, price, onClose }) => {
             <Check className="w-8 h-8" />
           </div>
           <h2 className="text-xl font-bold text-gray-800">Submission Received!</h2>
-          <p className="text-gray-500 mt-2 text-center">We will verify your payment shortly.</p>
+          <p className="text-gray-500 mt-2 text-center">We will verify your payment shortly (Within 12 hours).</p>
         </div>
       </div>
     );
