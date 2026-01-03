@@ -1,18 +1,26 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from './supabase';
-import { Trophy, Users, BrainCircuit, X, Loader2, Target, ChevronDown, ChevronUp, BarChart3, Folder, FileText, RefreshCw, DollarSign, Coins, ArrowUpDown, ArrowUp, ArrowDown, Database, AlertCircle, Clock, Wallet, CreditCard, CheckCircle2 } from 'lucide-react';
+import { 
+  Trophy, Users, BrainCircuit, X, Loader2, Target, ChevronDown, ChevronUp, 
+  BarChart3, Folder, FileText, RefreshCw, DollarSign, Coins, ArrowUpDown, 
+  ArrowUp, ArrowDown, Database, AlertCircle, Clock, Wallet, CreditCard, 
+  CheckCircle2, Image as ImageIcon, Check, Ban, ExternalLink 
+} from 'lucide-react';
 
 const AdminDashboard = ({ onClose, questions }) => {
-  const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState(null);
+  // Data State
   const [stats, setStats] = useState([]);
   const [summary, setSummary] = useState({ totalUsers: 0, totalAnswers: 0, totalAiCalls: 0, totalAiSpentHKD: 0 });
   const [quotaData, setQuotaData] = useState({ totalDbBytes: 0, userBytesMap: {} });
+  const [pendingPayments, setPendingPayments] = useState([]); // New: For FPS
   
   // UI State
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState(null);
   const [expandedUserId, setExpandedUserId] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false); 
   const [sortConfig, setSortConfig] = useState({ key: 'lastActive', direction: 'desc' });
+  const [viewingProof, setViewingProof] = useState(null); // New: Image Modal URL
   
   // Modal State
   const [aiModalUser, setAiModalUser] = useState(null);
@@ -20,22 +28,22 @@ const AdminDashboard = ({ onClose, questions }) => {
   const [aiHistoryLogs, setAiHistoryLogs] = useState([]);
   const [dbModalUser, setDbModalUser] = useState(null);
 
-  // --- NEW: MANAGE USER STATE ---
-  const [managingUser, setManagingUser] = useState(null); // The user being edited
-  const [managingDetails, setManagingDetails] = useState(null); // The fresh profile data
+  // User Management State
+  const [managingUser, setManagingUser] = useState(null);
+  const [managingDetails, setManagingDetails] = useState(null);
   const [topUpAmount, setTopUpAmount] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
   const PRO_PLAN_COST_USD = 25;
   const USD_TO_HKD_RATE = 7.8;
+  const DB_LIMIT_PRO = 52428800; // 50 MB
 
+  // --- DATA FETCHING ---
+  
   const questionMetaMap = useMemo(() => {
     const map = new Map();
     questions.forEach(q => {
-      map.set(String(q.unique_id), {
-        topic: q.topic || 'Uncategorized',
-        subtopic: q.subtopic || 'General'
-      });
+      map.set(String(q.unique_id), { topic: q.topic || 'Uncategorized', subtopic: q.subtopic || 'General' });
     });
     return map;
   }, [questions]);
@@ -49,15 +57,27 @@ const AdminDashboard = ({ onClose, questions }) => {
       setLoading(true);
       setErrorMsg(null);
 
+      // 1. Fetch Main Stats (RPC)
       const { data: userStatsRaw, error: statsError } = await supabase.rpc('get_admin_dashboard_stats');
       if (statsError) throw new Error("Could not load dashboard stats.");
 
-      const { data: quotaResult, error: quotaError } = await supabase.rpc('get_all_users_quota_stats');
+      // 2. Fetch Quota Stats (RPC)
+      const { data: quotaResult } = await supabase.rpc('get_all_users_quota_stats');
       const totalDbBytes = quotaResult?.total_db_bytes || 1;
       const userBytesMap = {};
       if (quotaResult?.users) { quotaResult.users.forEach(u => { userBytesMap[u.user_id] = u.total_user_bytes; }); }
       setQuotaData({ totalDbBytes, userBytesMap });
 
+      // 3. Fetch Pending Payments (New)
+      const { data: payments, error: payError } = await supabase
+        .from('payment_submissions')
+        .select('*, profiles:user_id(email, display_name)')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      
+      if (!payError) setPendingPayments(payments || []);
+
+      // 4. Process Data
       const processedStats = (userStatsRaw || []).map(u => {
         const accuracy = u.total_max_score > 0 ? Math.round((u.total_score / u.total_max_score) * 100) : 0;
         const userBytes = userBytesMap[u.user_id] || 0;
@@ -95,18 +115,55 @@ const AdminDashboard = ({ onClose, questions }) => {
     }
   };
 
-  // --- MANAGE USER LOGIC ---
+  // --- PAYMENT APPROVAL LOGIC (FPS) ---
+  
+  const handleApprovePayment = async (payment) => {
+    const amount = parseFloat(payment.amount);
+    if (!confirm(`Confirm approval for ${payment.profiles?.email} ($${amount})?`)) return;
+    
+    setActionLoading(true);
+    try {
+        // 1. Activate User Profile (Add credits + Increase Storage)
+        const { error: profileError } = await supabase.from('profiles').update({
+            subscription_status: 'active',
+            subscription_tier: 'standard', // or payment.plan_tier if dynamic
+            ai_credit_balance: 100, // Or calculate based on amount
+            db_storage_limit: DB_LIMIT_PRO // 50MB Limit
+        }).eq('id', payment.user_id);
+ 
+        if (profileError) throw profileError;
+ 
+        // 2. Mark Submission as Approved
+        const { error: subError } = await supabase.from('payment_submissions')
+            .update({ status: 'approved' })
+            .eq('id', payment.id);
+
+        if (subError) throw subError;
+ 
+        // 3. Refresh UI
+        setPendingPayments(prev => prev.filter(p => p.id !== payment.id));
+        alert("Payment Approved & User Activated!");
+     } catch (e) {
+         alert("Approval Failed: " + e.message);
+     } finally {
+         setActionLoading(false);
+     }
+  };
+
+  const handleRejectPayment = async (payment) => {
+    if (!confirm("Reject this payment submission?")) return;
+    try {
+        await supabase.from('payment_submissions').update({ status: 'rejected' }).eq('id', payment.id);
+        setPendingPayments(prev => prev.filter(p => p.id !== payment.id));
+    } catch(e) { alert(e.message); }
+  };
+
+  // --- MANUAL MANAGEMENT LOGIC ---
+
   const handleOpenManageModal = async (user) => {
       setManagingUser(user);
-      setManagingDetails(null); // Reset while fetching
-      
-      // Fetch fresh profile data (tier, wallet, status)
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      
+      setManagingDetails(null);
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       if (!error) setManagingDetails(data);
   };
 
@@ -127,7 +184,12 @@ const AdminDashboard = ({ onClose, questions }) => {
 
   const handleActivatePlan = async (amount) => {
     const currentBal = managingDetails.ai_credit_balance || 0;
-    await handleUpdateProfile({ subscription_status: 'active', ai_credit_balance: currentBal + amount });
+    // UPDATED: Now sets db_storage_limit to 50MB
+    await handleUpdateProfile({ 
+        subscription_status: 'active', 
+        ai_credit_balance: currentBal + amount,
+        db_storage_limit: DB_LIMIT_PRO 
+    });
   };
 
   const handleManualTopUp = async () => {
@@ -138,20 +200,14 @@ const AdminDashboard = ({ onClose, questions }) => {
     setTopUpAmount('');
   };
 
-  // ... (Row Toggle & AI History Logic preserved from before) ...
+  // --- HELPER FUNCTIONS ---
   const handleToggleRow = async (user) => {
     if (expandedUserId === user.id) { setExpandedUserId(null); return; }
     setExpandedUserId(user.id);
     if (user.structuredStats) return; 
     setLoadingDetails(true);
-    // ... (fetch logic same as before) ...
-    // Shortened for brevity, use existing logic here
     try {
-        const { data: userProgress, error } = await supabase
-            .from('user_progress')
-            .select('score, max_score, question_id')
-            .eq('user_id', user.id)
-            .not('score', 'is', null);
+        const { data: userProgress, error } = await supabase.from('user_progress').select('score, max_score, question_id').eq('user_id', user.id).not('score', 'is', null);
         if (error) throw error;
         const hierarchy = {}; 
         userProgress.forEach(ans => {
@@ -159,17 +215,11 @@ const AdminDashboard = ({ onClose, questions }) => {
             const { topic, subtopic } = meta;
             if (!hierarchy[topic]) hierarchy[topic] = { score: 0, maxScore: 0, count: 0, subtopics: {} };
             if (!hierarchy[topic].subtopics[subtopic]) hierarchy[topic].subtopics[subtopic] = { score: 0, maxScore: 0, count: 0 };
-            hierarchy[topic].count += 1;
-            hierarchy[topic].score += ans.score;
-            hierarchy[topic].maxScore += ans.max_score;
-            hierarchy[topic].subtopics[subtopic].count += 1;
-            hierarchy[topic].subtopics[subtopic].score += ans.score;
-            hierarchy[topic].subtopics[subtopic].maxScore += ans.max_score;
+            hierarchy[topic].count += 1; hierarchy[topic].score += ans.score; hierarchy[topic].maxScore += ans.max_score;
+            hierarchy[topic].subtopics[subtopic].count += 1; hierarchy[topic].subtopics[subtopic].score += ans.score; hierarchy[topic].subtopics[subtopic].maxScore += ans.max_score;
         });
         const structuredStats = Object.entries(hierarchy).map(([tName, tData]) => {
-            const subList = Object.entries(tData.subtopics).map(([sName, sData]) => ({
-                name: sName, total: sData.count, accuracy: sData.maxScore > 0 ? Math.round((sData.score / sData.maxScore) * 100) : 0
-            })).sort((a, b) => b.accuracy - a.accuracy); 
+            const subList = Object.entries(tData.subtopics).map(([sName, sData]) => ({ name: sName, total: sData.count, accuracy: sData.maxScore > 0 ? Math.round((sData.score / sData.maxScore) * 100) : 0 })).sort((a, b) => b.accuracy - a.accuracy); 
             return { name: tName, total: tData.count, accuracy: tData.maxScore > 0 ? Math.round((tData.score / tData.maxScore) * 100) : 0, subtopics: subList };
         }).sort((a, b) => b.accuracy - a.accuracy);
         setStats(prev => prev.map(u => u.id === user.id ? { ...u, structuredStats } : u));
@@ -189,8 +239,7 @@ const AdminDashboard = ({ onClose, questions }) => {
     let items = [...stats];
     if (sortConfig.key) {
       items.sort((a, b) => {
-        let aVal = a[sortConfig.key];
-        let bVal = b[sortConfig.key];
+        let aVal = a[sortConfig.key]; let bVal = b[sortConfig.key];
         if (sortConfig.key === 'lastActive') {
             if (!aVal) return 1; if (!bVal) return -1;
             return sortConfig.direction === 'asc' ? new Date(aVal) - new Date(bVal) : new Date(bVal) - new Date(aVal);
@@ -218,17 +267,11 @@ const AdminDashboard = ({ onClose, questions }) => {
   const formatDate = (iso) => new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
   const formatTimeAgo = (dateString) => {
     if (!dateString) return "Never";
-    const date = new Date(dateString);
-    const now = new Date();
-    const seconds = Math.floor((now - date) / 1000);
-    if (seconds < 60) return 'Just now';
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    if (days < 7) return `${days}d ago`;
-    return date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+    const date = new Date(dateString); const now = new Date(); const seconds = Math.floor((now - date) / 1000);
+    if (seconds < 60) return 'Just now'; const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`; const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`; const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`; return date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
   };
   const getScoreColor = (score) => score >= 70 ? 'text-green-700 bg-green-100' : score >= 40 ? 'text-yellow-700 bg-yellow-100' : 'text-red-700 bg-red-100';
   const getBarColor = (score) => score >= 70 ? 'bg-green-500' : score >= 40 ? 'bg-yellow-400' : 'bg-red-400';
@@ -280,7 +323,6 @@ const AdminDashboard = ({ onClose, questions }) => {
     );
   };
 
-  // --- NEW: MANAGE MODAL COMPONENT ---
   const ManageUserModal = () => {
       if (!managingUser) return null;
       return (
@@ -297,7 +339,9 @@ const AdminDashboard = ({ onClose, questions }) => {
                                 <div className="p-3 bg-gray-50 rounded-lg border border-gray-200"><p className="text-xs font-bold text-gray-400 uppercase mb-1">Tier</p><p className="font-bold text-slate-700 capitalize">{managingDetails.subscription_tier.replace('_', ' ')}</p></div>
                                 <div className="p-3 bg-gray-50 rounded-lg border border-gray-200"><p className="text-xs font-bold text-gray-400 uppercase mb-1">Status</p><p className={`font-bold capitalize ${managingDetails.subscription_status === 'active' ? 'text-green-600' : 'text-orange-500'}`}>{managingDetails.subscription_status}</p></div>
                             </div>
-                            {managingDetails.subscription_tier === 'standard' && (
+                            
+                            {/* Standard / Trial Controls */}
+                            {(managingDetails.subscription_tier === 'standard' || managingDetails.subscription_tier === 'trial') && (
                                 <>
                                     <hr className="border-gray-100" />
                                     <div><h3 className="text-sm font-bold text-indigo-900 mb-3 flex items-center gap-2"><CreditCard className="w-4 h-4"/> Activate / Upgrade</h3>
@@ -307,13 +351,15 @@ const AdminDashboard = ({ onClose, questions }) => {
                                         </div>
                                     </div>
                                     <hr className="border-gray-100" />
-                                    <div><h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2"><Wallet className="w-4 h-4"/> Manual Top Up</h3>
+                                    <div><h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2"><Wallet className="w-4 h-4"/> Manual Top Up (Credits Only)</h3>
                                         <div className="flex gap-2"><input type="number" placeholder="Amount" value={topUpAmount} onChange={(e) => setTopUpAmount(e.target.value)} className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
                                         <button disabled={!topUpAmount || actionLoading} onClick={handleManualTopUp} className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-700 disabled:opacity-50">Add</button></div>
                                         <p className="text-[10px] text-gray-400 mt-2">Current Balance: ${managingDetails.ai_credit_balance?.toFixed(2)}</p>
                                     </div>
                                 </>
                             )}
+                            
+                            {/* Legacy Indicator */}
                             {managingDetails.subscription_tier === 'legacy_friend' && <div className="p-4 bg-purple-50 border border-purple-100 rounded-lg text-sm text-purple-800 flex items-center gap-3"><CheckCircle2 className="w-5 h-5 shrink-0" /><div><strong>Legacy Account</strong><p className="text-xs mt-1 opacity-80">Unlimited access. No wallet required.</p></div></div>}
                         </>
                     )}
@@ -332,12 +378,71 @@ const AdminDashboard = ({ onClose, questions }) => {
       <UserDBStatsModal user={dbModalUser} onClose={() => setDbModalUser(null)} />
       <ManageUserModal />
 
+      {/* FULL SCREEN IMAGE PREVIEW MODAL */}
+      {viewingProof && (
+        <div className="fixed inset-0 z-[90] bg-black/90 flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setViewingProof(null)}>
+           <img src={viewingProof} className="max-w-full max-h-full rounded-lg shadow-2xl" alt="Proof Full" />
+           <div className="absolute top-4 right-4 text-white/50 text-sm">Click anywhere to close</div>
+        </div>
+      )}
+
+      {/* HEADER */}
       <div className="bg-indigo-900 text-white sticky top-0 z-10 px-6 py-4 flex justify-between items-center shadow-lg">
         <div className="flex items-center gap-3"><div className="p-2 bg-indigo-800 rounded-lg"><Trophy className="w-6 h-6 text-yellow-400" /></div><div><h1 className="text-xl font-bold">Admin Dashboard</h1><p className="text-xs text-indigo-300">Performance, Quota & Billing</p></div></div>
         <div className="flex items-center gap-2"><button onClick={fetchDashboardData} className="p-2 bg-indigo-800 hover:bg-indigo-700 text-indigo-200 hover:text-white rounded-full transition-colors"><RefreshCw className="w-5 h-5" /></button><button onClick={onClose} className="p-2 hover:bg-indigo-800 rounded-full transition-colors"><X className="w-6 h-6" /></button></div>
       </div>
 
       <div className="max-w-7xl mx-auto p-6">
+        
+        {/* ========================================================= */}
+        {/* NEW: PENDING PAYMENTS SECTION                             */}
+        {/* ========================================================= */}
+        {pendingPayments.length > 0 && (
+          <div className="mb-8 bg-orange-50 border border-orange-200 rounded-xl p-6 animate-in slide-in-from-left duration-500">
+            <h2 className="text-lg font-bold text-orange-800 mb-4 flex items-center gap-2">
+               <AlertCircle className="w-5 h-5"/> Pending Payments ({pendingPayments.length})
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {pendingPayments.map(payment => (
+                <div key={payment.id} className="bg-white p-4 rounded-lg shadow-sm border border-orange-100 flex gap-4">
+                   {/* Thumbnail - Click to Zoom */}
+                   <div className="w-20 h-24 bg-gray-100 rounded overflow-hidden cursor-pointer shrink-0 border border-gray-200 group relative" onClick={() => setViewingProof(payment.proof_url)}>
+                     <img src={payment.proof_url} alt="Proof" className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"/>
+                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/20 text-white"><ExternalLink className="w-4 h-4"/></div>
+                   </div>
+                   
+                   <div className="flex-1 flex flex-col justify-between">
+                     <div>
+                        <div className="font-bold text-sm text-gray-800 truncate" title={payment.profiles?.email}>{payment.profiles?.email || 'Unknown User'}</div>
+                        <div className="text-xs text-gray-500 mb-1">{new Date(payment.created_at).toLocaleDateString()} at {new Date(payment.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                        <div className="font-mono font-bold text-emerald-600 text-lg">${payment.amount}</div>
+                     </div>
+                     <div className="flex gap-2 mt-2">
+                        {actionLoading ? <div className="text-xs text-gray-400">Processing...</div> : (
+                            <>
+                                <button 
+                                onClick={() => handleApprovePayment(payment)}
+                                className="flex-1 bg-green-600 text-white text-xs font-bold py-1.5 rounded hover:bg-green-700 flex items-center justify-center gap-1"
+                                >
+                                <Check className="w-3 h-3"/> Approve
+                                </button>
+                                <button 
+                                onClick={() => handleRejectPayment(payment)}
+                                className="px-2 bg-red-50 text-red-600 text-xs font-bold rounded hover:bg-red-100 border border-red-200"
+                                >
+                                <Ban className="w-4 h-4"/>
+                                </button>
+                            </>
+                        )}
+                     </div>
+                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* SUMMARY CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 text-gray-500 mb-1"><Users className="w-4 h-4" /><span className="text-xs font-bold uppercase">Total Users</span></div><p className="text-3xl font-bold text-gray-800">{summary.totalUsers}</p></div>
           <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 text-gray-500 mb-1"><Target className="w-4 h-4" /><span className="text-xs font-bold uppercase">Total Attempts</span></div><p className="text-3xl font-bold text-teal-600">{summary.totalAnswers}</p></div>
@@ -345,6 +450,7 @@ const AdminDashboard = ({ onClose, questions }) => {
           <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 text-gray-500 mb-1"><Coins className="w-4 h-4" /><span className="text-xs font-bold uppercase">Total AI Spent (HKD)</span></div><p className="text-3xl font-bold text-emerald-600">${summary.totalAiSpentHKD.toFixed(2)}</p></div>
         </div>
 
+        {/* MAIN USER TABLE */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
             <h2 className="font-bold text-gray-800">User Performance & Costs</h2>
@@ -399,7 +505,6 @@ const AdminDashboard = ({ onClose, questions }) => {
                          <div className="flex items-center justify-end gap-1 font-mono font-bold text-emerald-600 bg-emerald-50 py-1 px-2 rounded inline-block ml-auto border border-transparent hover:border-emerald-200"><DollarSign className="w-3 h-3" />{user.dbCostHKD.toFixed(1)}</div>
                       </td>
 
-                      {/* --- NEW ACTION BUTTON --- */}
                       <td className="px-6 py-4 text-right">
                           <button onClick={() => handleOpenManageModal(user)} className="text-indigo-600 hover:text-indigo-800 text-xs font-bold px-2 py-1 bg-indigo-50 rounded hover:bg-indigo-100">Manage</button>
                       </td>

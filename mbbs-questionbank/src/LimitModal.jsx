@@ -1,13 +1,13 @@
 import React from 'react';
 import { Lock, Wallet, ArrowRight, Database, Check, Clock, AlertTriangle } from 'lucide-react';
 
-const LimitModal = ({ isOpen, onClose, type, requiredAmount, currentBalance }) => {
+// Added 'onUpgrade' to props
+const LimitModal = ({ isOpen, onClose, onUpgrade, type, requiredAmount, currentBalance }) => {
   if (!isOpen) return null;
 
   const isLowBalance = type === 'LOW_BALANCE';
   
   // Logic: Trial Limit and Storage Limit both trigger the "Upgrade Plan" view.
-  // Low Balance triggers the "Top Up" view.
   const isSalesPitch = type === 'TRIAL_LIMIT' || type === 'STORAGE_LIMIT';
 
   // --- CONFIG FOR SALES PITCH ---
@@ -43,9 +43,9 @@ const LimitModal = ({ isOpen, onClose, type, requiredAmount, currentBalance }) =
       subtitle = 'Wallet Balance Low';
   }
 
+  // Keep this for Low Balance (Wallet Top Up)
   const handleContactAdmin = () => {
-      // Replace with your actual contact logic or Stripe link
-      window.location.href = "mailto:admin@hkupastpapers.com?subject=Upgrade%20to%20Full%20Access";
+      window.location.href = "mailto:admin@hkupastpapers.com?subject=Top%20Up%20Wallet";
   };
 
   return (
@@ -77,7 +77,7 @@ const LimitModal = ({ isOpen, onClose, type, requiredAmount, currentBalance }) =
                     <div>
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Subscription (Valid till Apr 1)</p>
                         <div className="flex items-center gap-2 mt-1">
-                            <span className="text-3xl font-bold text-slate-800">$699</span>
+                            <span className="text-3xl font-bold text-slate-800">$599</span>
                             <span className="text-sm font-bold text-slate-400 line-through decoration-slate-400">$899</span>
                             <span className="text-sm font-bold text-slate-600">HKD</span>
                         </div>
@@ -107,9 +107,9 @@ const LimitModal = ({ isOpen, onClose, type, requiredAmount, currentBalance }) =
                   </ul>
               </div>
 
-              {/* Call to Action */}
+              {/* Call to Action - NOW USES onUpgrade PROP */}
               <button 
-                onClick={handleContactAdmin}
+                onClick={onUpgrade} 
                 className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition-transform active:scale-95"
               >
                 Upgrade Now <ArrowRight className="w-4 h-4" />

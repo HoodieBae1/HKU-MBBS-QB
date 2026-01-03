@@ -45,6 +45,7 @@ import LimitModal from "./LimitModal";
 import { APP_VERSION } from "./appVersion";
 import DailyStatsDisplay from './DailyStatsDisplay';
 import LegacyUserModal from './LegacyUserModal';
+import PaymentUploadModal from "./PaymentUploadModal";
 
 const AI_COST_MAP = {
 	"gemini-2.5-flash-lite": 0.005,
@@ -150,6 +151,7 @@ const App = () => {
 	const [modalInitialData, setModalInitialData] = useState(null);
 
 	const [showHistory, setShowHistory] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
@@ -262,6 +264,13 @@ const App = () => {
 		localStorage.setItem("app_last_seen_version", APP_VERSION);
 		setShowReleaseModal(false);
 	};
+
+  const handleTriggerUpgrade = () => {
+        // 1. Close the Limit/Warning Modal
+        setLimitModal((prev) => ({ ...prev, isOpen: false }));
+        // 2. Open the Payment Upload Modal
+        setShowPaymentModal(true);
+  };
 
 	const fetchUserProgress = async (userId) => {
 		try {
@@ -1156,10 +1165,19 @@ const App = () => {
 			<LimitModal
 				isOpen={limitModal.isOpen}
 				onClose={() => setLimitModal((prev) => ({ ...prev, isOpen: false }))}
+        onUpgrade={handleTriggerUpgrade}
 				type={limitModal.type}
 				requiredAmount={limitModal.required}
 				currentBalance={limitModal.balance}
 			/>
+      {showPaymentModal && (
+        <PaymentUploadModal 
+            user={session?.user}
+            planName="Premium Subscription"
+            price={599}
+            onClose={() => setShowPaymentModal(false)}
+        />
+      )}
 
 			<CompletionModal
 				isOpen={modalOpen}
