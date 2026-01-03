@@ -133,10 +133,10 @@ serve(async (req) => {
 
         Question: "${question}"
         ${type === 'MCQ' ? `Options: \n${options.map((o: any, i: number) => `${String.fromCharCode(65+i)}. ${o}`).join('\n')}` : ''}
-        Official Answer: "${official_answer}"
+        Goddisk Answer: "${official_answer}"
 
         Provide a response with this exact structure:
-        1. **Official Answer Analysis**: Agree or disagree with the official answer.
+        1. **Goddisk Answer Analysis**: Agree or disagree with the goddisk answer.
         2. **Pathophysiology/Mechanism**: Explain your thought process into why the answer is correct or incorrect.
         3. **Why others are wrong** (If MCQ): Brief dismissal of distractors.
         4. **Clinical Pearl**: A high-yield fact or mnemonic.
