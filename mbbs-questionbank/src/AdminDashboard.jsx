@@ -76,6 +76,12 @@ const AdminDashboard = ({ onClose, questions }) => {
         .order('created_at', { ascending: false });
       
       if (!payError) setPendingPayments(payments || []);
+      if (payError) {
+        console.error("CRITICAL PAYMENT FETCH ERROR:", payError);
+      } else {
+        console.log("Payments fetched:", payments); // See if data comes back but is empty
+        setPendingPayments(payments || []);
+      }
 
       // 4. Process Data
       const processedStats = (userStatsRaw || []).map(u => {
