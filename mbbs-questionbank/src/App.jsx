@@ -46,6 +46,7 @@ import { APP_VERSION } from "./appVersion";
 import DailyStatsDisplay from './DailyStatsDisplay';
 import LegacyUserModal from './LegacyUserModal';
 import PaymentUploadModal from "./PaymentUploadModal";
+import DataExportModal from './DataExportModal';
 
 const AI_COST_MAP = {
 	"gemini-2.5-flash-lite": 0.005,
@@ -124,6 +125,7 @@ const App = () => {
 	const [modalViewMode, setModalViewMode] = useState("FULL");
 
 	const [filtersOpen, setFiltersOpen] = useStickyState(true, "app_filtersOpen");
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
 	const [searchInput, setSearchInput] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
@@ -1124,6 +1126,14 @@ const App = () => {
 				user={session?.user}
 				isAdmin={isAdmin}
 			/>
+      <DataExportModal 
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        questions={questions}
+        userProgress={userProgress}
+        onDownloadJson={handleDownloadData}
+        userId={session?.user?.id}
+      />
 			{showPasswordResetModal && (
 				<div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
 					{" "}
@@ -1324,7 +1334,7 @@ const App = () => {
 										<StickyNote className="w-5 h-5" />
 									</button>
 									<button
-										onClick={handleDownloadData}
+										onClick={() => setIsExportModalOpen(true)}
 										className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white"
 										title="Download My Data"
 									>
