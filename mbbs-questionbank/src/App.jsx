@@ -633,7 +633,7 @@ const App = () => {
 
 		try {
 			const response = await fetch(
-				"https://qzoreybelgjynenkwobi.supabase.co/functions/v1/gemini-test",
+				"https://qzoreybelgjynenkwobi.supabase.co/functions/v1/gemini-tutor",
 				{
 					method: "POST",
 					headers: {
