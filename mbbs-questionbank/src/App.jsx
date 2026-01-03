@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
 	Filter,
 	BookOpen,
@@ -127,7 +127,7 @@ const App = () => {
 
 	const [searchInput, setSearchInput] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
-  const [showLegacyModal, setShowLegacyModal] = useState(false);
+	const [showLegacyModal, setShowLegacyModal] = useState(false);
 
 	const [selectedTopic, setSelectedTopic] = useStickyState(
 		"All",
@@ -151,7 +151,10 @@ const App = () => {
 	const [modalInitialData, setModalInitialData] = useState(null);
 
 	const [showHistory, setShowHistory] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+	const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+	// FIX: Use ref to track the last user ID to prevent unnecessary re-renders/scroll resets
+	const lastUserId = useRef(null);
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
@@ -161,9 +164,12 @@ const App = () => {
 	}, [searchInput]);
 
 	useEffect(() => {
+		// 1. Initial Session Check
 		supabase.auth.getSession().then(({ data: { session } }) => {
 			setSession(session);
 			if (session) {
+				// Initialize the Ref so we don't trigger loading on the immediate auth change
+				lastUserId.current = session.user.id;
 				fetchUserProgress(session.user.id);
 				fetchUserProfile(session.user.id);
 				fetchQuotaStats(session.user.id);
@@ -172,17 +178,35 @@ const App = () => {
 			}
 		});
 
+		// 2. Auth State Listener
 		const {
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange(async (event, session) => {
 			setSession(session);
 			if (event === "PASSWORD_RECOVERY") setShowPasswordResetModal(true);
+			
 			if (session) {
-				setProfileLoading(true);
-				fetchUserProgress(session.user.id);
-				fetchUserProfile(session.user.id);
-				fetchQuotaStats(session.user.id);
+				const currentUserId = session.user.id;
+
+				// KEY FIX: Compare current User ID with the last one we saw.
+				// If it is the same user, this is just a tab-focus or token refresh.
+				// DO NOT enable profileLoading, or the app unmounts and resets scroll.
+				if (lastUserId.current === currentUserId) {
+					// Silent Update: Fetch data to keep fresh, but don't show spinner
+					fetchUserProgress(currentUserId);
+					fetchUserProfile(currentUserId);
+					fetchQuotaStats(currentUserId);
+				} else {
+					// New User or First Load: Show Spinner
+					lastUserId.current = currentUserId;
+					setProfileLoading(true);
+					fetchUserProgress(currentUserId);
+					fetchUserProfile(currentUserId);
+					fetchQuotaStats(currentUserId);
+				}
 			} else {
+				// Logged Out
+				lastUserId.current = null;
 				setUserProgress({});
 				setUserProfile(null);
 				setProfileLoading(false);
@@ -241,36 +265,29 @@ const App = () => {
 		checkVersion();
 	}, []);
 
-  useEffect(() => {
-    // 1. Ensure profile is loaded and user is Legacy
-    if (userProfile && userProfile.subscription_tier === 'legacy_friend') {
-        
-        // 2. Check Local Storage to see if they've seen this specific popup version
-        const hasSeen = window.localStorage.getItem('app_legacy_welcome_seen_v1');
-        
-        if (!hasSeen) {
-            setShowLegacyModal(true);
-        }
-    }
-  }, [userProfile]);
+	useEffect(() => {
+		if (userProfile && userProfile.subscription_tier === 'legacy_friend') {
+			const hasSeen = window.localStorage.getItem('app_legacy_welcome_seen_v1');
+			if (!hasSeen) {
+				setShowLegacyModal(true);
+			}
+		}
+	}, [userProfile]);
 
-  const handleCloseLegacyModal = () => {
-      // 3. Save to Local Storage so it doesn't show again
-      window.localStorage.setItem('app_legacy_welcome_seen_v1', 'true');
-      setShowLegacyModal(false);
-  };
+	const handleCloseLegacyModal = () => {
+		window.localStorage.setItem('app_legacy_welcome_seen_v1', 'true');
+		setShowLegacyModal(false);
+	};
 
 	const handleCloseReleaseNotes = () => {
 		localStorage.setItem("app_last_seen_version", APP_VERSION);
 		setShowReleaseModal(false);
 	};
 
-  const handleTriggerUpgrade = () => {
-        // 1. Close the Limit/Warning Modal
-        setLimitModal((prev) => ({ ...prev, isOpen: false }));
-        // 2. Open the Payment Upload Modal
-        setShowPaymentModal(true);
-  };
+	const handleTriggerUpgrade = () => {
+		setLimitModal((prev) => ({ ...prev, isOpen: false }));
+		setShowPaymentModal(true);
+	};
 
 	const fetchUserProgress = async (userId) => {
 		try {
@@ -359,6 +376,9 @@ const App = () => {
 		} catch (e) {
 			console.error("Profile fetch failed", e);
 		} finally {
+			// This sets loading to false. 
+			// If we are doing a silent update, it goes from false -> false (No Re-render).
+			// If we are doing a fresh login, it goes from true -> false (Reveals content).
 			setProfileLoading(false);
 		}
 	};
@@ -1141,11 +1161,11 @@ const App = () => {
 				</div>
 			)}
 
-    <LegacyUserModal 
-    isOpen={showLegacyModal} 
-    onClose={handleCloseLegacyModal}
-    userProfile={userProfile} // <--- ADD THIS PROP
-    />
+			<LegacyUserModal
+				isOpen={showLegacyModal}
+				onClose={handleCloseLegacyModal}
+				userProfile={userProfile} 
+			/>
 
 			{/* --- NEW: LOGIN MODAL FOR GUESTS --- */}
 			{showLoginModal && (
@@ -1165,19 +1185,19 @@ const App = () => {
 			<LimitModal
 				isOpen={limitModal.isOpen}
 				onClose={() => setLimitModal((prev) => ({ ...prev, isOpen: false }))}
-        onUpgrade={handleTriggerUpgrade}
+				onUpgrade={handleTriggerUpgrade}
 				type={limitModal.type}
 				requiredAmount={limitModal.required}
 				currentBalance={limitModal.balance}
 			/>
-      {showPaymentModal && (
-        <PaymentUploadModal 
-            user={session?.user}
-            planName="Premium Subscription"
-            price={599}
-            onClose={() => setShowPaymentModal(false)}
-        />
-      )}
+			{showPaymentModal && (
+				<PaymentUploadModal
+					user={session?.user}
+					planName="Premium Subscription"
+					price={599}
+					onClose={() => setShowPaymentModal(false)}
+				/>
+			)}
 
 			<CompletionModal
 				isOpen={modalOpen}
@@ -1227,18 +1247,18 @@ const App = () => {
 										</span>
 									)}
 
-                  {!isGuest && userProfile?.subscription_tier === 'standard' && (
-                    <button 
-                      onClick={() => setLimitModal({ isOpen: true, type: 'TRIAL_LIMIT' })} // <--- Trigger Modal
-                      className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition-colors cursor-pointer ${
-                        userProfile.subscription_status === 'active' 
-                        ? 'bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200' 
-                        : 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200'
-                      }`}
-                    >
-                      {userProfile.subscription_status === 'active' ? 'PREMIUM' : 'TRIAL'}
-                    </button>
-                  )}
+									{!isGuest && userProfile?.subscription_tier === 'standard' && (
+										<button
+											onClick={() => setLimitModal({ isOpen: true, type: 'TRIAL_LIMIT' })} 
+											className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition-colors cursor-pointer ${
+												userProfile.subscription_status === 'active'
+													? 'bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200'
+													: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200'
+											}`}
+										>
+											{userProfile.subscription_status === 'active' ? 'PREMIUM' : 'TRIAL'}
+										</button>
+									)}
 
 									{!isGuest && (
 										<div className="ml-2 border-l border-teal-600 pl-2 flex gap-2 items-center">
@@ -1295,7 +1315,7 @@ const App = () => {
 											<Trophy className="w-5 h-5 text-yellow-300" />
 										</button>
 									)}
-                  <DailyStatsDisplay userProgress={userProgress} />
+									<DailyStatsDisplay userProgress={userProgress} />
 									<button
 										onClick={() => setShowNotesPanel(true)}
 										className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1"
@@ -1320,7 +1340,7 @@ const App = () => {
 									<button
 										onClick={() => setShowHistory(true)}
 										className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1"
-                    title="Version History"
+										title="Version History"
 									>
 										<GitCommit className="w-5 h-5" />
 									</button>
@@ -1635,7 +1655,7 @@ const App = () => {
 										aiUsageCount={aiUsageCount}
 										// --- NEW: Pass Guest Status ---
 										isGuest={isGuest}
-                    onUnlock={() => setLimitModal({ isOpen: true, type: 'TRIAL_LIMIT' })}
+										onUnlock={() => setLimitModal({ isOpen: true, type: 'TRIAL_LIMIT' })}
 										// -----------------------------
 
 										onToggleComplete={(mcqSelection, saqResponse, viewMode) =>
