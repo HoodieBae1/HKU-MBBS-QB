@@ -23832,7 +23832,7 @@
         "topic": "Pediatrics",
         "subtopic": "1 General Pediatrics",
         "type": "MCQ",
-        "question": "A 15-month-old boy with good past health and development. Mother was concerned that multiple family members died of a neuromuscular disease. (The following pedigree is a simplified version of the real pedigree.) What is the likelihood of the boy having the disease?",
+        "question": "A 15-month-old boy with good past health and development. Mother was concerned that multiple family members died of a neuromuscular disease. (The following pedigree is a simplified version of the real pedigree.) What is the likelihood of the boy having the disease? <img src='https://i.imgur.com/L2Z3Obg.png'/>",
         "options": [
             "0%",
             "25%",
@@ -69929,7 +69929,7 @@
         "topic": "Surgery",
         "subtopic": "15 Urology (URO)",
         "type": "MCQ",
-        "question": "TREATMENT OF URINARY TRACT CALCULI: A 56-year-old lady with a history of recurrent right acute pyelonephritis. Investigations show a staghorn stone in the right kidney. A DTPA renal scan showed the right kidney to be contributing to 5% of the total renal function. Choose the single most appropriate treatment option from the list: , E. Double-J catheter stenting, F. Ureterolithotomy, G. Percutaneous nephrolithotripsy (PCNL), H. Nephrectomy, I. Observation, J. Cystolitholapaxy]",
+        "question": "TREATMENT OF URINARY TRACT CALCULI: A 56-year-old lady with a history of recurrent right acute pyelonephritis. Investigations show a staghorn stone in the right kidney. A DTPA renal scan showed the right kidney to be contributing to 5% of the total renal function. Choose the single most appropriate treatment option from the list:",
         "official_answer": "H. Nephrectomy. A kidney with a large stone burden, recurrent infections, and poor function (<10-15%) is best managed with nephrectomy.",
         "ai_answer": {
             "agreement": "Agree",
@@ -69941,16 +69941,22 @@
             "ESWL",
             "Pyelolithotomy",
             "Cystolithotomy",
-            "Ureterorenoscopic lithotripsy (URSL"
+            "Ureterorenoscopic lithotripsy (URSL)",
+            "Double-J catheter stenting",
+            "Ureterolithotomy",
+            "Percutaneous nephrolithotripsy (PCNL)",
+            "Nephrectomy",
+            "Observation",
+            "Cystolitholapaxy"
         ],
-        "correctAnswerIndex": -1
+        "correctAnswerIndex": 7
     },
     {
         "id": "M02-EMQ02-03-SAQ",
         "topic": "Surgery",
         "subtopic": "15 Urology (URO)",
         "type": "MCQ",
-        "question": "TREATMENT OF URINARY TRACT CALCULI: A 60-year-old gentleman presented with acute onset of left loin pain, fever, chills and rigors. Ultrasonogram of the kidneys revealed one obstructing left upper ureteric stone with left hydronephrosis. The temperature is still swinging despite 24 hours of intravenous broad-spectrum antibiotics. Choose the single most appropriate treatment option from the list: , E. Double-J catheter stenting, F. Ureterolithotomy, G. Percutaneous nephrolithotripsy (PCNL), H. Nephrectomy, I. Observation, J. Cystolitholapaxy]",
+        "question": "TREATMENT OF URINARY TRACT CALCULI: A 60-year-old gentleman presented with acute onset of left loin pain, fever, chills and rigors. Ultrasonogram of the kidneys revealed one obstructing left upper ureteric stone with left hydronephrosis. The temperature is still swinging despite 24 hours of intravenous broad-spectrum antibiotics. Choose the single most appropriate treatment option from the list:",
         "official_answer": "E. Double-J catheter stenting. The immediate priority is to drain the infected and obstructed kidney, which can be achieved with a JJ stent or percutaneous nephrostomy.",
         "ai_answer": {
             "agreement": "Agree",
@@ -69962,9 +69968,15 @@
             "ESWL",
             "Pyelolithotomy",
             "Cystolithotomy",
-            "Ureterorenoscopic lithotripsy (URSL"
+            "Ureterorenoscopic lithotripsy (URSL)",
+            "Double-J catheter stenting",
+            "Ureterolithotomy",
+            "Percutaneous nephrolithotripsy (PCNL)",
+            "Nephrectomy",
+            "Observation",
+            "Cystolitholapaxy"
         ],
-        "correctAnswerIndex": 3
+        "correctAnswerIndex": 4
     },
     {
         "id": "M03-EMQ05-01-SAQ",
@@ -79511,7 +79523,7 @@
         "_source_file": "Processed\\superpass_matthew_cheung\\Surgery\\2 Surgery Final MB_P29.pdf",
         "unique_id": 3816,
         "options": [
-            "[List: A. Congenital melanocytic naevus",
+            "Congenital melanocytic naevus",
             "Melanoma",
             "Seborrhoeic keratosis",
             "Basal cell carcinoma",
@@ -79538,7 +79550,7 @@
         "_source_file": "Processed\\superpass_matthew_cheung\\Surgery\\2 Surgery Final MB_P29.pdf",
         "unique_id": 3817,
         "options": [
-            "[List: A. Congenital melanocytic naevus",
+            "Congenital melanocytic naevus",
             "Melanoma",
             "Seborrhoeic keratosis",
             "Basal cell carcinoma",
@@ -79565,7 +79577,7 @@
         "_source_file": "Processed\\superpass_matthew_cheung\\Surgery\\2 Surgery Final MB_P29.pdf",
         "unique_id": 3818,
         "options": [
-            "[List: A. Congenital melanocytic naevus",
+            "Congenital melanocytic naevus",
             "Melanoma",
             "Seborrhoeic keratosis",
             "Basal cell carcinoma",
@@ -172067,7 +172079,7 @@
         "topic": "Surgery",
         "subtopic": "15 Urology (URO)",
         "type": "SAQ",
-        "question": "65/M complains of frequency and nocturia. After enquiry of symptoms, you suggest he is suffering from LUTS. a. Name 3 symptoms more suggestive of obstruction (voiding) rather than storage (irritative) problems. (3). b. Suggest 3 investigations in primary care to delineate the cause in this patient. (3). c. 4 non-drug interventions for obstructive symptoms (4)",
+        "question": "65/M complains of frequency and nocturia. After enquiry of symptoms, you suggest he is suffering from LUTS. \na. Name 3 symptoms more suggestive of obstruction (voiding) rather than storage (irritative) problems. (3). \nb. Suggest 3 investigations in primary care to delineate the cause in this patient. (3). \nc. 4 non-drug interventions for obstructive symptoms (4)",
         "official_answer": "a. Obstruction (voiding) symptoms: Incomplete emptying, Dribbling (weak stream), Intermittent flow, Straining.\nb. Investigations: Urinalysis (to r/o UTI), Bladder diary/Frequency & Volume chart, Fasting glucose/HbA1c (to r/o DM).\nc. Non-drug interventions: Reduce fluid intake before bedtime, Reduce intake of caffeine/alcohol/tea, Double-voiding, Timed voiding, Pelvic floor muscle training (Kegel exercises).",
         "ai_answer": {
             "agreement": "Agree",

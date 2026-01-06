@@ -91,6 +91,9 @@ const App = () => {
 	const [questions, setQuestions] = useState([]);
 	const [userProgress, setUserProgress] = useState({});
 	const [aiUsageCount, setAiUsageCount] = useState(0);
+	
+	// --- NEW: Track if initial progress fetch is done to allow initial sort ---
+	const [progressLoaded, setProgressLoaded] = useState(false);
 
 	// --- NEW STATES ---
 	const [showLoginModal, setShowLoginModal] = useState(false);
@@ -252,6 +255,7 @@ const App = () => {
 			} else {
 				lastUserId.current = null;
 				setUserProgress({});
+				setProgressLoaded(false); // Reset this to ensure clean sort on re-login
 				setUserProfile(null);
 				prevStatusRef.current = null; // Reset polling ref on logout
 				setProfileLoading(false);
@@ -368,6 +372,9 @@ const App = () => {
 				progressMap[String(row.question_id)] = row;
 			});
 			setUserProgress(progressMap);
+			
+			// --- Signal that progress is ready for the initial sort ---
+			setProgressLoaded(true);
 
 			const { count } = await supabase
 				.from("ai_usage_logs")
@@ -1037,6 +1044,7 @@ const App = () => {
 		});
 		return { tCounts, sCounts, totalMatchingSearch: baseSet.length };
 	}, [questions, searchQuery, selectedType, selectedTopic]);
+	
 	const filteredQuestions = useMemo(() => {
 		const qLower = searchQuery.toLowerCase().trim();
 		let result = questions.filter((q) => {
@@ -1115,13 +1123,15 @@ const App = () => {
 			}
 			return a.unique_id - b.unique_id;
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		questions,
 		selectedTopic,
 		selectedSubtopic,
 		selectedType,
 		sortOrder,
-		userProgress,
+		// userProgress, // <--- INTENTIONALLY REMOVED to prevent auto-resort jumping
+		progressLoaded, // <--- ADDED to ensure initial sort works
 		searchQuery,
 	]);
 

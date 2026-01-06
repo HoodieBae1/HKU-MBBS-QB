@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.0.0",
+  "currentVersion": "4.0.1",
   "history": [
+    {
+      "version": "4.0.1",
+      "date": "2026-1-6",
+      "title": "Question bug fixes and improved sorting logic",
+      "changes": [
+        "Questions: Added image to 1196, fixed MCQ options in 3381 and 3382",
+        "Refactor: Make questions stay in the same order; ie. flag a question, it will not pop to the beginning if you are sorting by flagged questions first. Sorting now only happens under the any of the following conditions: sort order is changed, topic/filter changed, page reload, performed search."
+      ]
+    },
     {
       "version": "4.0.0",
       "date": "2026-1-2",
