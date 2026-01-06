@@ -191,7 +191,7 @@ serve(async (req) => {
        return ((inTok / 1_000_000) * p.input) + ((outTok / 1_000_000) * p.output);
     }
 
-    const realUsdCost = calculateRealCost(tokens.input, tokens.output);
+    const realUsdCost = calculateRealCost(tokens.input, tokens.output) * 1.5;
     let deductionAmount = 0;
 
     if (hasPaidBefore) {
