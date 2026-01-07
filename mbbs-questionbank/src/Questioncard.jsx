@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'; 
-import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, Square, StickyNote, Flag, Sparkles, Loader2, AlertCircle, RotateCcw, Lock } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, Square, StickyNote, Flag, Sparkles, Loader2, AlertCircle, RotateCcw, Lock, AlertTriangle  } from 'lucide-react';
 import ReactMarkdown from 'react-markdown'; 
 import RichTextEditor from './RichTextEditor'; 
 import DOMPurify from 'dompurify'; 
@@ -27,7 +27,9 @@ const QuestionCard = ({
     userProfile = null,
     aiUsageCount = 0,
     isGuest = false,
-    onUnlock
+    onUnlock,
+    isReported = false,
+    onReport 
 }) => {
   
   const [selectedOption, setSelectedOption] = useState(null);
@@ -204,6 +206,18 @@ const QuestionCard = ({
           {isCompleted && (score !== undefined && score !== null) && (
               <div className={`flex items-center gap-1 px-2 py-1 border rounded text-xs font-bold font-mono mr-1 ${score === displayMaxScore ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'}`}>{score} / {displayMaxScore}</div>
           )}
+          <button 
+            onClick={() => onReport()} 
+            title={isReported ? "This question has been reported as problematic." : "Report an issue with this question"}
+            className={`flex items-center justify-center p-1.5 rounded transition-colors ${
+                isReported 
+                ? 'bg-red-100 text-red-600 border border-red-200 cursor-help' 
+                : 'text-gray-300 hover:text-red-500 hover:bg-red-50'
+            }`}
+          >
+             <AlertTriangle className={`w-4 h-4 ${isReported ? 'fill-current' : ''}`} />
+             {isReported && <span className="ml-1 text-[10px] font-bold uppercase hidden md:inline">Reported</span>}
+          </button>
 
           <button onClick={() => onToggleFlag(localInput)} className={`flex items-center justify-center p-1.5 rounded transition-colors ${isFlagged ? 'bg-orange-100 text-orange-600 border border-orange-200' : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50'}`}><Flag className={`w-4 h-4 ${isFlagged ? 'fill-current' : ''}`} /></button>
 

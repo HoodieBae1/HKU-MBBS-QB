@@ -47,6 +47,7 @@ import DailyStatsDisplay from './DailyStatsDisplay';
 import LegacyUserModal from './LegacyUserModal';
 import PaymentUploadModal from "./PaymentUploadModal";
 import DataExportModal from './DataExportModal';
+import ReportModal from "./ReportModal";
 
 const AI_COST_MAP = {
 	"gemini-2.5-flash-lite": 0.005,
@@ -134,6 +135,11 @@ const App = () => {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [showLegacyModal, setShowLegacyModal] = useState(false);
 
+	const [reportedQuestionIds, setReportedQuestionIds] = useState(new Set());
+	const [reportModalOpen, setReportModalOpen] = useState(false);
+	const [pendingReportQuestion, setPendingReportQuestion] = useState(null);
+	const [isReportSubmitting, setIsReportSubmitting] = useState(false);
+
 	const [selectedTopic, setSelectedTopic] = useStickyState(
 		"All",
 		"app_selectedTopic"
@@ -213,6 +219,27 @@ const App = () => {
 			prevStatusRef.current = currentStatus;
 		}
 	}, [userProfile]);
+
+ 	useEffect(() => {
+        const fetchReports = async () => {
+            // Select question_id AND status
+            const { data, error } = await supabase
+                .from('question_reports')
+                .select('question_id, status');
+            
+            if (!error && data) {
+                // Filter: Only add to the Set if the status is NOT 'resolved'
+                // This ensures that once an Admin fixes it, the red icon disappears for users.
+                const activeIssues = data.filter(r => r.status !== 'resolved');
+                
+                const ids = new Set(activeIssues.map(r => r.question_id));
+                setReportedQuestionIds(ids);
+            }
+        };
+
+        // Only run if not already loading profile to avoid duplicate calls on init
+        fetchReports();
+    }, []);
 	
 	// ------------------------------------------------------------
 	// END: POLLING LOGIC
@@ -337,7 +364,7 @@ const App = () => {
 		setLimitModal((prev) => ({ ...prev, isOpen: false }));
 		setShowPaymentModal(true);
 	};
-
+	
 	const fetchUserProgress = async (userId) => {
 		try {
 			let allProgressData = [];
@@ -467,7 +494,60 @@ const App = () => {
 		return { mcqCount, saqCount };
 	}, [userProgress, questions]);
 
-	const handleUpdatePassword = async () => {
+	const handleReportQuestion = (questionData) => {
+		// Guest Check
+		if (!session) {
+			setShowLoginModal(true);
+			return;
+		}
+		
+		// Set the question to be reported and open modal
+		setPendingReportQuestion(questionData);
+		setReportModalOpen(true);
+		};
+
+	const handleSubmitReport = async (reason) => {
+		if (!session || !pendingReportQuestion) return;
+
+		setIsReportSubmitting(true);
+		const idStr = String(pendingReportQuestion.unique_id);
+
+		try {
+			// 1. Optimistic UI update (make icon red immediately)
+			setReportedQuestionIds(prev => new Set(prev).add(idStr));
+
+			// 2. Send to Supabase
+			const { error } = await supabase
+				.from('question_reports')
+				.insert({
+					question_id: idStr,
+					user_id: session.user.id,
+					reason: reason,
+					status: 'new' // Explicitly setting status
+				});
+
+			if (error) throw error;
+
+			// 3. Success state
+			setReportModalOpen(false);
+			setPendingReportQuestion(null);
+			// Optional: You could show a small toast notification here
+			
+		} catch (error) {
+			console.error("Report error:", error);
+			alert("Failed to submit report. Please check your connection.");
+			// Revert optimistic update if failed
+			setReportedQuestionIds(prev => {
+				const next = new Set(prev);
+				next.delete(idStr);
+				return next;
+			});
+		} finally {
+			setIsReportSubmitting(false);
+		}
+	};
+	
+		const handleUpdatePassword = async () => {
 		if (!newPassword) return alert("Please enter a password");
 		setResetLoading(true);
 		const { error } = await supabase.auth.updateUser({ password: newPassword });
@@ -1259,6 +1339,15 @@ const App = () => {
 				/>
 			)}
 
+			<ReportModal 
+				isOpen={reportModalOpen}
+				onClose={() => setReportModalOpen(false)}
+				onSubmit={handleSubmitReport}
+				isSubmitting={isReportSubmitting}
+				questionId={pendingReportQuestion?.unique_id}
+				isAlreadyReported={pendingReportQuestion && reportedQuestionIds.has(String(pendingReportQuestion.unique_id))}
+			/>
+
 			<CompletionModal
 				isOpen={modalOpen}
 				onClose={() => setModalOpen(false)}
@@ -1647,6 +1736,7 @@ const App = () => {
 							aiEnabled,
 							aiUsageCount,
 							isGuest,
+							reportedQuestionIds
 						}}
 						initialTopMostItemIndex={initialScrollIndex}
 						rangeChanged={({ startIndex }) => {
@@ -1662,6 +1752,7 @@ const App = () => {
 								aiEnabled,
 								aiUsageCount,
 								isGuest,
+								reportedQuestionIds
 							} = context;
 							const idStr = String(q.unique_id);
 							const p = userProgress[idStr];
@@ -1676,6 +1767,7 @@ const App = () => {
 							const maxScore = p?.max_score;
 							const isRevealedOverride = viewState[idStr]?.isRevealed || false;
 							const currentAiState = aiState[idStr] || {};
+							const isReported = reportedQuestionIds.has(String(q.unique_id));
 
 							let isLocked = false;
 							// Only lock for standard users in trial mode. Guests can see questions (read-only) but cannot interact.
@@ -1735,6 +1827,8 @@ const App = () => {
 										}
 										onToggleFlag={(draft) => handleToggleFlag(q, draft)}
 										onRedo={() => handleRedo(q)}
+										isReported={reportedQuestionIds.has(String(q.unique_id))}
+    									onReport={() => handleReportQuestion(q)}
 									/>
 								</div>
 							);

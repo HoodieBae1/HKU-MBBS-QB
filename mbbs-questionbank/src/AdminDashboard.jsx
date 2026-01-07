@@ -4,23 +4,31 @@ import {
   Trophy, Users, BrainCircuit, X, Loader2, Target, ChevronDown, ChevronUp, 
   BarChart3, Folder, FileText, RefreshCw, DollarSign, Coins, ArrowUpDown, 
   ArrowUp, ArrowDown, Database, AlertCircle, Clock, Wallet, CreditCard, 
-  CheckCircle2, Image as ImageIcon, Check, Ban, ExternalLink 
+  CheckCircle2, Image as ImageIcon, Check, Ban, ExternalLink, 
+  MessageSquareWarning, LayoutDashboard, Flag
 } from 'lucide-react';
 
 const AdminDashboard = ({ onClose, questions }) => {
-  // Data State
+  // --- TABS STATE ---
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'reports'
+
+  // Data State (Overview)
   const [stats, setStats] = useState([]);
   const [summary, setSummary] = useState({ totalUsers: 0, totalAnswers: 0, totalAiCalls: 0, totalAiSpentHKD: 0 });
   const [quotaData, setQuotaData] = useState({ totalDbBytes: 0, userBytesMap: {} });
-  const [pendingPayments, setPendingPayments] = useState([]); // New: For FPS
+  const [pendingPayments, setPendingPayments] = useState([]); 
   
+  // Data State (Reports)
+  const [reports, setReports] = useState([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
+
   // UI State
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
   const [expandedUserId, setExpandedUserId] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false); 
   const [sortConfig, setSortConfig] = useState({ key: 'lastActive', direction: 'desc' });
-  const [viewingProof, setViewingProof] = useState(null); // New: Image Modal URL
+  const [viewingProof, setViewingProof] = useState(null); 
   
   // Modal State
   const [aiModalUser, setAiModalUser] = useState(null);
@@ -38,7 +46,7 @@ const AdminDashboard = ({ onClose, questions }) => {
   const USD_TO_HKD_RATE = 7.8;
   const DB_LIMIT_PRO = 52428800; // 50 MB
 
-  // --- DATA FETCHING ---
+  // --- DATA FETCHING (OVERVIEW) ---
   
   const questionMetaMap = useMemo(() => {
     const map = new Map();
@@ -51,6 +59,13 @@ const AdminDashboard = ({ onClose, questions }) => {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  // Fetch reports when tab changes
+  useEffect(() => {
+    if (activeTab === 'reports') {
+        fetchReports();
+    }
+  }, [activeTab]);
 
   const fetchDashboardData = async () => {
     try {
@@ -68,7 +83,7 @@ const AdminDashboard = ({ onClose, questions }) => {
       if (quotaResult?.users) { quotaResult.users.forEach(u => { userBytesMap[u.user_id] = u.total_user_bytes; }); }
       setQuotaData({ totalDbBytes, userBytesMap });
 
-      // 3. Fetch Pending Payments (New)
+      // 3. Fetch Pending Payments
       const { data: payments, error: payError } = await supabase
         .from('payment_submissions')
         .select('*, profiles:user_id(email, display_name)')
@@ -76,12 +91,6 @@ const AdminDashboard = ({ onClose, questions }) => {
         .order('created_at', { ascending: false });
       
       if (!payError) setPendingPayments(payments || []);
-      if (payError) {
-        console.error("CRITICAL PAYMENT FETCH ERROR:", payError);
-      } else {
-        console.log("Payments fetched:", payments); // See if data comes back but is empty
-        setPendingPayments(payments || []);
-      }
 
       // 4. Process Data
       const processedStats = (userStatsRaw || []).map(u => {
@@ -121,32 +130,66 @@ const AdminDashboard = ({ onClose, questions }) => {
     }
   };
 
-  // --- PAYMENT APPROVAL LOGIC (FPS) ---
-  
+  // --- DATA FETCHING (REPORTS) ---
+  const fetchReports = async () => {
+    setReportsLoading(true);
+    try {
+        const { data, error } = await supabase
+            .from('question_reports')
+            .select('*, profiles:user_id(email, display_name)')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        setReports(data || []);
+    } catch (e) {
+        alert("Failed to load reports: " + e.message);
+    } finally {
+        setReportsLoading(false);
+    }
+  };
+
+  const handleUpdateReportStatus = async (reportId, newStatus) => {
+      setActionLoading(true);
+      try {
+          const { error } = await supabase
+            .from('question_reports')
+            .update({ status: newStatus })
+            .eq('id', reportId);
+          
+          if (error) throw error;
+          
+          // Optimistic Update
+          setReports(prev => prev.map(r => r.id === reportId ? { ...r, status: newStatus } : r));
+
+      } catch (e) {
+          alert("Update failed: " + e.message);
+      } finally {
+          setActionLoading(false);
+      }
+  };
+
+  // --- PAYMENT APPROVAL LOGIC ---
   const handleApprovePayment = async (payment) => {
     const amount = parseFloat(payment.amount);
     if (!confirm(`Confirm approval for ${payment.profiles?.email} ($${amount})?`)) return;
     
     setActionLoading(true);
     try {
-        // 1. Activate User Profile (Add credits + Increase Storage)
         const { error: profileError } = await supabase.from('profiles').update({
             subscription_status: 'active',
-            subscription_tier: 'standard', // or payment.plan_tier if dynamic
-            ai_credit_balance: 100, // Or calculate based on amount
-            db_storage_limit: DB_LIMIT_PRO // 50MB Limit
+            subscription_tier: 'standard', 
+            ai_credit_balance: 100, 
+            db_storage_limit: DB_LIMIT_PRO 
         }).eq('id', payment.user_id);
  
         if (profileError) throw profileError;
  
-        // 2. Mark Submission as Approved
         const { error: subError } = await supabase.from('payment_submissions')
             .update({ status: 'approved' })
             .eq('id', payment.id);
 
         if (subError) throw subError;
  
-        // 3. Refresh UI
         setPendingPayments(prev => prev.filter(p => p.id !== payment.id));
         alert("Payment Approved & User Activated!");
      } catch (e) {
@@ -165,7 +208,6 @@ const AdminDashboard = ({ onClose, questions }) => {
   };
 
   // --- MANUAL MANAGEMENT LOGIC ---
-
   const handleOpenManageModal = async (user) => {
       setManagingUser(user);
       setManagingDetails(null);
@@ -190,7 +232,6 @@ const AdminDashboard = ({ onClose, questions }) => {
 
   const handleActivatePlan = async (amount) => {
     const currentBal = managingDetails.ai_credit_balance || 0;
-    // UPDATED: Now sets db_storage_limit to 50MB
     await handleUpdateProfile({ 
         subscription_status: 'active', 
         ai_credit_balance: currentBal + amount,
@@ -346,7 +387,6 @@ const AdminDashboard = ({ onClose, questions }) => {
                                 <div className="p-3 bg-gray-50 rounded-lg border border-gray-200"><p className="text-xs font-bold text-gray-400 uppercase mb-1">Status</p><p className={`font-bold capitalize ${managingDetails.subscription_status === 'active' ? 'text-green-600' : 'text-orange-500'}`}>{managingDetails.subscription_status}</p></div>
                             </div>
                             
-                            {/* Standard / Trial Controls */}
                             {(managingDetails.subscription_tier === 'standard' || managingDetails.subscription_tier === 'trial') && (
                                 <>
                                     <hr className="border-gray-100" />
@@ -364,8 +404,6 @@ const AdminDashboard = ({ onClose, questions }) => {
                                     </div>
                                 </>
                             )}
-                            
-                            {/* Legacy Indicator */}
                             {managingDetails.subscription_tier === 'legacy_friend' && <div className="p-4 bg-purple-50 border border-purple-100 rounded-lg text-sm text-purple-800 flex items-center gap-3"><CheckCircle2 className="w-5 h-5 shrink-0" /><div><strong>Legacy Account</strong><p className="text-xs mt-1 opacity-80">Unlimited access. No wallet required.</p></div></div>}
                         </>
                     )}
@@ -393,157 +431,277 @@ const AdminDashboard = ({ onClose, questions }) => {
       )}
 
       {/* HEADER */}
-      <div className="bg-indigo-900 text-white sticky top-0 z-10 px-6 py-4 flex justify-between items-center shadow-lg">
-        <div className="flex items-center gap-3"><div className="p-2 bg-indigo-800 rounded-lg"><Trophy className="w-6 h-6 text-yellow-400" /></div><div><h1 className="text-xl font-bold">Admin Dashboard</h1><p className="text-xs text-indigo-300">Performance, Quota & Billing</p></div></div>
-        <div className="flex items-center gap-2"><button onClick={fetchDashboardData} className="p-2 bg-indigo-800 hover:bg-indigo-700 text-indigo-200 hover:text-white rounded-full transition-colors"><RefreshCw className="w-5 h-5" /></button><button onClick={onClose} className="p-2 hover:bg-indigo-800 rounded-full transition-colors"><X className="w-6 h-6" /></button></div>
+      <div className="bg-indigo-900 text-white sticky top-0 z-10 shadow-lg">
+        <div className="px-6 py-4 flex justify-between items-center">
+            <div className="flex items-center gap-3"><div className="p-2 bg-indigo-800 rounded-lg"><Trophy className="w-6 h-6 text-yellow-400" /></div><div><h1 className="text-xl font-bold">Admin Dashboard</h1><p className="text-xs text-indigo-300">Performance, Quota & Billing</p></div></div>
+            <div className="flex items-center gap-2"><button onClick={fetchDashboardData} className="p-2 bg-indigo-800 hover:bg-indigo-700 text-indigo-200 hover:text-white rounded-full transition-colors"><RefreshCw className="w-5 h-5" /></button><button onClick={onClose} className="p-2 hover:bg-indigo-800 rounded-full transition-colors"><X className="w-6 h-6" /></button></div>
+        </div>
+        
+        {/* TABS NAVIGATION */}
+        <div className="px-6 flex gap-1">
+            <button 
+                onClick={() => setActiveTab('overview')}
+                className={`px-4 py-2 text-sm font-bold rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'overview' ? 'bg-slate-100 text-indigo-900' : 'text-indigo-200 hover:bg-indigo-800'}`}
+            >
+                <LayoutDashboard className="w-4 h-4" /> Overview
+            </button>
+            <button 
+                onClick={() => setActiveTab('reports')}
+                className={`px-4 py-2 text-sm font-bold rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'reports' ? 'bg-slate-100 text-indigo-900' : 'text-indigo-200 hover:bg-indigo-800'}`}
+            >
+                <MessageSquareWarning className="w-4 h-4" /> Question Reports
+            </button>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto p-6">
         
         {/* ========================================================= */}
-        {/* NEW: PENDING PAYMENTS SECTION                             */}
+        {/* CONTENT: OVERVIEW                                         */}
         {/* ========================================================= */}
-        {pendingPayments.length > 0 && (
-          <div className="mb-8 bg-orange-50 border border-orange-200 rounded-xl p-6 animate-in slide-in-from-left duration-500">
-            <h2 className="text-lg font-bold text-orange-800 mb-4 flex items-center gap-2">
-               <AlertCircle className="w-5 h-5"/> Pending Payments ({pendingPayments.length})
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {pendingPayments.map(payment => (
-                <div key={payment.id} className="bg-white p-4 rounded-lg shadow-sm border border-orange-100 flex gap-4">
-                   {/* Thumbnail - Click to Zoom */}
-                   <div className="w-20 h-24 bg-gray-100 rounded overflow-hidden cursor-pointer shrink-0 border border-gray-200 group relative" onClick={() => setViewingProof(payment.proof_url)}>
-                     <img src={payment.proof_url} alt="Proof" className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"/>
-                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/20 text-white"><ExternalLink className="w-4 h-4"/></div>
-                   </div>
-                   
-                   <div className="flex-1 flex flex-col justify-between">
-                     <div>
-                        <div className="font-bold text-sm text-gray-800 truncate" title={payment.profiles?.email}>{payment.profiles?.email || 'Unknown User'}</div>
-                        <div className="text-xs text-gray-500 mb-1">{new Date(payment.created_at).toLocaleDateString()} at {new Date(payment.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
-                        <div className="font-mono font-bold text-emerald-600 text-lg">${payment.amount}</div>
-                     </div>
-                     <div className="flex gap-2 mt-2">
-                        {actionLoading ? <div className="text-xs text-gray-400">Processing...</div> : (
-                            <>
-                                <button 
-                                onClick={() => handleApprovePayment(payment)}
-                                className="flex-1 bg-green-600 text-white text-xs font-bold py-1.5 rounded hover:bg-green-700 flex items-center justify-center gap-1"
-                                >
-                                <Check className="w-3 h-3"/> Approve
-                                </button>
-                                <button 
-                                onClick={() => handleRejectPayment(payment)}
-                                className="px-2 bg-red-50 text-red-600 text-xs font-bold rounded hover:bg-red-100 border border-red-200"
-                                >
-                                <Ban className="w-4 h-4"/>
-                                </button>
-                            </>
-                        )}
-                     </div>
-                   </div>
+        {activeTab === 'overview' && (
+            <div className="animate-in fade-in duration-300">
+                {/* PENDING PAYMENTS SECTION */}
+                {pendingPayments.length > 0 && (
+                <div className="mb-8 bg-orange-50 border border-orange-200 rounded-xl p-6 animate-in slide-in-from-left duration-500">
+                    <h2 className="text-lg font-bold text-orange-800 mb-4 flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5"/> Pending Payments ({pendingPayments.length})
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {pendingPayments.map(payment => (
+                        <div key={payment.id} className="bg-white p-4 rounded-lg shadow-sm border border-orange-100 flex gap-4">
+                        {/* Thumbnail */}
+                        <div className="w-20 h-24 bg-gray-100 rounded overflow-hidden cursor-pointer shrink-0 border border-gray-200 group relative" onClick={() => setViewingProof(payment.proof_url)}>
+                            <img src={payment.proof_url} alt="Proof" className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"/>
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/20 text-white"><ExternalLink className="w-4 h-4"/></div>
+                        </div>
+                        
+                        <div className="flex-1 flex flex-col justify-between">
+                            <div>
+                                <div className="font-bold text-sm text-gray-800 truncate" title={payment.profiles?.email}>{payment.profiles?.email || 'Unknown User'}</div>
+                                <div className="text-xs text-gray-500 mb-1">{new Date(payment.created_at).toLocaleDateString()} at {new Date(payment.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                                <div className="font-mono font-bold text-emerald-600 text-lg">${payment.amount}</div>
+                            </div>
+                            <div className="flex gap-2 mt-2">
+                                {actionLoading ? <div className="text-xs text-gray-400">Processing...</div> : (
+                                    <>
+                                        <button 
+                                        onClick={() => handleApprovePayment(payment)}
+                                        className="flex-1 bg-green-600 text-white text-xs font-bold py-1.5 rounded hover:bg-green-700 flex items-center justify-center gap-1"
+                                        >
+                                        <Check className="w-3 h-3"/> Approve
+                                        </button>
+                                        <button 
+                                        onClick={() => handleRejectPayment(payment)}
+                                        className="px-2 bg-red-50 text-red-600 text-xs font-bold rounded hover:bg-red-100 border border-red-200"
+                                        >
+                                        <Ban className="w-4 h-4"/>
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                        </div>
+                    ))}
+                    </div>
                 </div>
-              ))}
+                )}
+
+                {/* SUMMARY CARDS */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 text-gray-500 mb-1"><Users className="w-4 h-4" /><span className="text-xs font-bold uppercase">Total Users</span></div><p className="text-3xl font-bold text-gray-800">{summary.totalUsers}</p></div>
+                <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 text-gray-500 mb-1"><Target className="w-4 h-4" /><span className="text-xs font-bold uppercase">Total Attempts</span></div><p className="text-3xl font-bold text-teal-600">{summary.totalAnswers}</p></div>
+                <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 text-gray-500 mb-1"><BrainCircuit className="w-4 h-4" /><span className="text-xs font-bold uppercase">AI Consultations</span></div><p className="text-3xl font-bold text-violet-600">{summary.totalAiCalls}</p></div>
+                <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 text-gray-500 mb-1"><Coins className="w-4 h-4" /><span className="text-xs font-bold uppercase">Total AI Spent (HKD)</span></div><p className="text-3xl font-bold text-emerald-600">${summary.totalAiSpentHKD.toFixed(2)}</p></div>
+                </div>
+
+                {/* MAIN USER TABLE */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                    <h2 className="font-bold text-gray-800">User Performance & Costs</h2>
+                    <div className="flex items-center gap-2"><span className="text-xs text-gray-400">Sort by:</span><span className="text-xs font-bold text-indigo-600 uppercase bg-indigo-50 px-2 py-1 rounded">{sortConfig.key} {sortConfig.direction}</span></div>
+                </div>
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                    <tr className="text-xs font-bold text-gray-500 uppercase bg-gray-50/50 border-b border-gray-100 cursor-pointer select-none">
+                        <th className="px-6 py-3 w-16 cursor-default">Rank</th>
+                        <th className="px-6 py-3 hover:bg-gray-100" onClick={() => requestSort('display_name')}><div className="flex items-center gap-1">User {getSortIcon('display_name')}</div></th>
+                        <th className="px-6 py-3 text-center hover:bg-gray-100" onClick={() => requestSort('lastActive')}><div className="flex items-center justify-center gap-1">Last Active {getSortIcon('lastActive')}</div></th>
+                        <th className="px-6 py-3 text-center hover:bg-gray-100" onClick={() => requestSort('totalAttempted')}><div className="flex items-center justify-center gap-1">Attempted {getSortIcon('totalAttempted')}</div></th>
+                        <th className="px-6 py-3 text-center hover:bg-gray-100" onClick={() => requestSort('accuracy')}><div className="flex items-center justify-center gap-1">Accuracy {getSortIcon('accuracy')}</div></th>
+                        <th className="px-6 py-3 text-center hover:bg-gray-100 text-violet-600" onClick={() => requestSort('aiUsageCount')}><div className="flex items-center justify-center gap-1">AI Calls {getSortIcon('aiUsageCount')}</div></th>
+                        <th className="px-6 py-3 text-right hover:bg-gray-100 text-violet-700" onClick={() => requestSort('aiCostHKD')}><div className="flex items-center justify-end gap-1">AI (HKD) {getSortIcon('aiCostHKD')}</div></th>
+                        <th className="px-6 py-3 text-right hover:bg-gray-100 text-emerald-600" onClick={() => requestSort('dbCostHKD')}><div className="flex items-center justify-end gap-1">DB (HKD) {getSortIcon('dbCostHKD')}</div></th>
+                        <th className="px-6 py-3 text-right cursor-default">Action</th>
+                        <th className="px-6 py-3 text-right cursor-default">Details</th>
+                    </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-5">
+                    {sortedStats.map((user, index) => {
+                        const isExpanded = expandedUserId === user.id;
+                        return (
+                        <React.Fragment key={user.id}>
+                            <tr className={`transition-colors ${isExpanded ? 'bg-indigo-50/50' : 'hover:bg-slate-50'}`}>
+                            <td className="px-6 py-4"><div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${index === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'}`}>{index + 1}</div></td>
+                            <td className="px-6 py-4"><div className="font-bold text-gray-900 text-sm">{user.display_name || <span className="text-gray-400 italic">No Name</span>}</div><div className="text-xs text-gray-500">{user.email}</div></td>
+                            
+                            <td className="px-6 py-4 text-center">
+                                <div className="flex items-center justify-center gap-1 text-xs text-gray-600 font-medium bg-gray-50 px-2 py-1 rounded border border-gray-100">
+                                    <Clock className="w-3 h-3 text-gray-400" />
+                                    {formatTimeAgo(user.lastActive)}
+                                </div>
+                            </td>
+
+                            <td className="px-6 py-4 text-center"><span className="inline-block px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-semibold">{user.totalAttempted}</span></td>
+                            
+                            <td className="px-6 py-4 text-center cursor-pointer hover:bg-indigo-100/50 rounded-lg" onClick={() => handleToggleRow(user)}>
+                                <div className="flex items-center justify-center gap-2"><div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden"><div className={`h-full rounded-full ${getBarColor(user.accuracy)}`} style={{width: `${user.accuracy}%`}}></div></div><span className="text-sm font-bold text-gray-700">{user.accuracy}%</span></div>
+                            </td>
+
+                            <td className="px-6 py-4 text-center cursor-pointer hover:bg-violet-100/50 rounded-lg" onClick={() => handleOpenAiHistory(user)}>
+                                <span className="font-mono font-bold text-violet-600 border-b border-dashed border-violet-300">{user.aiUsageCount}</span>
+                            </td>
+                            
+                            <td className="px-6 py-4 text-right cursor-pointer hover:bg-violet-100/50 rounded-lg" onClick={() => handleOpenAiHistory(user)}>
+                                <span className="font-mono font-bold text-violet-700 border-b border-dashed border-violet-300">${user.aiCostHKD.toFixed(2)}</span>
+                            </td>
+
+                            <td className="px-6 py-4 text-right cursor-pointer hover:bg-emerald-100/50 rounded-lg" onClick={() => setDbModalUser(user)}>
+                                <div className="flex items-center justify-end gap-1 font-mono font-bold text-emerald-600 bg-emerald-50 py-1 px-2 rounded inline-block ml-auto border border-transparent hover:border-emerald-200"><DollarSign className="w-3 h-3" />{user.dbCostHKD.toFixed(1)}</div>
+                            </td>
+
+                            <td className="px-6 py-4 text-right">
+                                <button onClick={() => handleOpenManageModal(user)} className="text-indigo-600 hover:text-indigo-800 text-xs font-bold px-2 py-1 bg-indigo-50 rounded hover:bg-indigo-100">Manage</button>
+                            </td>
+
+                            <td className="px-6 py-4 text-right"><button onClick={() => handleToggleRow(user)} className="text-gray-400 hover:text-indigo-600 transition-colors">{isExpanded ? <ChevronUp className="w-5 h-5"/> : <ChevronDown className="w-5 h-5"/>}</button></td>
+                            </tr>
+
+                            {isExpanded && (
+                            <tr className="bg-indigo-50/30 animate-in fade-in duration-200">
+                                <td colSpan="10" className="px-6 py-6">
+                                <div className="bg-white rounded-lg border border-indigo-100 p-6 shadow-sm min-h-[100px]">
+                                    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100"><BarChart3 className="w-4 h-4 text-indigo-500" /><h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Detailed Breakdown (Graded Only)</h3></div>
+                                    {loadingDetails ? <div className="flex items-center justify-center h-20 text-gray-400"><Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading...</div> : !user.structuredStats || user.structuredStats.length === 0 ? <p className="text-gray-400 text-sm italic">No graded data.</p> : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {user.structuredStats.map((topic, i) => (
+                                        <div key={i} className="border border-gray-200 rounded-lg overflow-hidden bg-slate-50">
+                                            <div className="bg-white p-3 border-b border-gray-200 flex justify-between items-center"><div className="flex items-center gap-2"><Folder className="w-4 h-4 text-indigo-400" /><span className="font-bold text-gray-800 text-sm">{topic.name}</span></div><div className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${getScoreColor(topic.accuracy)}`}>{topic.accuracy}%</div></div>
+                                            <div className="w-full h-1 bg-gray-100"><div className={`h-full ${getBarColor(topic.accuracy)}`} style={{width: `${topic.accuracy}%`}}></div></div>
+                                            <div className="p-3 space-y-2">{topic.subtopics.map((sub, j) => (<div key={j} className="flex items-center justify-between text-xs"><div className="flex items-center gap-2 text-gray-600 truncate"><FileText className="w-3 h-3 text-gray-300" /><span title={sub.name} className="truncate max-w-[150px]">{sub.name}</span></div><div className="flex items-center gap-3"><span className="text-gray-400">{sub.total} q's</span><span className={`font-mono font-bold w-8 text-right ${sub.accuracy >= 70 ? 'text-green-600' : sub.accuracy >= 40 ? 'text-yellow-600' : 'text-red-500'}`}>{sub.accuracy}%</span></div></div>))}</div>
+                                        </div>
+                                        ))}
+                                    </div>
+                                    )}
+                                </div>
+                                </td>
+                            </tr>
+                            )}
+                        </React.Fragment>
+                        );
+                    })}
+                    </tbody>
+                </table>
+                </div>
             </div>
-          </div>
         )}
 
-        {/* SUMMARY CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 text-gray-500 mb-1"><Users className="w-4 h-4" /><span className="text-xs font-bold uppercase">Total Users</span></div><p className="text-3xl font-bold text-gray-800">{summary.totalUsers}</p></div>
-          <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 text-gray-500 mb-1"><Target className="w-4 h-4" /><span className="text-xs font-bold uppercase">Total Attempts</span></div><p className="text-3xl font-bold text-teal-600">{summary.totalAnswers}</p></div>
-          <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 text-gray-500 mb-1"><BrainCircuit className="w-4 h-4" /><span className="text-xs font-bold uppercase">AI Consultations</span></div><p className="text-3xl font-bold text-violet-600">{summary.totalAiCalls}</p></div>
-          <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 text-gray-500 mb-1"><Coins className="w-4 h-4" /><span className="text-xs font-bold uppercase">Total AI Spent (HKD)</span></div><p className="text-3xl font-bold text-emerald-600">${summary.totalAiSpentHKD.toFixed(2)}</p></div>
-        </div>
+        {/* ========================================================= */}
+        {/* CONTENT: REPORTS                                          */}
+        {/* ========================================================= */}
+        {activeTab === 'reports' && (
+             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-in fade-in duration-300">
+                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                    <h2 className="font-bold text-gray-800 flex items-center gap-2">
+                        <Flag className="w-5 h-5 text-red-500" />
+                        Community Reports ({reports.length})
+                    </h2>
+                    <button onClick={fetchReports} disabled={reportsLoading} className="p-2 text-gray-500 hover:bg-gray-200 rounded-full"><RefreshCw className={`w-4 h-4 ${reportsLoading ? 'animate-spin' : ''}`} /></button>
+                </div>
 
-        {/* MAIN USER TABLE */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-            <h2 className="font-bold text-gray-800">User Performance & Costs</h2>
-            <div className="flex items-center gap-2"><span className="text-xs text-gray-400">Sort by:</span><span className="text-xs font-bold text-indigo-600 uppercase bg-indigo-50 px-2 py-1 rounded">{sortConfig.key} {sortConfig.direction}</span></div>
-          </div>
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="text-xs font-bold text-gray-500 uppercase bg-gray-50/50 border-b border-gray-100 cursor-pointer select-none">
-                <th className="px-6 py-3 w-16 cursor-default">Rank</th>
-                <th className="px-6 py-3 hover:bg-gray-100" onClick={() => requestSort('display_name')}><div className="flex items-center gap-1">User {getSortIcon('display_name')}</div></th>
-                <th className="px-6 py-3 text-center hover:bg-gray-100" onClick={() => requestSort('lastActive')}><div className="flex items-center justify-center gap-1">Last Active {getSortIcon('lastActive')}</div></th>
-                <th className="px-6 py-3 text-center hover:bg-gray-100" onClick={() => requestSort('totalAttempted')}><div className="flex items-center justify-center gap-1">Attempted {getSortIcon('totalAttempted')}</div></th>
-                <th className="px-6 py-3 text-center hover:bg-gray-100" onClick={() => requestSort('accuracy')}><div className="flex items-center justify-center gap-1">Accuracy {getSortIcon('accuracy')}</div></th>
-                <th className="px-6 py-3 text-center hover:bg-gray-100 text-violet-600" onClick={() => requestSort('aiUsageCount')}><div className="flex items-center justify-center gap-1">AI Calls {getSortIcon('aiUsageCount')}</div></th>
-                <th className="px-6 py-3 text-right hover:bg-gray-100 text-violet-700" onClick={() => requestSort('aiCostHKD')}><div className="flex items-center justify-end gap-1">AI (HKD) {getSortIcon('aiCostHKD')}</div></th>
-                <th className="px-6 py-3 text-right hover:bg-gray-100 text-emerald-600" onClick={() => requestSort('dbCostHKD')}><div className="flex items-center justify-end gap-1">DB (HKD) {getSortIcon('dbCostHKD')}</div></th>
-                <th className="px-6 py-3 text-right cursor-default">Action</th>
-                <th className="px-6 py-3 text-right cursor-default">Details</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-5">
-              {sortedStats.map((user, index) => {
-                const isExpanded = expandedUserId === user.id;
-                return (
-                  <React.Fragment key={user.id}>
-                    <tr className={`transition-colors ${isExpanded ? 'bg-indigo-50/50' : 'hover:bg-slate-50'}`}>
-                      <td className="px-6 py-4"><div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${index === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'}`}>{index + 1}</div></td>
-                      <td className="px-6 py-4"><div className="font-bold text-gray-900 text-sm">{user.display_name || <span className="text-gray-400 italic">No Name</span>}</div><div className="text-xs text-gray-500">{user.email}</div></td>
-                      
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex items-center justify-center gap-1 text-xs text-gray-600 font-medium bg-gray-50 px-2 py-1 rounded border border-gray-100">
-                            <Clock className="w-3 h-3 text-gray-400" />
-                            {formatTimeAgo(user.lastActive)}
-                        </div>
-                      </td>
+                {reportsLoading ? (
+                    <div className="flex justify-center items-center p-12"><Loader2 className="w-8 h-8 text-gray-300 animate-spin" /></div>
+                ) : reports.length === 0 ? (
+                    <div className="p-12 text-center text-gray-400 italic">No reports found.</div>
+                ) : (
+                    <table className="w-full text-left border-collapse">
+                        <thead className="text-xs font-bold text-gray-500 uppercase bg-gray-50/50 border-b border-gray-100">
+                            <tr>
+                                <th className="px-6 py-3 w-32">Status</th>
+                                <th className="px-6 py-3 w-32">Question ID</th>
+                                <th className="px-6 py-3">Reason / Details</th>
+                                <th className="px-6 py-3">Reported By</th>
+                                <th className="px-6 py-3 text-right">Date</th>
+                                <th className="px-6 py-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {reports.map((report) => {
+                                let statusStyle = "bg-gray-100 text-gray-600 border-gray-200";
+                                if (report.status === 'new') statusStyle = "bg-red-50 text-red-700 border-red-200";
+                                if (report.status === 'resolved') statusStyle = "bg-green-50 text-green-700 border-green-200";
+                                if (report.status === 'unresolvable') statusStyle = "bg-slate-100 text-slate-500 border-slate-200 decoration-slate-400 line-through";
 
-                      <td className="px-6 py-4 text-center"><span className="inline-block px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-semibold">{user.totalAttempted}</span></td>
-                      
-                      <td className="px-6 py-4 text-center cursor-pointer hover:bg-indigo-100/50 rounded-lg" onClick={() => handleToggleRow(user)}>
-                        <div className="flex items-center justify-center gap-2"><div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden"><div className={`h-full rounded-full ${getBarColor(user.accuracy)}`} style={{width: `${user.accuracy}%`}}></div></div><span className="text-sm font-bold text-gray-700">{user.accuracy}%</span></div>
-                      </td>
+                                return (
+                                    <tr key={report.id} className="hover:bg-slate-50">
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase border ${statusStyle}`}>
+                                                {report.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 font-mono text-sm font-bold text-indigo-700">
+                                            {report.question_id}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-700 max-w-md">
+                                            {report.reason}
+                                        </td>
+                                        <td className="px-6 py-4 text-xs text-gray-500">
+                                            <div>{report.profiles?.display_name || 'Unknown'}</div>
+                                            <div className="opacity-75">{report.profiles?.email}</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right text-xs text-gray-400 font-mono">
+                                            {new Date(report.created_at).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex justify-end gap-2">
+                                                {report.status !== 'resolved' && (
+                                                    <button 
+                                                        onClick={() => handleUpdateReportStatus(report.id, 'resolved')}
+                                                        className="p-1.5 bg-green-50 text-green-600 hover:bg-green-100 rounded border border-green-200"
+                                                        title="Mark Resolved"
+                                                    >
+                                                        <Check className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                                {report.status === 'new' && (
+                                                    <button 
+                                                        onClick={() => handleUpdateReportStatus(report.id, 'unresolvable')}
+                                                        className="p-1.5 bg-gray-50 text-gray-500 hover:bg-gray-100 rounded border border-gray-200"
+                                                        title="Mark Unresolvable"
+                                                    >
+                                                        <Ban className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                                {report.status !== 'new' && (
+                                                    <button 
+                                                        onClick={() => handleUpdateReportStatus(report.id, 'new')}
+                                                        className="p-1.5 bg-red-50 text-red-500 hover:bg-red-100 rounded border border-red-200"
+                                                        title="Reopen"
+                                                    >
+                                                        <RefreshCw className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
+                        </tbody>
+                    </table>
+                )}
+             </div>
+        )}
 
-                      <td className="px-6 py-4 text-center cursor-pointer hover:bg-violet-100/50 rounded-lg" onClick={() => handleOpenAiHistory(user)}>
-                        <span className="font-mono font-bold text-violet-600 border-b border-dashed border-violet-300">{user.aiUsageCount}</span>
-                      </td>
-                      
-                      <td className="px-6 py-4 text-right cursor-pointer hover:bg-violet-100/50 rounded-lg" onClick={() => handleOpenAiHistory(user)}>
-                        <span className="font-mono font-bold text-violet-700 border-b border-dashed border-violet-300">${user.aiCostHKD.toFixed(2)}</span>
-                      </td>
-
-                      <td className="px-6 py-4 text-right cursor-pointer hover:bg-emerald-100/50 rounded-lg" onClick={() => setDbModalUser(user)}>
-                         <div className="flex items-center justify-end gap-1 font-mono font-bold text-emerald-600 bg-emerald-50 py-1 px-2 rounded inline-block ml-auto border border-transparent hover:border-emerald-200"><DollarSign className="w-3 h-3" />{user.dbCostHKD.toFixed(1)}</div>
-                      </td>
-
-                      <td className="px-6 py-4 text-right">
-                          <button onClick={() => handleOpenManageModal(user)} className="text-indigo-600 hover:text-indigo-800 text-xs font-bold px-2 py-1 bg-indigo-50 rounded hover:bg-indigo-100">Manage</button>
-                      </td>
-
-                      <td className="px-6 py-4 text-right"><button onClick={() => handleToggleRow(user)} className="text-gray-400 hover:text-indigo-600 transition-colors">{isExpanded ? <ChevronUp className="w-5 h-5"/> : <ChevronDown className="w-5 h-5"/>}</button></td>
-                    </tr>
-
-                    {isExpanded && (
-                      <tr className="bg-indigo-50/30 animate-in fade-in duration-200">
-                        <td colSpan="10" className="px-6 py-6">
-                          <div className="bg-white rounded-lg border border-indigo-100 p-6 shadow-sm min-h-[100px]">
-                            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100"><BarChart3 className="w-4 h-4 text-indigo-500" /><h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Detailed Breakdown (Graded Only)</h3></div>
-                            {loadingDetails ? <div className="flex items-center justify-center h-20 text-gray-400"><Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading...</div> : !user.structuredStats || user.structuredStats.length === 0 ? <p className="text-gray-400 text-sm italic">No graded data.</p> : (
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {user.structuredStats.map((topic, i) => (
-                                  <div key={i} className="border border-gray-200 rounded-lg overflow-hidden bg-slate-50">
-                                    <div className="bg-white p-3 border-b border-gray-200 flex justify-between items-center"><div className="flex items-center gap-2"><Folder className="w-4 h-4 text-indigo-400" /><span className="font-bold text-gray-800 text-sm">{topic.name}</span></div><div className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${getScoreColor(topic.accuracy)}`}>{topic.accuracy}%</div></div>
-                                    <div className="w-full h-1 bg-gray-100"><div className={`h-full ${getBarColor(topic.accuracy)}`} style={{width: `${topic.accuracy}%`}}></div></div>
-                                    <div className="p-3 space-y-2">{topic.subtopics.map((sub, j) => (<div key={j} className="flex items-center justify-between text-xs"><div className="flex items-center gap-2 text-gray-600 truncate"><FileText className="w-3 h-3 text-gray-300" /><span title={sub.name} className="truncate max-w-[150px]">{sub.name}</span></div><div className="flex items-center gap-3"><span className="text-gray-400">{sub.total} q's</span><span className={`font-mono font-bold w-8 text-right ${sub.accuracy >= 70 ? 'text-green-600' : sub.accuracy >= 40 ? 'text-yellow-600' : 'text-red-500'}`}>{sub.accuracy}%</span></div></div>))}</div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
   );
