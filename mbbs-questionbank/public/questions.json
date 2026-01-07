@@ -38581,7 +38581,7 @@
         "subtopic": "11 Fertility and Contraception",
         "type": "MCQ",
         "question": "From the list of options (A-J), select the most appropriate contraceptive method for the following case: A 39-year-old lady with good past health. P/E all normal. She said she would not want methods that cause menstrual disturbances.",
-        "Options": [
+        "options": [
             "Combined oral contraceptive pills",
             "Copper IUCD",
             "Depo-provera and condom",
@@ -89229,7 +89229,7 @@
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "SAQ",
-        "question": "What is the finding on EEG?",
+        "question": "A 40-year old man was found unconscious at home. He was admitted into ICU. After 2 days of treatment, he regained consciousness, but was not orientated to time, place. He also said he saw small animals running in ward. What is the finding on EEG?",
         "official_answer": "Diffuse slow waves / diffuse slowing of the background rhythm.",
         "ai_answer": {
             "agreement": "Agree",
@@ -89243,7 +89243,7 @@
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "SAQ",
-        "question": "Four days later, he became orientated... could not recall recent memory. He had normal forward digit span, and could immediately recall 5 items but could not recall after 5 minutes. What is loss of memory medically called?",
+        "question": "A 40-year old man was found unconscious at home. He was admitted into ICU. After 2 days of treatment, he regained consciousness, but was not orientated to time, place. He also said he saw small animals running in ward. Four days later, he became orientated... could not recall recent memory. He had normal forward digit span, and could immediately recall 5 items but could not recall after 5 minutes. What is loss of memory medically called?",
         "official_answer": "Amnesia",
         "ai_answer": {
             "agreement": "Agree",
@@ -89257,7 +89257,7 @@
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "SAQ",
-        "question": "Name the type of the above memory loss (inability to recall after 5 minutes).",
+        "question": "A 40-year old man was found unconscious at home. He was admitted into ICU. After 2 days of treatment, he regained consciousness, but was not orientated to time, place. He also said he saw small animals running in ward. Name the type of the above memory loss (inability to recall after 5 minutes).",
         "official_answer": "Anterograde amnesia",
         "ai_answer": {
             "agreement": "Agree",
@@ -89271,7 +89271,7 @@
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "SAQ",
-        "question": "He could not remember birthday party 2 weeks ago, but could remember vacation 10 years ago. Name the type of the above memory loss.",
+        "question": "A 40-year old man was found unconscious at home. He was admitted into ICU. After 2 days of treatment, he regained consciousness, but was not orientated to time, place. He also said he saw small animals running in ward. He could not remember birthday party 2 weeks ago, but could remember vacation 10 years ago. Name the type of the above memory loss.",
         "official_answer": "Retrograde (episodic) amnesia",
         "ai_answer": {
             "agreement": "Agree",
@@ -89285,7 +89285,7 @@
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "SAQ",
-        "question": "What is selective loss of recent memory called?",
+        "question": "A 40-year old man was found unconscious at home. He was admitted into ICU. After 2 days of treatment, he regained consciousness, but was not orientated to time, place. He also said he saw small animals running in ward. What is selective loss of recent memory called?",
         "official_answer": "Temporally graded retrograde amnesia",
         "ai_answer": {
             "agreement": "Agree",
@@ -89299,7 +89299,7 @@
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "SAQ",
-        "question": "What is the significance of this feature (temporally graded retrograde amnesia)?",
+        "question": "A 40-year old man was found unconscious at home. He was admitted into ICU. After 2 days of treatment, he regained consciousness, but was not orientated to time, place. He also said he saw small animals running in ward. What is the significance of this feature (temporally graded retrograde amnesia)?",
         "official_answer": "Ribot's law - likely organic pathology.",
         "ai_answer": {
             "agreement": "Agree",
@@ -204960,7 +204960,7 @@
         "topic": "Pediatrics",
         "subtopic": "10 Hematology & immunology",
         "type": "SAQ",
-        "question": "A patient presents with the following CXR and blood test results: CXR shows diffuse opacity of Rt hemithorax. Bloods show High WCC, Low Hb, Low Platelet, Slightly prolonged PT/aPTT, Normal D-dimer, Normal/low Fibrinogen, High Urea, High Creatinine.\n1. CXR features? (1 mark)\n2. What is the diagnosis? What is the complication? (2 marks)\n3. What is the most common etiology for the diagnosis? (1 mark)\n4. Give the empiric drug treatment. (1 mark)",
+        "question": "A patient presents with the following CXR and blood test results: CXR shows diffuse opacity of Rt hemithorax. Bloods show High WCC, Low Hb, Low Platelet, Slightly prolonged PT/aPTT, Normal D-dimer, Normal/low Fibrinogen, High Urea, High Creatinine.<img src='https://i.imgur.com/Q5EkhZA.png'/>\n1. CXR features? (1 mark)\n2. What is the diagnosis? What is the complication? (2 marks)\n3. What is the most common etiology for the diagnosis? (1 mark)\n4. Give the empiric drug treatment. (1 mark)",
         "official_answer": "1. CXR features: Diffuse opacity of Rt hemithorax / Complete white out of Rt lung field – Rt lung consolidation.\n2. Diagnosis & Complication: Pneumonia (leukocytosis + CXR consolidation), Hemolytic uraemic syndrome (Hb and platelet low). PT and aPTT prolonged could also be DIC, but D dimer and fibrinogen normal.\n3. Etiology: Streptococcus pneumoniae.\n4. Empiric drug treatment: Amoxicillin / Tazocin / Vancomycin + extended-spectrum cephalosporin.",
         "ai_answer": {
             "agreement": "Agree",
