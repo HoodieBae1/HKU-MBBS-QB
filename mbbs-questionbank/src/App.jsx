@@ -1254,7 +1254,7 @@ const App = () => {
 				<PaymentUploadModal
 					user={session?.user}
 					planName="Premium Subscription"
-					price={599}
+					price={899}
 					onClose={() => setShowPaymentModal(false)}
 				/>
 			)}

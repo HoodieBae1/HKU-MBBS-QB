@@ -133,8 +133,7 @@ const LimitModal = ({ isOpen, onClose, onUpgrade, type, requiredAmount, currentB
                     <div>
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Subscription (Valid till Feb 14)</p>
                         <div className="flex items-center gap-2 mt-1">
-                            <span className="text-3xl font-bold text-slate-800">$599</span>
-                            <span className="text-sm font-bold text-slate-400 line-through decoration-slate-400">$899</span>
+                            <span className="text-3xl font-bold text-slate-800">$899</span>
                             <span className="text-sm font-bold text-slate-600">HKD</span>
                         </div>
                     </div>
