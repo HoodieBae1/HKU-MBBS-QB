@@ -24,6 +24,7 @@ import {
 	ZapOff,
 	Lock,
 	ArrowRight,
+	ClipboardList
 } from "lucide-react";
 import { Virtuoso } from "react-virtuoso";
 import { supabase } from "./supabase";
@@ -48,6 +49,7 @@ import LegacyUserModal from './LegacyUserModal';
 import PaymentUploadModal from "./PaymentUploadModal";
 import DataExportModal from './DataExportModal';
 import ReportModal from "./ReportModal";
+import ReportListModal from "./ReportListModal";
 
 const AI_COST_MAP = {
 	"gemini-2.5-flash-lite": 0.005,
@@ -166,6 +168,9 @@ const App = () => {
 
 	const lastUserId = useRef(null);
 
+	const [showReportListModal, setShowReportListModal] = useState(false); // <--- NEW STATE
+    const virtuosoRef = useRef(null);
+
 	// --- NEW: Ref to track previous status for auto-upgrade detection ---
 	const prevStatusRef = useRef(null); 
 
@@ -245,6 +250,55 @@ const App = () => {
 	// END: POLLING LOGIC
 	// ------------------------------------------------------------
 
+	const handleJumpToQuestion = (uniqueId) => {
+		// 1. Reset all filters to ensure the question is visible
+		setSearchInput("");
+		setSelectedTopic("All");
+		setSelectedSubtopic("All");
+		setSelectedType("All");
+		// Optional: Reset sort to ensure predictable indexing, or keep current sort.
+		// For consistency, let's reset to Newest so logic matches 'questions' array closely if needed
+		setSortOrder("Newest"); 
+
+		// 2. Close the list modal
+		setShowReportListModal(false);
+
+		// 3. Find index and scroll (using setTimeout to allow React to re-render the list with "All" filters)
+		setTimeout(() => {
+			// We need to find the index within the *current filtered list*. 
+			// Since we reset filters to "All", this effectively searches the main list.
+			// Note: If you have complex sorting logic, this lookup must match the current 'filteredQuestions' logic.
+			// Since we reset sortOrder to "Newest" above, we should assume the list re-orders to Newest.
+			
+			// However, 'filteredQuestions' is derived. We can't access the *next* render's filteredQuestions here easily.
+			// A simple approach: The 'filteredQuestions' will update. 
+			// We search the 'questions' array based on the Default Sort (Newest).
+			
+			// Let's create a temporary sorted list matching "Newest" logic to find the index:
+			const sortedForIndex = [...questions].sort((a, b) => {
+					// Match "Newest" sort logic from your useMemo
+					const getYearFromId = (idStr) => {
+					if (!idStr || !idStr.startsWith("M")) return 0;
+					const yy = parseInt(idStr.substring(1, 3), 10);
+					if (isNaN(yy)) return 0;
+					return yy < 50 ? 2000 + yy : 1900 + yy;
+				};
+				const yearA = getYearFromId(a.id);
+				const yearB = getYearFromId(b.id);
+				if (yearA !== yearB) return yearB - yearA;
+				return b.id.localeCompare(a.id, undefined, { numeric: true });
+			});
+
+			const index = sortedForIndex.findIndex(q => String(q.unique_id) === String(uniqueId));
+
+			if (index !== -1 && virtuosoRef.current) {
+				virtuosoRef.current.scrollToIndex({ index, align: 'start', behavior: 'auto' });
+			} else {
+				alert("Could not find question in the current list.");
+			}
+		}, 150); // Slight delay to ensure state updates and re-render
+	};
+	
 	useEffect(() => {
 		// 1. Initial Session Check
 		supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1346,7 +1400,14 @@ const App = () => {
 				isSubmitting={isReportSubmitting}
 				questionId={pendingReportQuestion?.unique_id}
 				isAlreadyReported={pendingReportQuestion && reportedQuestionIds.has(String(pendingReportQuestion.unique_id))}
+				sourceFile={pendingReportQuestion?._source_file}
 			/>
+
+			<ReportListModal 
+                isOpen={showReportListModal}
+                onClose={() => setShowReportListModal(false)}
+                onJumpToQuestion={handleJumpToQuestion}
+            />
 
 			<CompletionModal
 				isOpen={modalOpen}
@@ -1469,6 +1530,13 @@ const App = () => {
 										</button>
 									)}
 									<DailyStatsDisplay userProgress={userProgress} />
+									<button
+                                        onClick={() => setShowReportListModal(true)}
+                                        className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1 relative"
+                                        title="Reported Questions"
+                                    >
+                                    <ClipboardList className="w-5 h-5" />
+                                    </button>
 									<button
 										onClick={() => setShowNotesPanel(true)}
 										className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1"
@@ -1724,6 +1792,7 @@ const App = () => {
 					</div>
 				) : (
 					<Virtuoso
+						ref={virtuosoRef}
 						useWindowScroll
 						data={filteredQuestions}
 						// --- UPDATED: PASS isGuest to context ---
