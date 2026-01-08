@@ -226,10 +226,9 @@ const ReportModal = ({ isOpen, onClose, onSubmit, isSubmitting, questionId, sour
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder={`Please use the source file to verify errors. Keep in mind I lack medical knowledge: 
-• Be Specific: 'Question is wrong' gives me no actionable path. Tell me exactly what text to change.
-• Images: Tell me exactly which image to insert if there are multiple. 
-• Context: If a 'statement' is actually a question, please explicitly tell me to reformat it.`}
+            placeholder={`Please use the source file to verify errors. I lack medical knowledge: 
+• Be Specific: 'Question is wrong' gives me no actionable path. Tell me what text to change.
+• Images: Tell me which image to insert if there are multiple.`}
             className="w-full h-32 p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none resize-none bg-slate-50"
           />
           <p className={`text-right text-xs mt-2 transition-colors ${selectedTag ? 'text-green-600 font-medium' : 'text-red-400'}`}>
