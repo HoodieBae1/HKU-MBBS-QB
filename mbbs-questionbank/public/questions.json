@@ -10,7 +10,7 @@
             "agreement": "Agree",
             "explanation": "Investigations for diastolic heart failure focus on confirming the diagnosis with echocardiography (preserved ejection fraction), identifying underlying etiologies like hypertension, and assessing for complications."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 0
     },
     {
@@ -24,7 +24,7 @@
             "agreement": "Agree",
             "explanation": "The management of atrial fibrillation involves a three-pronged approach: rate control, consideration of rhythm control, and stroke prevention with antithrombotic therapy based on risk stratification."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 1
     },
     {
@@ -38,7 +38,7 @@
             "agreement": "Agree",
             "explanation": "The optimal antihypertensive regimen is tailored to the patient's comorbidities, making an ACE inhibitor and an alpha-blocker (for BPH) a logical choice while avoiding agents that could worsen his bradycardia or metabolic profile."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 2
     },
     {
@@ -52,7 +52,7 @@
             "agreement": "Agree",
             "explanation": "The constellation of fever, constitutional symptoms, and a new or changing heart murmur is highly suggestive of infective endocarditis, diagnosed via blood cultures and echocardiography."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 3
     },
     {
@@ -66,7 +66,7 @@
             "agreement": "Agree",
             "explanation": "Secondary prevention post-MI involves aggressive risk factor modification, including lifestyle changes and optimal medical therapy with a statin and beta-blocker in addition to his current medications."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 4
     },
     {
@@ -80,7 +80,7 @@
             "agreement": "Agree",
             "explanation": "Pharmacological management of unstable angina aims to relieve ischemia acutely with anti-anginals and prevent future events with anti-platelet agents and statins."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 5
     },
     {
@@ -94,7 +94,7 @@
             "agreement": "Agree",
             "explanation": "Initial management of acute pulmonary edema involves improving oxygenation, reducing preload with diuretics and nitrates, and reducing afterload, while continuously monitoring the patient's vital signs."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 6
     },
     {
@@ -108,7 +108,7 @@
             "agreement": "Agree",
             "explanation": "The priority in hypertensive acute pulmonary edema is to rapidly reduce both preload and afterload using intravenous nitrates and diuretics while ensuring adequate oxygenation."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 7
     },
     {
@@ -122,7 +122,7 @@
             "agreement": "Agree",
             "explanation": "Management of hypertensive urgency involves careful clinical assessment for end-organ damage, gradual blood pressure reduction with oral agents, and investigation for secondary causes."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 8
     },
     {
@@ -136,7 +136,7 @@
             "agreement": "Agree",
             "explanation": "In a patient with a known heart murmur and prolonged low-grade fever, infective endocarditis must be the primary differential, requiring urgent investigation with blood cultures and echocardiography."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 9
     },
     {
@@ -150,7 +150,7 @@
             "agreement": "Agree",
             "explanation": "The clinical picture of severe bradycardia, hypotension, and cannon A waves is classic for complete heart block, requiring immediate stabilization and usually permanent pacemaker implantation."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 10
     },
     {
@@ -164,7 +164,7 @@
             "agreement": "Agree",
             "explanation": "This presentation is a classic emergency of Type A aortic dissection, requiring immediate heart rate and blood pressure control followed by urgent surgical intervention to prevent fatal complications."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 11
     },
     {
@@ -178,7 +178,7 @@
             "agreement": "Agree",
             "explanation": "Infective endocarditis prophylaxis is reserved for the highest-risk cardiac patients undergoing specific procedures, with maintenance of good oral and skin hygiene being a crucial baseline preventative measure for all."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 12
     },
     {
@@ -192,7 +192,7 @@
             "agreement": "Agree",
             "explanation": "Management for this high-risk patient with symptomatic atrial fibrillation focuses on ventricular rate control and, most importantly, stroke prevention with oral anticoagulation due to his high CHADS2-VASc score."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 13
     },
     {
@@ -206,7 +206,7 @@
             "agreement": "Agree",
             "explanation": "The classic triad of syncope, signs of heart failure, and an ejection systolic murmur indicates severe aortic stenosis, which requires surgical valve replacement once symptomatic."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 14
     },
     {
@@ -220,7 +220,7 @@
             "agreement": "Agree",
             "explanation": "This patient is in cardiogenic shock secondary to a large myocardial infarction, requiring immediate hemodynamic support with inotropes or vasopressors, and urgent revascularization via primary PCI."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 15
     },
     {
@@ -234,7 +234,7 @@
             "agreement": "Agree",
             "explanation": "Management involves acute stabilization with diuretics to relieve congestion, followed by titration of guideline-directed medical therapy before discharge to improve long-term prognosis."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 16
     },
     {
@@ -248,7 +248,7 @@
             "agreement": "Agree",
             "explanation": "The diagnosis of heart failure with reduced ejection fraction is confirmed by echocardiogram, and survival is improved by guideline-directed medical therapy including ACE inhibitors/ARBs, beta-blockers, and mineralocorticoid receptor antagonists."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 17
     },
     {
@@ -262,7 +262,7 @@
             "agreement": "Agree",
             "explanation": "This patient with features of Marfan syndrome has a Type A aortic dissection complicated by aortic regurgitation and cardiac tamponade, requiring immediate medical stabilization and emergent cardiothoracic surgery."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 18
     },
     {
@@ -276,7 +276,7 @@
             "agreement": "Agree",
             "explanation": "The workup for new-onset atrial fibrillation involves identifying underlying causes like hypertension or thyroid disease, while management principles focus on rate control, rhythm control consideration, and stroke prevention with anticoagulation."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 19
     },
     {
@@ -290,7 +290,7 @@
             "agreement": "Agree",
             "explanation": "The patient's complete heart block is caused by an acute inferior myocardial infarction, requiring immediate temporary pacing for hemodynamic support and urgent coronary angiography for revascularization."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 20
     },
     {
@@ -312,7 +312,7 @@
             "agreement": "Agree",
             "explanation": "The presence of ST-segment elevation in contiguous precordial leads (V2-V5) is diagnostic of an acute anterior myocardial infarction, even with initially normal cardiac enzymes."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 21
     },
     {
@@ -334,7 +334,7 @@
             "agreement": "Agree",
             "explanation": "The combination of intravenous drug abuse, fever, and a pansystolic murmur that increases with inspiration (Carvallo's sign) is highly suggestive of tricuspid valve endocarditis."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 22
     },
     {
@@ -356,7 +356,7 @@
             "agreement": "Agree",
             "explanation": "The use of weight reduction pills is a known risk factor for primary pulmonary hypertension, which presents with signs of right heart failure such as a raised JVP with a prominent V wave and a loud P2."
         },
-        "_source_file": "Processed\\superpass_matthew_cheung\\1 Medicine Final MB_P1.pdf",
+        "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P1.pdf",
         "unique_id": 23
     },
     {
@@ -23625,7 +23625,7 @@
         "topic": "Pediatrics",
         "subtopic": "8 Endocrinology",
         "type": "MCQ",
-        "question": "A 16-year-old female presents with primary amenorrhoea. Breast development started at 10 years old and is now Tanner stage IV. She has no pubic hair and no external genitalia abnormality. There is no dysmorphism, and weight and height are normal for age. Two of six maternal aunts also have primary amenorrhoea. What is the most likely diagnosis?",
+        "question": "A 16-year-old female presents with primary amenorrhoea. Breast development started at 10 years old and is now Tanner stage IV, she has no pubic hair. Otherwise, there is no external genitalia abnormality or dysmorphism. Her weight and height are normal for age. Two of six maternal aunts also have primary amenorrhoea. What is the most likely diagnosis?",
         "options": [
             "Testicular feminization",
             "Turner syndrome",
@@ -25332,7 +25332,7 @@
         "topic": "Pediatrics",
         "subtopic": "10 Hematology & immunology",
         "type": "MCQ",
-        "question": "8/M recurrent sneezing in the morning. No nasal obstruction. P/E showed mildly swollen inferior nasal tubinates.",
+        "question": "8/M recurrent sneezing in the morning. No nasal obstruction. P/E showed mildly swollen inferior nasal tubinates. First line treatment to offer?",
         "options": [
             "First generation antihistamine",
             "Second generation antihistamine",
@@ -63890,7 +63890,7 @@
         "topic": "Pediatrics",
         "subtopic": "13 Musculoskeletal",
         "type": "MCQ",
-        "question": "The mother brought her 2-year-and-3 month-old son to you because the boy could not walk as well as other children of the same age. She also told you that there was difficulty in putting on the napkins all along.",
+        "question": "The mother brought her 2-year-and-3 month-old son to you because the boy could not walk as well as other children of the same age. She also told you that there was difficulty in putting on the nappies all along.",
         "options": [
             "Osteoid osteoma",
             "Slipped upper femoral epiphysis",
@@ -103051,6 +103051,7 @@
             "agreement": "Agree",
             "explanation": "In proteinuric CKD, maximizing RAS blockade (increasing Losartan) is the priority for renoprotection; mild hyperkalemia (5.1) is manageable and not a contraindication."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4939
     },
     {
@@ -103072,6 +103073,7 @@
             "agreement": "Agree",
             "explanation": "Metformin is contraindicated in severe renal impairment (Creatinine 190, likely eGFR <30) due to the high risk of Metformin-Associated Lactic Acidosis (MALA)."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4940
     },
     {
@@ -103093,6 +103095,7 @@
             "agreement": "Agree",
             "explanation": "Initial management of primary membranous nephropathy involves conservative therapy (ACE inhibitors for proteinuria/BP and statins) unless there are high-risk features warranting immediate immunosuppression."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4941
     },
     {
@@ -103114,6 +103117,7 @@
             "agreement": "Agree",
             "explanation": "With severe hyperkalemia (K 8.0), the immediate priority is to stabilize the cardiac membrane using IV calcium gluconate to prevent fatal arrhythmias."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4942
     },
     {
@@ -103135,6 +103139,7 @@
             "agreement": "Agree",
             "explanation": "The constellation of systemic symptoms (night sweats, weight loss), arthralgia, acute kidney injury, and active urine sediment (blood/protein) is classic for small vessel vasculitis."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4943
     },
     {
@@ -103156,6 +103161,7 @@
             "agreement": "Agree",
             "explanation": "Screening for CKD requires both an assessment of kidney function (serum creatinine/eGFR) and markers of kidney damage (urinalysis for albuminuria/hematuria)."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4944
     },
     {
@@ -103177,6 +103183,7 @@
             "agreement": "Agree",
             "explanation": "The triad of prolonged immobilization (coma), markedly elevated Creatine Kinase (13,500), and heme-positive urine without RBCs (myoglobinuria) confirms rhabdomyolysis."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4945
     },
     {
@@ -103198,6 +103205,7 @@
             "agreement": "Agree",
             "explanation": "In patients with unexplained or significant renal impairment (Cr 200), renal ultrasound is a standard initial investigation to rule out structural causes or obstruction."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4946
     },
     {
@@ -103219,6 +103227,7 @@
             "agreement": "Disagree",
             "explanation": "The clinical presentation is nephrotic syndrome (proteinuria, hypoalbuminemia, edema) in an adult male, where Primary Membranous Nephropathy is a leading cause; Anti-PLA2R (Option C) is the specific diagnostic marker, whereas ANCA (Option B) is associated with nephritic vasculitis."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4947
     },
     {
@@ -103240,6 +103249,7 @@
             "agreement": "Agree",
             "explanation": "Metformin accumulation in severe renal failure (Cr 388) can cause lactic acidosis, explaining the general malaise and Kussmaul breathing (laboured without crackles)."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4948
     },
     {
@@ -103260,6 +103270,7 @@
             "agreement": "Agree",
             "explanation": "Renal ultrasound is the standard, non-invasive initial screening modality for Autosomal Dominant Polycystic Kidney Disease (ADPKD) in at-risk relatives."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4949
     },
     {
@@ -103281,6 +103292,7 @@
             "agreement": "Agree",
             "explanation": "Bumpy contours of the renal pelvis suggest papillary necrosis; established causes include Diabetes, Analgesic (NSAID) abuse, Sickle cell, and Alcohol, whereas Hypertension causes cortical scarring."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4950
     },
     {
@@ -103302,6 +103314,7 @@
             "agreement": "Agree",
             "explanation": "The profile of hyponatremia with inappropriately high urine osmolality (600) in the context of SSRI use suggests SIADH; fluid restriction is the first-line treatment for mild-moderate cases."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4951
     },
     {
@@ -103323,6 +103336,7 @@
             "agreement": "Agree",
             "explanation": "The patient has nephrotic syndrome; Anti-PLA2R antibodies are specific for Primary Membranous Nephropathy, a common cause in this demographic."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4952
     },
     {
@@ -103344,6 +103358,7 @@
             "agreement": "Agree",
             "explanation": "Severe ADAMTS13 deficiency (<10%) is pathognomonic for Thrombotic Thrombocytopenic Purpura (TTP)."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4953
     },
     {
@@ -103364,6 +103379,7 @@
             "agreement": "Agree",
             "explanation": "Pneumocystis jirovecii pneumonia (PCP) is a classic opportunistic infection in heavily immunosuppressed patients presenting with dyspnea and ground-glass opacities."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4954
     },
     {
@@ -103381,6 +103397,7 @@
             "agreement": "Agree",
             "explanation": "The combination of hyponatremia, hypo-osmolality, concentrated urine, and high urine sodium in a patient on an SSRI (Citalopram) is diagnostic of SIADH."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4955
     },
     {
@@ -103402,6 +103419,7 @@
             "agreement": "Agree",
             "explanation": "The patient has symptomatic anemia of CKD (Hb 9) with adequate iron stores (TSAT >20%), making Erythropoiesis-Stimulating Agents (EPO) the appropriate treatment."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4956
     },
     {
@@ -103423,6 +103441,7 @@
             "agreement": "Agree",
             "explanation": "Macroscopic hematuria occurring synpharyngitically (within 24-48 hours of an upper respiratory infection) is the hallmark presentation of IgA nephropathy."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4957
     },
     {
@@ -103444,6 +103463,7 @@
             "agreement": "Agree",
             "explanation": "Simple lower urinary tract infections (cystitis) do not cause chronic renal failure unless they ascend to cause pyelonephritis or are associated with structural abnormalities."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4958
     },
     {
@@ -103465,6 +103485,7 @@
             "agreement": "Disagree",
             "explanation": "The clinical picture of a young female with malaise and cytopenias (anemia, borderline leukopenia/thrombocytopenia) suggests Systemic Lupus Erythematosus (SLE), making Anti-dsDNA (Option A) the most relevant test; Bicarbonate (Option B) is less specific."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4959
     },
     {
@@ -103486,6 +103507,7 @@
             "agreement": "Agree",
             "explanation": "In the presence of persistent glomerular hematuria and significant proteinuria (0.8g/day), a kidney biopsy is indicated to diagnose the underlying glomerulonephritis (likely IgA)."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4960
     },
     {
@@ -103507,6 +103529,7 @@
             "agreement": "Agree",
             "explanation": "Long-term dialysis is a risk factor for Acquired Cystic Kidney Disease, which carries a significantly increased risk of developing Renal Cell Carcinoma."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4961
     },
     {
@@ -103527,6 +103550,7 @@
             "agreement": "Agree",
             "explanation": "Mycophenolate Mofetil (MMF) is a common maintenance therapy for Lupus Nephritis and is well-known for causing gastrointestinal side effects, particularly diarrhea."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4962
     },
     {
@@ -103547,6 +103571,7 @@
             "agreement": "Agree",
             "explanation": "Reduced ejection fraction leads to renal hypoperfusion and venous congestion (cardiorenal syndrome), which is a key driver for AKI progression in heart failure."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4963
     },
     {
@@ -103567,6 +103592,7 @@
             "agreement": "Agree",
             "explanation": "While IgA is common, among the options provided, Anti-dsDNA tests for Lupus Nephritis, which presents with a nephritic picture (RBC casts, HTN)."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4964
     },
     {
@@ -103587,6 +103613,7 @@
             "agreement": "Agree",
             "explanation": "Thiazide diuretics typically cause hyponatremia, hypokalemia, and contraction metabolic alkalosis."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4965
     },
     {
@@ -103607,6 +103634,7 @@
             "agreement": "Agree",
             "explanation": "Prophylactic antiviral therapy (e.g., Entecavir) is recommended for HBsAg carriers undergoing immunosuppressive therapy (like high-dose steroids) to prevent HBV reactivation."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4966
     },
     {
@@ -103627,6 +103655,7 @@
             "agreement": "Agree",
             "explanation": "Repeated peritonitis is a risk factor for Encapsulating Peritoneal Sclerosis (EPS) and membrane failure (high transport status/ultrafiltration failure), necessitating hypertonic exchanges."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4967
     },
     {
@@ -103647,6 +103676,7 @@
             "agreement": "Agree",
             "explanation": "Sterile pyuria (pus cells with negative standard culture) in a patient with recurrent lower urinary tract symptoms is a classic presentation of genitourinary tuberculosis."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4968
     },
     {
@@ -103667,6 +103697,7 @@
             "agreement": "Agree",
             "explanation": "Glue sniffing (Toluene exposure) causes Distal Renal Tubular Acidosis (Type 1 RTA), leading to normal anion gap metabolic acidosis and hypokalemia."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4969
     },
     {
@@ -103687,6 +103718,7 @@
             "agreement": "Agree",
             "explanation": "ABO compatibility is the fundamental prerequisite for standard kidney transplantation to prevent hyperacute rejection, although ABO-incompatible protocols exist."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4970
     },
     {
@@ -103707,6 +103739,7 @@
             "agreement": "Agree",
             "explanation": "Infective endocarditis-associated glomerulonephritis typically shows an immune-complex mediated pattern, most commonly Membranoproliferative Glomerulonephritis (MPGN)."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4971
     },
     {
@@ -103727,6 +103760,7 @@
             "agreement": "Agree",
             "explanation": "With progressive renal failure (Cr rising) and hyperkalemia (K 5.0 and likely rising), discontinuation of ACEi/ARB (Losartan) is often necessary to prevent life-threatening hyperkalemia."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4972
     },
     {
@@ -103747,6 +103781,7 @@
             "agreement": "Agree",
             "explanation": "The clinical tetrad of anemia, renal failure, hypercalcemia, and reversed A/G ratio (high globulins) is strongly suggestive of Multiple Myeloma, best investigated with immunoelectrophoresis."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4973
     },
     {
@@ -103767,6 +103802,7 @@
             "agreement": "Disagree",
             "explanation": "While steroids are used, monotherapy is generally ineffective for Membranous Nephropathy; guidelines recommend Rituximab or Cyclophosphamide+Steroids. However, assuming B implies an immunosuppressive regimen starting with steroids, it's context-dependent."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4974
     },
     {
@@ -103787,6 +103823,7 @@
             "agreement": "Agree",
             "explanation": "Significant proteinuria (3+) and hematuria indicate glomerular disease (e.g., secondary FSGS or IgA), requiring specialist referral rather than just hypertension management."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4975
     },
     {
@@ -103807,6 +103844,7 @@
             "agreement": "Agree",
             "explanation": "Tolvaptan carries a risk of severe idiosyncratic hepatocellular injury, requiring frequent monitoring of liver function tests (monthly for 18 months)."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P18.pdf",
         "unique_id": 4976
     },
     {
@@ -103826,6 +103864,7 @@
             "agreement": "Agree",
             "explanation": "Acidosis increases ionized calcium levels because excess hydrogen ions displace calcium from albumin binding sites."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P17.pdf",
         "unique_id": 4977
     },
     {
@@ -103847,6 +103886,7 @@
             "agreement": "Agree",
             "explanation": "Significant proteinuria and edema in a diabetic patient with short disease duration and no retinopathy raises suspicion for non-diabetic renal disease, indicated for biopsy."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P17.pdf",
         "unique_id": 4978
     },
     {
@@ -103868,6 +103908,7 @@
             "agreement": "Agree",
             "explanation": "In suspected renovascular hypertension (bruit, CKD, hypoK), Calcium Channel Blockers (Amlodipine) are safe and effective; ACEi/ARBs are cautioned due to risk of renal failure in bilateral stenosis."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P17.pdf",
         "unique_id": 4979
     },
     {
@@ -103889,6 +103930,7 @@
             "agreement": "Agree",
             "explanation": "The patient has volume overload; increasing the osmotic gradient of the dialysate (using 2.5% dextrose) increases ultrafiltration to remove excess fluid."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P17.pdf",
         "unique_id": 4980
     },
     {
@@ -103910,6 +103952,7 @@
             "agreement": "Agree",
             "explanation": "NSAIDs (Ibuprofen) are nephrotoxic, causing AKI through vasoconstriction of afferent arterioles and/or acute interstitial nephritis."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P17.pdf",
         "unique_id": 4981
     },
     {
@@ -103931,6 +103974,7 @@
             "agreement": "Agree",
             "explanation": "Anticoagulation may unmask underlying pathology; in an elderly smoker with hematuria, cystoscopy is mandatory to rule out bladder cancer."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P17.pdf",
         "unique_id": 4982
     },
     {
@@ -103952,6 +103996,7 @@
             "agreement": "Agree",
             "explanation": "The patient has microcytic anemia refractory to ESA, highly suggestive of iron deficiency, requiring assessment of iron stores (Ferritin/TSAT) before adjusting ESA."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P17.pdf",
         "unique_id": 4983
     },
     {
@@ -103973,6 +104018,7 @@
             "agreement": "Agree",
             "explanation": "The patient has severe Metabolic Acidosis (BE -12, pH low) with Respiratory Alkalosis (low PaCO2) as compensation; since pH is not normal, it is partially compensated."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P17.pdf",
         "unique_id": 4984
     },
     {
@@ -103994,6 +104040,7 @@
             "agreement": "Agree",
             "explanation": "In a patient with significant proteinuria and unexplained renal impairment, a renal biopsy is the gold standard for diagnosis, provided the patient is fit for the procedure."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P17.pdf",
         "unique_id": 4985
     },
     {
@@ -104015,6 +104062,7 @@
             "agreement": "Agree",
             "explanation": "The renal function is stable (Cr unchanged) and potassium is safe; therefore, the dose of Losartan should be increased to optimize blood pressure control."
         },
+        "_source_file": "Processed\\M25_Superpass\\Medicine\\medicine_al_parsed_P17.pdf",
         "unique_id": 4986
     },
     {
@@ -104616,6 +104664,19 @@
         "type": "SAQ",
         "question": "2-year old boy developed coryzal symptoms and cough. Her mother noticed that he became short of breath. On inspection, the child was tachypnoeic and had suprasternal retraction. A harsh respiratory sound was heart during inspiration.",
         "official_answer": "Option F. Acute laryngotracheobronchitis.",
+        "options": [
+            "Acute asthmatic attack",
+            "Tension pneumothorax",
+            "Diabetic ketoacidosis",
+            "Acute epiglottis",
+            "Bronchopulmonary dysplasia",
+            "Acute laryngotracheobronchitis",
+            "Pneumonia",
+            "Acute bronchiolitis",
+            "Acute viral myocarditis",
+            "Mediastinal lymphoma"
+        ],
+        "correctAnswerIndex": 5,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "The presence of a harsh inspiratory sound (stridor) following coryzal symptoms in a toddler is the classic presentation of acute laryngotracheobronchitis, also known as croup."
@@ -104624,11 +104685,24 @@
         "unique_id": 5020
     },
     {
-        "id": "M11-02-SAQ",
+        "id": "M11-02-EMQ",
         "topic": "Pediatrics",
         "subtopic": "11 Oncology",
-        "type": "SAQ",
+        "type": "EMQ",
         "question": "3-year-old girl presented with one weeks' history of progressive increase in facial swelling and in difficulty in breathing. She became cyanotic after an episode of coughing. On examination, her face and eyes were swollen. Distended neck veins and marked respiratory distress were observed.",
+        "options": [
+            "Acute asthmatic attack",
+            "Tension pneumothorax",
+            "Diabetic ketoacidosis",
+            "Acute epiglottis",
+            "Bronchopulmonary dysplasia",
+            "Acute laryngotracheobronchitis",
+            "Pneumonia",
+            "Acute bronchiolitis",
+            "Acute viral myocarditis",
+            "Mediastinal lymphoma"
+        ],
+        "correctAnswerIndex": 9,
         "official_answer": "Option J. Mediastinal lymphoma. SVC syndrome.",
         "ai_answer": {
             "agreement": "Agree",
@@ -104638,11 +104712,24 @@
         "unique_id": 5021
     },
     {
-        "id": "M11-03-SAQ",
+        "id": "M11-03-EMQ",
         "topic": "Pediatrics",
         "subtopic": "6 Cardiology",
-        "type": "SAQ",
+        "type": "EMQ",
         "question": "9-year old boy who had been previously healthy was brought into A&E department with a 3-days' history of progressive shortness of breath. On examination, he appeared pale and anxious. He had tachypnoea, tachycardia and weak peripheral pulse volume. Apex beat was displaced to 6th intercostal space at anterior axillary line. Liver was found to be enlarged.",
+        "options": [
+            "Acute asthmatic attack",
+            "Tension pneumothorax",
+            "Diabetic ketoacidosis",
+            "Acute epiglottis",
+            "Bronchopulmonary dysplasia",
+            "Acute laryngotracheobronchitis",
+            "Pneumonia",
+            "Acute bronchiolitis",
+            "Acute viral myocarditis",
+            "Mediastinal lymphoma"
+        ],
+        "correctAnswerIndex": 8,
         "official_answer": "Option I. Acute viral myocarditis.",
         "ai_answer": {
             "agreement": "Agree",
@@ -104652,11 +104739,24 @@
         "unique_id": 5022
     },
     {
-        "id": "M11-04-SAQ",
+        "id": "M11-04-EMQ",
         "topic": "Pediatrics",
         "subtopic": "2 Perinatal and Neonatal Medicine",
-        "type": "SAQ",
+        "type": "EMQ",
         "question": "30-week old premature neonate with respiratory distress syndrome had been improving on mechanical ventilation but was found to have increased respiratory distress, oxygen desaturation and drop in his blood pressure. On inspection, asymmetry of the chest was noted.",
+        "options": [
+            "Acute asthmatic attack",
+            "Tension pneumothorax",
+            "Diabetic ketoacidosis",
+            "Acute epiglottis",
+            "Bronchopulmonary dysplasia",
+            "Acute laryngotracheobronchitis",
+            "Pneumonia",
+            "Acute bronchiolitis",
+            "Acute viral myocarditis",
+            "Mediastinal lymphoma"
+        ],
+        "correctAnswerIndex": 1,
         "official_answer": "No answer from Goddisk",
         "ai_answer": {
             "agreement": "Agree",
@@ -104671,6 +104771,19 @@
         "subtopic": "8 Endocrinology",
         "type": "SAQ",
         "question": "10-year old girl was brought to A&E department by her mother who noticed that she had recurrent abdominal pain and had become increasingly confused over recent 24 hours. On examination, she had tachypnoea and was breathing deeply. She had an odd odour and signs of dehydration.",
+        "options": [
+            "Acute asthmatic attack",
+            "Tension pneumothorax",
+            "Diabetic ketoacidosis",
+            "Acute epiglottis",
+            "Bronchopulmonary dysplasia",
+            "Acute laryngotracheobronchitis",
+            "Pneumonia",
+            "Acute bronchiolitis",
+            "Acute viral myocarditis",
+            "Mediastinal lymphoma"
+        ],
+        "correctAnswerIndex": 2,
         "official_answer": "No answer from Goddisk",
         "ai_answer": {
             "agreement": "Agree",
@@ -107622,7 +107735,7 @@
             "36m",
             "48m"
         ],
-        "correctAnswerIndex": 7,
+        "correctAnswerIndex": 6,
         "official_answer": "Answer: H (24 months) [Note: H is 30m in the list, 24m is G. Text has a typo, but H is selected]",
         "ai_answer": {
             "agreement": "Agree",
@@ -165138,7 +165251,7 @@
         "topic": "Medicine",
         "subtopic": "8 Hematology / Immunology / Medical Oncology",
         "type": "SAQ",
-        "question": "Ix?",
+        "question": "Scenario: 2025 Februrary Oncologist in Prince Marget Hospital presented with fever. Platelet 25, WCC 12, Hb 6, serum creatine 1000. Ix?",
         "official_answer": "Said renal biopsy, he so triggered: platelet 25!!!!!!!!!!! Cannot biopsy!!!!!!! Said blood smear, ask: what do u expect on smear?",
         "ai_answer": {
             "agreement": "Agree",
@@ -191556,7 +191669,7 @@
         "topic": "Pediatrics",
         "subtopic": "2 Perinatal and Neonatal Medicine",
         "type": "MCQ",
-        "question": "Based on the history and physical examination, what is (are) the most likely differential diagnosis(es)?",
+        "question": "On physical examination, the baby is asleep with warm peripheries, with a capillary refill time of 1 second. He appears mildly cyanosed with purplish lips and blue finger nails. The respiratory rate is 40/min. There is no subcostal or suprasternal insucking. Cardiovascular examination reveals normal upper and lower limb pulses, a normally-positioned cardiac apex, a mild left parasternal impulse, normal heart sounds, and the absence of cardiac mrmurs. The abdominal exmination is unremarkable. Based on the history and physical examination, what is (are) the most likely differential diagnosis(es)?",
         "options": [
             "Pneumonia",
             "Meconium aspiration syndrome",
@@ -207417,7 +207530,7 @@
         "topic": "Pediatrics",
         "subtopic": "5 Respirology",
         "type": "SAQ",
-        "question": "Describe the abnormal X-ray findings. (2 marks)",
+        "question": "Describe the abnormal X-ray findings. (2 marks) <img src='https://i.imgur.com/Lin77kG.png' />",
         "official_answer": "Prevertebral soft tissue swelling (usually soft tissue width < 50% of the vertebral body of the same level until C4, see Rt for reference), Reduced cervical lordosis",
         "ai_answer": {
             "agreement": "Agree",
