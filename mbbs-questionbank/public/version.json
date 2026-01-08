@@ -2,6 +2,16 @@
   "currentVersion": "4.1.0",
   "history": [
     {
+      "version": "4.2.0",
+      "date": "2026-1-9",
+      "title": "Questions reporting improvements",
+      "changes": [
+        "Questions: Fixed questions that I could/know how to fix. Some questions are unresolvable because I don't know how to fix - even the original source had nothing.",
+        "Questions reporting: Added a button beside notes to easily keep track of reported questions",
+        "Questions reporting: You can now view the original source PDF for every question you want to report. When reporting issues, please cross-reference the source and provide specific instructions (e.g., 'Insert top image from Page 4').\nNote: As I am not a medical professional, I cannot interpret vague reports or medical context. Reports without exact instructions on how to fix (ie. modify the text or which specific image to include) cannot be actioned."
+      ]
+    },
+    {
       "version": "4.1.0",
       "date": "2026-1-7",
       "title": "Question bug fixes and improved questions reporting",
