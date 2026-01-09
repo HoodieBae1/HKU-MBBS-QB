@@ -349,7 +349,7 @@ const App = () => {
 			.then((res) => res.json())
 			.then((data) => {
 				const cleanData = Array.isArray(data)
-					? data.map((q) => ({
+					? data.filter((q) => !q.isObsolete).map((q) => ({
 							...q,
 							unique_id:
 								q.unique_id !== undefined ? q.unique_id : `missing-${Math.random()}`,
