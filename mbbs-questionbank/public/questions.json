@@ -115501,7 +115501,7 @@
         "topic": "Obstetrics & Gynaecology",
         "subtopic": "9 Gynaecological Neoplasms",
         "type": "MCQ",
-        "question": "14cm, post menopausal.",
+        "question": "14cm large ovarian mass, post-menopausal. Suggest best management",
         "options": [
             "FU with USG",
             "Lap BSO",
@@ -176228,10 +176228,10 @@
         "type": "MCQ",
         "question": "USG scan shows periventricular calcification, what is the most likely cause. keep a cat with close contact",
         "options": [
+            "",
             "CMV",
             "rubella",
-            "toxoplasmosis",
-            "CMV"
+            "toxoplasmosis"
         ],
         "correctAnswerIndex": 3,
         "official_answer": "Option D. toxoplasmosis.",
