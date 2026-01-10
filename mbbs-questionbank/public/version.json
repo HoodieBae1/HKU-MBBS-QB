@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.2.1",
+  "currentVersion": "4.2.2",
   "history": [
+    {
+      "version": "4.2.2",
+      "date": "2026-1-10",
+      "title": "Fixed questions and added filter by EMQ question type",
+      "changes": [
+        "Questions: Fixed questions reported on Jan 10, 2026",
+        "Feature: Added filter by EMQ question type. EMQ is defined to be MCQ questions with 6 or more options."
+      ]
+    },
     {
       "version": "4.2.1",
       "date": "2026-1-9",
