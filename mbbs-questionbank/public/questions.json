@@ -206198,7 +206198,7 @@
         "topic": "Pediatrics",
         "subtopic": "6 Cardiology",
         "type": "SAQ",
-        "question": "What does the ECG show?",
+        "question": "A child presents with sudden central chest pain, worse with inspiration, 4 days after a second dose of Comirnaty vaccine. PE: BP 130/80, RR 18, HR 80 SpO2 98, 38.2 C. What does the ECG show? <img src='https://i.imgur.com/YWJQ5qO.png'/>",
         "official_answer": "Diffuse concave ST elevation through most limb leads (I, II, aVL) and most precordial leads (V2-V6) [+reciprocal ST depression in other leads]",
         "ai_answer": {
             "agreement": "Agree",
@@ -206212,7 +206212,7 @@
         "topic": "Pediatrics",
         "subtopic": "6 Cardiology",
         "type": "SAQ",
-        "question": "What investigations would you order (specifically)?",
+        "question": "A child presents with sudden central chest pain, worse with inspiration, 4 days after a second dose of Comirnaty vaccine. PE: BP 130/80, RR 18, HR 80 SpO2 98, 38.2 C. What investigations would you order (specifically)?",
         "official_answer": "Echocardiogram, Cardiac enzymes (e.g. CK, troponin), CXR",
         "ai_answer": {
             "agreement": "Agree",
@@ -206226,7 +206226,7 @@
         "topic": "Pediatrics",
         "subtopic": "6 Cardiology",
         "type": "SAQ",
-        "question": "What is the appropriate management?",
+        "question": "A child presents with sudden central chest pain, worse with inspiration, 4 days after a second dose of Comirnaty vaccine. PE: BP 130/80, RR 18, HR 80 SpO2 98, 38.2 C. What is the appropriate management?",
         "official_answer": "Supportive (monitor vitals + ECG tracing), Supportive (bedrest, NSAID, colchicine)\nCounselling: Explain to parents, No vigorous exercise these few weeks\nIf severe: Pericardiocentesis",
         "ai_answer": {
             "agreement": "Agree",
@@ -206898,7 +206898,7 @@
         "topic": "Pediatrics",
         "subtopic": "8 Endocrinology",
         "type": "SAQ",
-        "question": "What are the investigations?",
+        "question": "M/13, referred for incidental finding of hypertension on school examination. Asymptomatic. Height 140 cm (10-25%), weight 44 kg (90%), BMI 22.4 kg/m2 (90%). Blood pressure 140/85mmHg. Has always been large for age. What are the investigations?",
         "official_answer": "(basically he has HT + slight stature shorter / heavier)\nFasting glucose, Fasting lipids, BP Diary",
         "ai_answer": {
             "agreement": "Agree",
@@ -206926,7 +206926,7 @@
         "topic": "Pediatrics",
         "subtopic": "5 Respirology",
         "type": "SAQ",
-        "question": "Name 2 important items to check in PE.",
+        "question": "The mother of an 8 years old boy is concerned of her son snoring heavily at night, seems to be worse recently. He has obesity of weight >97th percentile, and height at 50th percentile. Name 2 important items to check in PE.",
         "official_answer": "Senior's answer (M23):\n• Craniofacial features: micrognathia, short broad neck\n• Orofacial feature: tonsils, macroglossia",
         "ai_answer": {
             "agreement": "Agree",
@@ -206940,7 +206940,7 @@
         "topic": "Pediatrics",
         "subtopic": "5 Respirology",
         "type": "SAQ",
-        "question": "Name 3 important investigations which is helpful.",
+        "question": "The mother of an 8 years old boy is concerned of her son snoring heavily at night, seems to be worse recently. He has obesity of weight >97th percentile, and height at 50th percentile. Name 3 important investigations which is helpful.",
         "official_answer": "12-lead polysomnography\nFasting glucose, fasting lipids",
         "ai_answer": {
             "agreement": "Agree",
@@ -206954,7 +206954,7 @@
         "topic": "Pediatrics",
         "subtopic": "14 Others",
         "type": "SAQ",
-        "question": "What is the most likely underlying problem?",
+        "question": "A 13 year old boy was referred because of tall stature and scoliosis. <img src='https://i.imgur.com/JGdIi6I.png' /> What is the most likely underlying problem?",
         "official_answer": "Marfan syndrome",
         "ai_answer": {
             "agreement": "Agree",
@@ -206968,7 +206968,7 @@
         "topic": "Pediatrics",
         "subtopic": "14 Others",
         "type": "SAQ",
-        "question": "What is the mode of inheritance of the condition?",
+        "question": "A 13 year old boy was referred because of tall stature and scoliosis. <img src='https://i.imgur.com/JGdIi6I.png' /> What is the mode of inheritance of the condition?",
         "official_answer": "Autosomal dominant",
         "ai_answer": {
             "agreement": "Agree",
@@ -206982,7 +206982,7 @@
         "topic": "Pediatrics",
         "subtopic": "14 Others",
         "type": "SAQ",
-        "question": "Name 2 drug treatment for his condition.",
+        "question": "A 13 year old boy was referred because of tall stature and scoliosis. Name 2 drug treatment for his condition. <img src='https://i.imgur.com/JGdIi6I.png' />",
         "official_answer": "Antihypertensives e.g. ACEI / ARB, beta blockers (reduce the BP to as low as they could tolerate with S/E, because hypertension causes their elastic vessels for bulge and form aneurysms. See UTD “Management of Marfan Syndrome”)",
         "ai_answer": {
             "agreement": "Agree",
@@ -208585,7 +208585,7 @@
         "topic": "Pediatrics",
         "subtopic": "13 Musculoskeletal",
         "type": "SAQ",
-        "question": "DESCRIBE 4 features as shown in the photo. (2 marks)",
+        "question": "A 13 year old boy was referred because of tall stature and scoliosis. <img src='https://i.imgur.com/JGdIi6I.png' /> DESCRIBE 4 features as shown in the photo. (2 marks)",
         "official_answer": "Long slander fingers (arachnodactyly), joint hypermobility (wrist sign, thumb sign), Pectus excavatum (excavate = scooped out)",
         "ai_answer": {
             "agreement": "Agree",
@@ -208599,7 +208599,7 @@
         "topic": "Pediatrics",
         "subtopic": "6 Cardiology",
         "type": "SAQ",
-        "question": "Displaced cardiac apex, 2/6 mid diastolic murmur at LLSB, strong peripheral pulses. What is the cardiac lesion? (1 mark)",
+        "question": "A 13 year old boy was referred because of tall stature and scoliosis. <img src='https://i.imgur.com/JGdIi6I.png' /> Displaced cardiac apex, 2/6 mid diastolic murmur at LLSB, strong peripheral pulses. What is the cardiac lesion? (1 mark)",
         "official_answer": "Aortic regurgitation",
         "ai_answer": {
             "agreement": "Agree",
@@ -208613,7 +208613,7 @@
         "topic": "Pediatrics",
         "subtopic": "13 Musculoskeletal",
         "type": "SAQ",
-        "question": "What 4 investigations you would do and why? (4 marks)",
+        "question": "A 13 year old boy was referred because of tall stature and scoliosis. <img src='https://i.imgur.com/JGdIi6I.png' /> What 4 investigations you would do and why? (4 marks)",
         "official_answer": "Bone issues:\nXR spine: for scoliosis\nXR pelvis: for protrusion actebuli\nMRI spine: for dura ectasia",
         "ai_answer": {
             "agreement": "Agree",
