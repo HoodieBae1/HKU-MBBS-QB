@@ -132,13 +132,13 @@ serve(async (req) => {
         Analyze this medical finals question.
 
         Question: "${question}"
-        ${type === 'MCQ' ? `Options: \n${options.map((o: any, i: number) => `${String.fromCharCode(65+i)}. ${o}`).join('\n')}` : ''}
+        ${(type === 'MCQ' || type === 'EMQ') ? `Options: \n${options.map((o: any, i: number) => `${String.fromCharCode(65+i)}. ${o}`).join('\n')}` : ''}
         Goddisk Answer: "${official_answer}"
 
         Provide a response with this exact structure:
         1. **Goddisk Answer Analysis**: Agree or disagree with the goddisk answer.
         2. **Pathophysiology/Mechanism**: Explain your thought process into why the answer is correct or incorrect.
-        3. **Why others are wrong** (If MCQ): Brief dismissal of distractors.
+        3. **Why others are wrong** (If MCQ or EMQ): Brief dismissal of distractors.
         4. **Clinical Pearl**: A high-yield fact or mnemonic.
         
         Keep it concise, professional, and academic.`;
