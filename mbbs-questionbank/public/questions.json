@@ -133286,11 +133286,24 @@
         "unique_id": 6247
     },
     {
-        "id": "M25-22-SAQ",
+        "id": "M25-22-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
-        "type": "SAQ",
-        "question": "From the list of options, which indicates a problem in the Parietal lobe? Options: A: Astereognosis, B: Cannot tell dates of WWII, C: intersecting pentagon, D: moca, E: spelling WORLD backwards, F: Rey-Osterrieth complex figure, G: Luria test, H: six elements test, I: memory battery, J: Wisconsin Card Sorting Test",
+        "type": "EMQ",
+        "question": "From the list of options, which indicates a problem in the Parietal lobe?",
+        "options": [
+            "Astereognosis",
+            "Cannot tell dates of WWII",
+            "intersecting pentagon",
+            "moca",
+            "spelling WORLD backwards",
+            "Rey–Osterrieth complex figure",
+            "Luria test",
+            "six elements test",
+            "memory battery",
+            "Wisconsin Card Sorting Test"
+        ],
+        "correctAnswerIndex": 0,
         "official_answer": "A. Astereognosis",
         "ai_answer": {
             "agreement": "Agree",
@@ -133300,11 +133313,24 @@
         "unique_id": 6248
     },
     {
-        "id": "M25-23-SAQ",
+        "id": "M25-23-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
-        "type": "SAQ",
-        "question": "From the list of options, which indicates a loss of Semantic memory? Options: A: Astereognosis, B: Cannot tell dates of WWII, C: intersecting pentagon, D: moca, E: spelling WORLD backwards, F: Rey-Osterrieth complex figure, G: Luria test, H: six elements test, I: memory battery, J: Wisconsin Card Sorting Test",
+        "type": "EMQ",
+        "question": "From the list of options, which indicates a loss of Semantic memory?",
+        "options": [
+            "Astereognosis",
+            "Cannot tell dates of WWII",
+            "intersecting pentagon",
+            "moca",
+            "spelling WORLD backwards",
+            "Rey–Osterrieth complex figure",
+            "Luria test",
+            "six elements test",
+            "memory battery",
+            "Wisconsin Card Sorting Test"
+        ],
+        "correctAnswerIndex": 1,
         "official_answer": "B. Cannot tell dates of WWII",
         "ai_answer": {
             "agreement": "Agree",
@@ -133314,11 +133340,24 @@
         "unique_id": 6249
     },
     {
-        "id": "M25-24-SAQ",
+        "id": "M25-24-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
-        "type": "SAQ",
-        "question": "From the list of options, which is a test for Visuospatial function? Options: A: Astereognosis, B: Cannot tell dates of WWII, C: intersecting pentagon, D: moca, E: spelling WORLD backwards, F: Rey-Osterrieth complex figure, G: Luria test, H: six elements test, I: memory battery, J: Wisconsin Card Sorting Test",
+        "type": "EMQ",
+        "question": "From the list of options, which is a test for Visuospatial function?",
+        "options": [
+            "Astereognosis",
+            "Cannot tell dates of WWII",
+            "intersecting pentagon",
+            "moca",
+            "spelling WORLD backwards",
+            "Rey–Osterrieth complex figure",
+            "Luria test",
+            "six elements test",
+            "memory battery",
+            "Wisconsin Card Sorting Test"
+        ],
+        "correctAnswerIndex": 2,
         "official_answer": "C. intersecting pentagon",
         "ai_answer": {
             "agreement": "Agree",
@@ -133328,11 +133367,24 @@
         "unique_id": 6250
     },
     {
-        "id": "M25-25-SAQ",
+        "id": "M25-25-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
-        "type": "SAQ",
-        "question": "From the list of options, which is a tool for screening and monitoring cognitive function? Options: A: Astereognosis, B: Cannot tell dates of WWII, C: intersecting pentagon, D: moca, E: spelling WORLD backwards, F: Rey-Osterrieth complex figure, G: Luria test, H: six elements test, I: memory battery, J: Wisconsin Card Sorting Test",
+        "type": "EMQ",
+        "question": "From the list of options, which is a tool for screening and monitoring cognitive function?",
+        "options": [
+            "Astereognosis",
+            "Cannot tell dates of WWII",
+            "intersecting pentagon",
+            "moca",
+            "spelling WORLD backwards",
+            "Rey–Osterrieth complex figure",
+            "Luria test",
+            "six elements test",
+            "memory battery",
+            "Wisconsin Card Sorting Test"
+        ],
+        "correctAnswerIndex": 3,
         "official_answer": "D. moca",
         "ai_answer": {
             "agreement": "Agree",
@@ -133342,11 +133394,24 @@
         "unique_id": 6251
     },
     {
-        "id": "M25-26-SAQ",
+        "id": "M25-26-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
-        "type": "SAQ",
-        "question": "From the list of options, which is a test for Attention? Options: A: Astereognosis, B: Cannot tell dates of WWII, C: intersecting pentagon, D: moca, E: spelling WORLD backwards, F: Rey-Osterrieth complex figure, G: Luria test, H: six elements test, I: memory battery, J: Wisconsin Card Sorting Test",
+        "type": "EMQ",
+        "question": "From the list of options, which is a test for Attention?",
+        "options": [
+            "Astereognosis",
+            "Cannot tell dates of WWII",
+            "intersecting pentagon",
+            "moca",
+            "spelling WORLD backwards",
+            "Rey–Osterrieth complex figure",
+            "Luria test",
+            "six elements test",
+            "memory battery",
+            "Wisconsin Card Sorting Test"
+        ],
+        "correctAnswerIndex": 4,
         "official_answer": "E. spelling WORLD backwards",
         "ai_answer": {
             "agreement": "Agree",
@@ -133356,7 +133421,7 @@
         "unique_id": 6252
     },
     {
-        "id": "M25-27-SAQ",
+        "id": "M25-27-EMQ",
         "topic": "Psychiatry",
         "subtopic": "1 Introduction",
         "type": "EMQ",
@@ -133383,7 +133448,7 @@
         "unique_id": 6253
     },
     {
-        "id": "M25-28-SAQ",
+        "id": "M25-28-EMQ",
         "topic": "Psychiatry",
         "subtopic": "1 Introduction",
         "type": "EMQ",
@@ -133410,7 +133475,7 @@
         "unique_id": 6254
     },
     {
-        "id": "M25-29-SAQ",
+        "id": "M25-29-EMQ",
         "topic": "Psychiatry",
         "subtopic": "1 Introduction",
         "type": "EMQ",
@@ -133437,7 +133502,7 @@
         "unique_id": 6255
     },
     {
-        "id": "M25-30-SAQ",
+        "id": "M25-30-EMQ",
         "topic": "Psychiatry",
         "subtopic": "1 Introduction",
         "type": "EMQ",
@@ -133464,7 +133529,7 @@
         "unique_id": 6256
     },
     {
-        "id": "M25-31-SAQ",
+        "id": "M25-31-EMQ",
         "topic": "Psychiatry",
         "subtopic": "1 Introduction",
         "type": "EMQ",
@@ -133491,11 +133556,24 @@
         "unique_id": 6257
     },
     {
-        "id": "M25-32-SAQ",
+        "id": "M25-32-EMQ",
         "topic": "Psychiatry",
         "subtopic": "9 Personality Disorders",
-        "type": "SAQ",
-        "question": "A 19-year-old is expelled from school due to multiple violations of school rules. The principal says he is totally irresponsible, shameless, and shows no remorse. Which diagnosis fits this description? Options: C: Dissocial personality disorder, E: Narcissistic PD, F: conduct disorder",
+        "type": "EMQ",
+        "question": "A 19-year-old is expelled from school due to multiple violations of school rules. The principal says he is totally irresponsible, shameless, and shows no remorse. Which diagnosis fits this description?",
+        "options":[
+            "adjustment disorder depressive episode",
+            "anankastic",
+            "Dissocial personality disorder",
+            "OCD",
+            "Narcissistic PD",
+            "conduct disorder",
+            "Major depressive disorder",
+            "bipolar ii",
+            "Schizophreniform",
+            "Schizotypal PD"
+        ],
+        "correctAnswerIndex": 2,
         "official_answer": "C. Dissocial personality disorder",
         "ai_answer": {
             "agreement": "Agree",
@@ -133505,11 +133583,24 @@
         "unique_id": 6258
     },
     {
-        "id": "M25-33-SAQ",
+        "id": "M25-33-EMQ",
         "topic": "Psychiatry",
         "subtopic": "6 Mood disorders",
-        "type": "SAQ",
-        "question": "A female with a history of childhood abuse breaks up with her long-term boyfriend. For 3 weeks, she experiences low mood, difficulty sleeping, no motivation to go to work, feelings of worthlessness, and thoughts of ending her life. Which diagnosis is most likely? Options: G: Major depressive disorder, A: adjustment disorder depressive episode",
+        "type": "EMQ",
+        "question": "A female with a history of childhood abuse breaks up with her long-term boyfriend. For 3 weeks, she experiences low mood, difficulty sleeping, no motivation to go to work, feelings of worthlessness, and thoughts of ending her life. Which diagnosis is most likely?",
+        "options":[
+            "adjustment disorder depressive episode",
+            "anankastic",
+            "Dissocial personality disorder",
+            "OCD",
+            "Narcissistic PD",
+            "conduct disorder",
+            "Major depressive disorder",
+            "bipolar ii",
+            "Schizophreniform",
+            "Schizotypal PD"
+        ],
+        "correctAnswerIndex": 6,
         "official_answer": "G. Major depressive disorder",
         "ai_answer": {
             "agreement": "Agree",
@@ -133519,11 +133610,24 @@
         "unique_id": 6259
     },
     {
-        "id": "M25-34-SAQ",
+        "id": "M25-34-EMQ",
         "topic": "Psychiatry",
         "subtopic": "5 Psychotic Disorders",
-        "type": "SAQ",
-        "question": "Friends report a girl has a 2-month history of thinking someone wants to harm her. She believes her landlord is trying to use a microwave beam to shoot her internal organs, so she uses 3 mattresses on her bed. She has no other past health issues. What is the most likely diagnosis? Options: I: Schizophreniform, J: Schizotypal PD",
+        "type": "EMQ",
+        "question": "Friends report a girl has a 2-month history of thinking someone wants to harm her. She believes her landlord is trying to use a microwave beam to shoot her internal organs, so she uses 3 mattresses on her bed. She has no other past health issues. What is the most likely diagnosis?",
+        "options":[
+            "adjustment disorder depressive episode",
+            "anankastic",
+            "Dissocial personality disorder",
+            "OCD",
+            "Narcissistic PD",
+            "conduct disorder",
+            "Major depressive disorder",
+            "bipolar ii",
+            "Schizophreniform",
+            "Schizotypal PD"
+        ],
+        "correctAnswerIndex": 8,
         "official_answer": "I. Schizophreniform",
         "ai_answer": {
             "agreement": "Agree",
@@ -133533,11 +133637,24 @@
         "unique_id": 6260
     },
     {
-        "id": "M25-35-SAQ",
+        "id": "M25-35-EMQ",
         "topic": "Psychiatry",
         "subtopic": "9 Personality Disorders",
-        "type": "SAQ",
-        "question": "An engineer is known to be very careful with details, causing his projects to always be delayed. He is too rigid and does not delegate work to subordinates. Which diagnosis is suggested? Options: B: anankastic (= obsessive compulsive PD), D: OCD",
+        "type": "EMQ",
+        "question": "An engineer is known to be very careful with details, causing his projects to always be delayed. He is too rigid and does not delegate work to subordinates. Which diagnosis is suggested?",
+        "options":[
+            "adjustment disorder depressive episode",
+            "anankastic",
+            "Dissocial personality disorder",
+            "OCD",
+            "Narcissistic PD",
+            "conduct disorder",
+            "Major depressive disorder",
+            "bipolar ii",
+            "Schizophreniform",
+            "Schizotypal PD"
+        ],
+        "correctAnswerIndex": 1,
         "official_answer": "B. anankastic (= obsessive compulsive PD)",
         "ai_answer": {
             "agreement": "Agree",
@@ -133547,11 +133664,24 @@
         "unique_id": 6261
     },
     {
-        "id": "M25-36-SAQ",
+        "id": "M25-36-EMQ",
         "topic": "Psychiatry",
         "subtopic": "9 Personality Disorders",
-        "type": "SAQ",
-        "question": "Mr. Cheung is a 45-year-old barrister who has been having 2 weeks of low mood and rage after being criticized by a colleague. He thinks he is a successful lawyer who should be respected. He appears conceited, is envious of members of the Queen's counsel, and feels he should have been appointed long ago. What is the likely diagnosis? Options: E: Narcissistic PD, H: bipolar ii",
+        "type": "EMQ",
+        "question": "Mr. Cheung is a 45-year-old barrister who has been having 2 weeks of low mood and rage after being criticized by a colleague. He thinks he is a successful lawyer who should be respected. He appears conceited, is envious of members of the Queen's counsel, and feels he should have been appointed long ago. What is the likely diagnosis?",
+        "options":[
+            "adjustment disorder depressive episode",
+            "anankastic",
+            "Dissocial personality disorder",
+            "OCD",
+            "Narcissistic PD",
+            "conduct disorder",
+            "Major depressive disorder",
+            "bipolar ii",
+            "Schizophreniform",
+            "Schizotypal PD"
+        ],
+        "correctAnswerIndex": 4,
         "official_answer": "E. Narcissistic PD",
         "ai_answer": {
             "agreement": "Agree",
@@ -133561,11 +133691,24 @@
         "unique_id": 6262
     },
     {
-        "id": "M25-37-SAQ",
+        "id": "M25-37-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
-        "type": "SAQ",
-        "question": "A patient with diagnosed Parkinson's disease develops poor memory within 1 year of the motor symptom onset. They have recent visual hallucinations of children and animals and a fluctuating course. PD drugs are not effective. What is the diagnosis? Options: A: LBD, D: dementia in Parkinson disease",
+        "type": "EMQ",
+        "question": "A patient with diagnosed Parkinson's disease develops poor memory within 1 year of the motor symptom onset. They have recent visual hallucinations of children and animals and a fluctuating course. PD drugs are not effective. What is the diagnosis?",
+        "options":[
+            "LBD",
+            "vascular dementia",
+            "dementia in Alzheimer",
+            "dementia in Parkinson disease",
+            "MDD",
+            "Delirium",
+            "",
+            "",
+            "",
+            ""
+        ],
+        "correctAnswerIndex": 0,
         "official_answer": "A. LBD (Lewy body dementia)",
         "ai_answer": {
             "agreement": "Agree",
@@ -133575,11 +133718,24 @@
         "unique_id": 6263
     },
     {
-        "id": "M25-38-SAQ",
+        "id": "M25-38-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
-        "type": "SAQ",
-        "question": "A patient presents with a sudden onset of memory impairment. On physical examination, there is a carotid bruit but no focal neurological deficit. What is the likely diagnosis? Options: B: vascular dementia, C: dementia in Alzheimer",
+        "type": "EMQ",
+        "question": "A patient presents with a sudden onset of memory impairment. On physical examination, there is a carotid bruit but no focal neurological deficit. What is the likely diagnosis?",
+        "options":[
+            "LBD",
+            "vascular dementia",
+            "dementia in Alzheimer",
+            "dementia in Parkinson disease",
+            "MDD",
+            "Delirium",
+            "",
+            "",
+            "",
+            ""
+        ],
+        "correctAnswerIndex": 1,
         "official_answer": "B. vascular dementia",
         "ai_answer": {
             "agreement": "Agree",
@@ -133589,11 +133745,24 @@
         "unique_id": 6264
     },
     {
-        "id": "M25-39-SAQ",
+        "id": "M25-39-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
-        "type": "SAQ",
-        "question": "A patient presents with sudden agitation and fever. What is the most likely diagnosis? Options: F: Delirium, A: LBD",
+        "type": "EMQ",
+        "question": "A patient presents with sudden agitation and fever. What is the most likely diagnosis?",
+        "options":[
+            "LBD",
+            "vascular dementia",
+            "dementia in Alzheimer",
+            "dementia in Parkinson disease",
+            "MDD",
+            "Delirium",
+            "",
+            "",
+            "",
+            ""
+        ],
+        "correctAnswerIndex": 5,
         "official_answer": "F. Delirium",
         "ai_answer": {
             "agreement": "Agree",
@@ -133603,11 +133772,24 @@
         "unique_id": 6265
     },
     {
-        "id": "M25-40-SAQ",
+        "id": "M25-40-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
-        "type": "SAQ",
-        "question": "A patient has a 4-year history of poor memory. She is unhappy and worried about causing trouble for her daughters as her memory declines. Her husband passed away, and since then she feels she cannot think properly. Her MSE shows a neutral mood, and she cannot tell the time and place. What is the likely diagnosis? Options: C: dementia in Alzheimer, E: MDD",
+        "type": "EMQ",
+        "question": "A patient has a 4-year history of poor memory. She is unhappy and worried about causing trouble for her daughters as her memory declines. Her husband passed away, and since then she feels she cannot think properly. Her MSE shows a neutral mood, and she cannot tell the time and place. What is the likely diagnosis?",
+        "options":[
+            "LBD",
+            "vascular dementia",
+            "dementia in Alzheimer",
+            "dementia in Parkinson disease",
+            "MDD",
+            "Delirium",
+            "",
+            "",
+            "",
+            ""
+        ],
+        "correctAnswerIndex": 2,
         "official_answer": "C. dementia in Alzheimer",
         "ai_answer": {
             "agreement": "Agree",
@@ -133617,11 +133799,24 @@
         "unique_id": 6266
     },
     {
-        "id": "M25-41-SAQ",
+        "id": "M25-41-EMQ",
         "topic": "Psychiatry",
         "subtopic": "6 Mood disorders",
-        "type": "SAQ",
-        "question": "A patient has a 1-year history of poor memory. She is unhappy and worried about causing trouble for her daughters as her memory declines. Her husband passed away, and since then she feels she cannot think properly. Her MSE shows a miserable mood, and she frequently responds 'I don't know' to questions. What is the likely diagnosis? Options: E: MDD, C: dementia in Alzheimer",
+        "type": "EMQ",
+        "question": "A patient has a 1-year history of poor memory. She is unhappy and worried about causing trouble for her daughters as her memory declines. Her husband passed away, and since then she feels she cannot think properly. Her MSE shows a miserable mood, and she frequently responds 'I don't know' to questions. What is the likely diagnosis?",
+        "options":[
+            "LBD",
+            "vascular dementia",
+            "dementia in Alzheimer",
+            "dementia in Parkinson disease",
+            "MDD",
+            "Delirium",
+            "",
+            "",
+            "",
+            ""
+        ],
+        "correctAnswerIndex": 4,
         "official_answer": "E. MDD (Depression)",
         "ai_answer": {
             "agreement": "Agree",
@@ -134344,11 +134539,24 @@
         "unique_id": 6301
     },
     {
-        "id": "M18-41-SAQ",
+        "id": "M18-41-EMQ",
         "topic": "Psychiatry",
         "subtopic": "2 Treatment in psychiatry",
-        "type": "SAQ",
+        "type": "EMQ",
         "question": "A 70 year old woman presented with confusion, dizziness, lethargy. She was recently diagnosed with depression and was prescribed with selective serotonin reuptake inhibitor for a few days.",
+        "options": [
+            "Alcohol intoxication",
+            "Benzodiazepine intoxication",
+            "Delirium tremens",
+            "Diabetic ketoacidosis",
+            "Hypercalcaemia",
+            "Hypernatraemia",
+            "Hypoglycaemia",
+            "Hyponatraemia",
+            "Lithium toxicity",
+            "Psychostimulant toxicity"
+        ],
+        "correctAnswerIndex": 7,
         "official_answer": "Ans: H (SSRI SIADH)",
         "ai_answer": {
             "agreement": "Agree",
@@ -134358,11 +134566,24 @@
         "unique_id": 6302
     },
     {
-        "id": "M18-42-SAQ",
+        "id": "M18-42-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
-        "type": "SAQ",
+        "type": "EMQ",
         "question": "50-year-old woman with insulin-dependent diabetes present to A&E with seizure. She reported she had been sweating, with tremor/ shivering.",
+        "options": [
+            "Alcohol intoxication",
+            "Benzodiazepine intoxication",
+            "Delirium tremens",
+            "Diabetic ketoacidosis",
+            "Hypercalcaemia",
+            "Hypernatraemia",
+            "Hypoglycaemia",
+            "Hyponatraemia",
+            "Lithium toxicity",
+            "Psychostimulant toxicity"
+        ],
+        "correctAnswerIndex": 6,
         "official_answer": "Ans: G",
         "ai_answer": {
             "agreement": "Agree",
@@ -134372,11 +134593,24 @@
         "unique_id": 6303
     },
     {
-        "id": "M18-43-SAQ",
+        "id": "M18-43-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
-        "type": "SAQ",
+        "type": "EMQ",
         "question": "56 years old man admitted to orthopaedic ward for minor elective procedure. He was well until 2 days post-op, developed agitation, confusion and visual hallucination of seeing small animals.",
+        "options": [
+            "Alcohol intoxication",
+            "Benzodiazepine intoxication",
+            "Delirium tremens",
+            "Diabetic ketoacidosis",
+            "Hypercalcaemia",
+            "Hypernatraemia",
+            "Hypoglycaemia",
+            "Hyponatraemia",
+            "Lithium toxicity",
+            "Psychostimulant toxicity"
+        ],
+        "correctAnswerIndex": 2,
         "official_answer": "Ans: C",
         "ai_answer": {
             "agreement": "Agree",
@@ -134386,11 +134620,24 @@
         "unique_id": 6304
     },
     {
-        "id": "M18-44-SAQ",
+        "id": "M18-44-EMQ",
         "topic": "Psychiatry",
         "subtopic": "2 Treatment in psychiatry",
-        "type": "SAQ",
+        "type": "EMQ",
         "question": "Man with bipolar disorder on long term mood stabilizers. Reported good past health and stable mental condition. Recently long hiking on a hot sunny day, confused and dehydrated, presented with coarse tremor and ataxia.",
+        "options": [
+            "Alcohol intoxication",
+            "Benzodiazepine intoxication",
+            "Delirium tremens",
+            "Diabetic ketoacidosis",
+            "Hypercalcaemia",
+            "Hypernatraemia",
+            "Hypoglycaemia",
+            "Hyponatraemia",
+            "Lithium toxicity",
+            "Psychostimulant toxicity"
+        ],
+        "correctAnswerIndex": 8,
         "official_answer": "Ans: I (dehydration induced Li toxicity)",
         "ai_answer": {
             "agreement": "Agree",
@@ -134400,11 +134647,24 @@
         "unique_id": 6305
     },
     {
-        "id": "M18-45-SAQ",
+        "id": "M18-45-EMQ",
         "topic": "Psychiatry",
         "subtopic": "4 Substance abuse",
-        "type": "SAQ",
+        "type": "EMQ",
         "question": "20 year old girl from dancing party with acute delirium and attacked by monster. Found fever and hypertension.",
+        "options": [
+            "Alcohol intoxication",
+            "Benzodiazepine intoxication",
+            "Delirium tremens",
+            "Diabetic ketoacidosis",
+            "Hypercalcaemia",
+            "Hypernatraemia",
+            "Hypoglycaemia",
+            "Hyponatraemia",
+            "Lithium toxicity",
+            "Psychostimulant toxicity"
+        ],
+        "correctAnswerIndex": 9,
         "official_answer": "Ans: J",
         "ai_answer": {
             "agreement": "Agree",
@@ -134414,11 +134674,24 @@
         "unique_id": 6306
     },
     {
-        "id": "M17-51-SAQ",
+        "id": "M17-51-EMQ",
         "topic": "Psychiatry",
         "subtopic": "2 Treatment in psychiatry",
-        "type": "SAQ",
-        "question": "Zolpidem",
+        "type": "EMQ",
+        "question": "Which of the above most common associated with Zolpidem",
+        "options": [
+            "Chronic fatigue syndrome",
+            "Diarrhoea",
+            "Erectile dysfunction",
+            "Fibromylagia",
+            "Hypertension",
+            "Insulin resistance",
+            "Nocturnal enuresis",
+            "Polycystic ovarian syndrome",
+            "Sleepwalking",
+            "Steven-Johnson syndrome"
+        ],
+        "correctAnswerIndex": 8,
         "official_answer": "Ans: I",
         "ai_answer": {
             "agreement": "Agree",
@@ -134428,11 +134701,24 @@
         "unique_id": 6307
     },
     {
-        "id": "M99-56-SAQ",
+        "id": "M99-56-EMQ",
         "topic": "Psychiatry",
         "subtopic": "7 Neurotic, stress-related and somatoform disorders",
-        "type": "SAQ",
+        "type": "EMQ",
         "question": "Male university student, insomnia as afraid of presentation or discussion.",
+        "options": [
+            "Agoraphobia",
+            "Generalised anxiety disorder",
+            "Hypochondriasis",
+            "Obsessive compulsive disorder",
+            "Panic disorder",
+            "Post-traumatic stress disorder",
+            "Social phobia",
+            "Simple phobia",
+            "Somatoform disorder",
+            "Schizophrenia"
+        ],
+        "correctAnswerIndex": 6,
         "official_answer": "Ans: G",
         "ai_answer": {
             "agreement": "Agree",
@@ -134442,11 +134728,24 @@
         "unique_id": 6308
     },
     {
-        "id": "M99-57-SAQ",
+        "id": "M99-57-EMQ",
         "topic": "Psychiatry",
         "subtopic": "7 Neurotic, stress-related and somatoform disorders",
-        "type": "SAQ",
+        "type": "EMQ",
         "question": "Middle-age man, palpitation and chest pain. Worried about IHD. Not reassured after negative cardiac workup. Recently more worried as seen NBA star having IHD.",
+        "options": [
+            "Agoraphobia",
+            "Generalised anxiety disorder",
+            "Hypochondriasis",
+            "Obsessive compulsive disorder",
+            "Panic disorder",
+            "Post-traumatic stress disorder",
+            "Social phobia",
+            "Simple phobia",
+            "Somatoform disorder",
+            "Schizophrenia"
+        ],
+        "correctAnswerIndex": 2,
         "official_answer": "Ans: C+1+1+1+1+1 (worried of disease not symptom)/ J +1 (if real symptoms then would start treatment? So maybe C more?)",
         "ai_answer": {
             "agreement": "Agree",
@@ -134456,11 +134755,24 @@
         "unique_id": 6309
     },
     {
-        "id": "M99-58-SAQ",
+        "id": "M99-58-EMQ",
         "topic": "Psychiatry",
         "subtopic": "7 Neurotic, stress-related and somatoform disorders",
-        "type": "SAQ",
+        "type": "EMQ",
         "question": "Taxi driver after serious road traffic accident, having flashbacks and was frightened at the sound of moving tires.",
+        "options": [
+            "Agoraphobia",
+            "Generalised anxiety disorder",
+            "Hypochondriasis",
+            "Obsessive compulsive disorder",
+            "Panic disorder",
+            "Post-traumatic stress disorder",
+            "Social phobia",
+            "Simple phobia",
+            "Somatoform disorder",
+            "Schizophrenia"
+        ],
+        "correctAnswerIndex": 5,
         "official_answer": "Ans: F",
         "ai_answer": {
             "agreement": "Agree",
@@ -134470,11 +134782,24 @@
         "unique_id": 6310
     },
     {
-        "id": "M99-59-SAQ",
+        "id": "M99-59-EMQ",
         "topic": "Psychiatry",
         "subtopic": "7 Neurotic, stress-related and somatoform disorders",
-        "type": "SAQ",
+        "type": "EMQ",
         "question": "Woman afraid of going to crowded places, better if husband accompany her.",
+        "options": [
+            "Agoraphobia",
+            "Generalised anxiety disorder",
+            "Hypochondriasis",
+            "Obsessive compulsive disorder",
+            "Panic disorder",
+            "Post-traumatic stress disorder",
+            "Social phobia",
+            "Simple phobia",
+            "Somatoform disorder",
+            "Schizophrenia"
+        ],
+        "correctAnswerIndex": 0,
         "official_answer": "Ans: A",
         "ai_answer": {
             "agreement": "Agree",
@@ -134484,11 +134809,24 @@
         "unique_id": 6311
     },
     {
-        "id": "M99-60-SAQ",
+        "id": "M99-60-EMQ",
         "topic": "Psychiatry",
         "subtopic": "7 Neurotic, stress-related and somatoform disorders",
-        "type": "SAQ",
+        "type": "EMQ",
         "question": "Housewife with anxiety symptoms, last for 2 years, no specific cue",
+        "options": [
+            "Agoraphobia",
+            "Generalised anxiety disorder",
+            "Hypochondriasis",
+            "Obsessive compulsive disorder",
+            "Panic disorder",
+            "Post-traumatic stress disorder",
+            "Social phobia",
+            "Simple phobia",
+            "Somatoform disorder",
+            "Schizophrenia"
+        ],
+        "correctAnswerIndex": 1,
         "official_answer": "Ans: B",
         "ai_answer": {
             "agreement": "Agree",
@@ -139112,22 +139450,22 @@
         "unique_id": 6508
     },
     {
-        "id": "M07-12-SAQ",
+        "id": "M07-12-EMQ",
         "topic": "Psychiatry",
         "subtopic": "2 Treatment in psychiatry",
         "type": "EMQ",
         "question": "A young female with an irresponsible alcoholic husband, who has attempted suicide and battered her baby, is now seeing you as a psychotherapist. Match the following scenario to the correct psychotherapeutic complication from the list provided. Scenario: Forgot to attend follow-up.",
         "options": [
-            "A. Morbid jealousy",
-            "B. Transference",
-            "C. Counter transference",
-            "D. Resistance",
-            "E. Acting out",
-            "F. Introjection",
-            "G. Dissociation",
-            "H. Erotic delusion",
-            "I. Conversion",
-            "J. Flight of health"
+            "Morbid jealousy",
+            "Transference",
+            "Counter transference",
+            "Resistance",
+            "Acting out",
+            "Introjection",
+            "Dissociation",
+            "Erotic delusion",
+            "Conversion",
+            "Flight of health"
         ],
         "official_answer": "D. Resistance. Resistance is defined as an unwillingness to engage in psychotherapy.",
         "ai_answer": {
@@ -139138,22 +139476,22 @@
         "unique_id": 6509
     },
     {
-        "id": "M07-13-SAQ",
+        "id": "M07-13-EMQ",
         "topic": "Psychiatry",
         "subtopic": "2 Treatment in psychiatry",
         "type": "EMQ",
         "question": "A young female with an irresponsible alcoholic husband, who has attempted suicide and battered her baby, is now seeing you as a psychotherapist. Match the following scenario to the correct psychotherapeutic complication from the list provided. Scenario: Forget to pay monthly consultation fee.",
         "options": [
-            "A. Morbid jealousy",
-            "B. Transference",
-            "C. Counter transference",
-            "D. Resistance",
-            "E. Acting out",
-            "F. Introjection",
-            "G. Dissociation",
-            "H. Erotic delusion",
-            "I. Conversion",
-            "J. Flight of health"
+            "Morbid jealousy",
+            "Transference",
+            "Counter transference",
+            "Resistance",
+            "Acting out",
+            "Introjection",
+            "Dissociation",
+            "Erotic delusion",
+            "Conversion",
+            "Flight of health"
         ],
         "official_answer": "E. Acting out. Acting out is performing an action considered 'bad' to garner attention.",
         "ai_answer": {
@@ -139164,22 +139502,22 @@
         "unique_id": 6510
     },
     {
-        "id": "M07-14-SAQ",
+        "id": "M07-14-EMQ",
         "topic": "Psychiatry",
         "subtopic": "2 Treatment in psychiatry",
         "type": "EMQ",
         "question": "A young female with an irresponsible alcoholic husband, who has attempted suicide and battered her baby, is now seeing you as a psychotherapist. Match the following scenario to the correct psychotherapeutic complication from the list provided. Scenario: Forgot she has beaten her baby.",
         "options": [
-            "A. Morbid jealousy",
-            "B. Transference",
-            "C. Counter transference",
-            "D. Resistance",
-            "E. Acting out",
-            "F. Introjection",
-            "G. Dissociation",
-            "H. Erotic delusion",
-            "I. Conversion",
-            "J. Flight of health"
+            "Morbid jealousy",
+            "Transference",
+            "Counter transference",
+            "Resistance",
+            "Acting out",
+            "Introjection",
+            "Dissociation",
+            "Erotic delusion",
+            "Conversion",
+            "Flight of health"
         ],
         "official_answer": "G. Dissociation. Dissociation is a detachment from reality, losing track of time or themselves and their usual thought processes and memories.",
         "ai_answer": {
@@ -139190,22 +139528,22 @@
         "unique_id": 6511
     },
     {
-        "id": "M07-15-SAQ",
+        "id": "M07-15-EMQ",
         "topic": "Psychiatry",
         "subtopic": "2 Treatment in psychiatry",
         "type": "EMQ",
         "question": "A young female with an irresponsible alcoholic husband, who has attempted suicide and battered her baby, is now seeing you as a psychotherapist. Match the following scenario to the correct psychotherapeutic complication from the list provided. Scenario: Complain of bilateral arm pain.",
         "options": [
-            "A. Morbid jealousy",
-            "B. Transference",
-            "C. Counter transference",
-            "D. Resistance",
-            "E. Acting out",
-            "F. Introjection",
-            "G. Dissociation",
-            "H. Erotic delusion",
-            "I. Conversion",
-            "J. Flight of health"
+            "Morbid jealousy",
+            "Transference",
+            "Counter transference",
+            "Resistance",
+            "Acting out",
+            "Introjection",
+            "Dissociation",
+            "Erotic delusion",
+            "Conversion",
+            "Flight of health"
         ],
         "official_answer": "I. Conversion. Conversion is when emotional conflicts are converted into physical symptoms that have no organic basis.",
         "ai_answer": {
@@ -139216,22 +139554,22 @@
         "unique_id": 6512
     },
     {
-        "id": "M07-16-SAQ",
+        "id": "M07-16-EMQ",
         "topic": "Psychiatry",
         "subtopic": "2 Treatment in psychiatry",
         "type": "EMQ",
         "question": "A young female with an irresponsible alcoholic husband, who has attempted suicide and battered her baby, is now seeing you as a psychotherapist. Match the following scenario to the correct psychotherapeutic complication from the list provided. Scenario: Fell in love with the therapist.",
         "options": [
-            "A. Morbid jealousy",
-            "B. Transference",
-            "C. Counter transference",
-            "D. Resistance",
-            "E. Acting out",
-            "F. Introjection",
-            "G. Dissociation",
-            "H. Erotic delusion",
-            "I. Conversion",
-            "J. Flight of health"
+            "Morbid jealousy",
+            "Transference",
+            "Counter transference",
+            "Resistance",
+            "Acting out",
+            "Introjection",
+            "Dissociation",
+            "Erotic delusion",
+            "Conversion",
+            "Flight of health"
         ],
         "official_answer": "B. Transference. Transference is the redirection of a patient's feelings for a significant person to the therapist.",
         "ai_answer": {
@@ -139242,22 +139580,22 @@
         "unique_id": 6513
     },
     {
-        "id": "M22-17-SAQ",
+        "id": "M22-17-EMQ",
         "topic": "Psychiatry",
         "subtopic": "7 Neurotic, stress-related and somatoform disorders",
         "type": "EMQ",
         "question": "Match the following clinical scenario to the most appropriate treatment from the list provided. Scenario: 50 years old housewife, anxiety for 6 months, worry about COVID, but no identifiable triggers, has chest discomfort, palpitations, perceived SOB, increase in bowel movement. Random bouts.",
         "options": [
-            "A. Zopiclone",
-            "B. Graded exposure and relaxation",
-            "C. Exposure and response prevention",
-            "D. Haloperidol",
-            "E. Diazepam",
-            "F. Fluoxetine",
-            "G. CBT",
-            "H. Negative reinforcement",
-            "I. Flooding",
-            "J. Punishment"
+            "Zopiclone",
+            "Graded exposure and relaxation",
+            "Exposure and response prevention",
+            "Haloperidol",
+            "Diazepam",
+            "Fluoxetine",
+            "CBT",
+            "Negative reinforcement",
+            "Flooding",
+            "Punishment"
         ],
         "official_answer": "F. Fluoxetine. The symptoms are suggestive of Generalized Anxiety Disorder (GAD), for which an SSRI like Fluoxetine is a first-line pharmacological treatment.",
         "ai_answer": {
@@ -139268,22 +139606,22 @@
         "unique_id": 6514
     },
     {
-        "id": "M22-18-SAQ",
+        "id": "M22-18-EMQ",
         "topic": "Psychiatry",
         "subtopic": "7 Neurotic, stress-related and somatoform disorders",
         "type": "EMQ",
         "question": "Match the following clinical scenario to the most appropriate treatment from the list provided. Scenario: 47 years old male, anxiety for 1 year after a road traffic accident in which his car got knocked over by a lorry. Been on antidepressants for 6 months, no improvement. Avoidance of driving. Bad dreams, SOB, feels anxious when thinking about the RTA.",
         "options": [
-            "A. Zopiclone",
-            "B. Graded exposure and relaxation",
-            "C. Exposure and response prevention",
-            "D. Haloperidol",
-            "E. Diazepam",
-            "F. Fluoxetine",
-            "G. CBT",
-            "H. Negative reinforcement",
-            "I. Flooding",
-            "J. Punishment"
+            "Zopiclone",
+            "Graded exposure and relaxation",
+            "Exposure and response prevention",
+            "Haloperidol",
+            "Diazepam",
+            "Fluoxetine",
+            "CBT",
+            "Negative reinforcement",
+            "Flooding",
+            "Punishment"
         ],
         "official_answer": "G. CBT. The symptoms are suggestive of Post-Traumatic Stress Disorder (PTSD), for which trauma-focused CBT is a first-line treatment.",
         "ai_answer": {
@@ -139294,22 +139632,22 @@
         "unique_id": 6515
     },
     {
-        "id": "M22-19-SAQ",
+        "id": "M22-19-EMQ",
         "topic": "Psychiatry",
         "subtopic": "7 Neurotic, stress-related and somatoform disorders",
         "type": "EMQ",
         "question": "Match the following clinical scenario to the most appropriate treatment from the list provided. Scenario: 30 years old female, repeated washing of hands for 6 months. Fear of dirt on hands. Been on antidepressants for 3 months, no improvement. Skin peeling of hands on examination.",
         "options": [
-            "A. Zopiclone",
-            "B. Graded exposure and relaxation",
-            "C. Exposure and response prevention",
-            "D. Haloperidol",
-            "E. Diazepam",
-            "F. Fluoxetine",
-            "G. CBT",
-            "H. Negative reinforcement",
-            "I. Flooding",
-            "J. Punishment"
+            "Zopiclone",
+            "Graded exposure and relaxation",
+            "Exposure and response prevention",
+            "Haloperidol",
+            "Diazepam",
+            "Fluoxetine",
+            "CBT",
+            "Negative reinforcement",
+            "Flooding",
+            "Punishment"
         ],
         "official_answer": "C. Exposure and response prevention. This is the classic presentation of Obsessive-Compulsive Disorder (OCD) with contamination obsessions and washing compulsions, for which ERP is the gold standard psychotherapy.",
         "ai_answer": {
@@ -139320,22 +139658,22 @@
         "unique_id": 6516
     },
     {
-        "id": "M22-20-SAQ",
+        "id": "M22-20-EMQ",
         "topic": "Psychiatry",
         "subtopic": "4 Substance abuse",
         "type": "EMQ",
         "question": "Match the following clinical scenario to the most appropriate treatment from the list provided. Scenario: 65 years old male, admitted 2 days ago due to head injury. 3 decade history of drinking. Now presents with acute confusion, sleep disturbance and bilateral hand tremor.",
         "options": [
-            "A. Zopiclone",
-            "B. Graded exposure and relaxation",
-            "C. Exposure and response prevention",
-            "D. Haloperidol",
-            "E. Diazepam",
-            "F. Fluoxetine",
-            "G. CBT",
-            "H. Negative reinforcement",
-            "I. Flooding",
-            "J. Punishment"
+            "Zopiclone",
+            "Graded exposure and relaxation",
+            "Exposure and response prevention",
+            "Haloperidol",
+            "Diazepam",
+            "Fluoxetine",
+            "CBT",
+            "Negative reinforcement",
+            "Flooding",
+            "Punishment"
         ],
         "official_answer": "E. Diazepam. The patient is experiencing alcohol withdrawal, potentially delirium tremens, which is managed with benzodiazepines like Diazepam.",
         "ai_answer": {
@@ -139346,22 +139684,22 @@
         "unique_id": 6517
     },
     {
-        "id": "M22-21-SAQ",
+        "id": "M22-21-EMQ",
         "topic": "Psychiatry",
         "subtopic": "7 Neurotic, stress-related and somatoform disorders",
         "type": "EMQ",
         "question": "Match the following clinical scenario to the most appropriate treatment from the list provided. Scenario: 21 years old male nursing student, anxiety when taking blood. Chest discomfort, blank mind during clinical sessions and avoidance of clinical sessions. No anxiety symptoms at other times.",
         "options": [
-            "A. Zopiclone",
-            "B. Graded exposure and relaxation",
-            "C. Exposure and response prevention",
-            "D. Haloperidol",
-            "E. Diazepam",
-            "F. Fluoxetine",
-            "G. CBT",
-            "H. Negative reinforcement",
-            "I. Flooding",
-            "J. Punishment"
+            "Zopiclone",
+            "Graded exposure and relaxation",
+            "Exposure and response prevention",
+            "Haloperidol",
+            "Diazepam",
+            "Fluoxetine",
+            "CBT",
+            "Negative reinforcement",
+            "Flooding",
+            "Punishment"
         ],
         "official_answer": "B. Graded exposure and relaxation. This is a specific phobia (blood-injection-injury type), which is best treated with systematic desensitization, involving graded exposure and relaxation techniques.",
         "ai_answer": {
@@ -139734,7 +140072,7 @@
         "unique_id": 6535
     },
     {
-        "id": "M07-51-SAQ",
+        "id": "M07-51-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "EMQ",
@@ -139760,7 +140098,7 @@
         "unique_id": 6536
     },
     {
-        "id": "M07-52-SAQ",
+        "id": "M07-52-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "EMQ",
@@ -139786,7 +140124,7 @@
         "unique_id": 6537
     },
     {
-        "id": "M07-53-SAQ",
+        "id": "M07-53-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "EMQ",
@@ -139812,7 +140150,7 @@
         "unique_id": 6538
     },
     {
-        "id": "M07-54-SAQ",
+        "id": "M07-54-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "EMQ",
@@ -139838,7 +140176,7 @@
         "unique_id": 6539
     },
     {
-        "id": "M07-55-SAQ",
+        "id": "M07-55-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "EMQ",
@@ -139864,7 +140202,7 @@
         "unique_id": 6540
     },
     {
-        "id": "M09-56-SAQ",
+        "id": "M09-56-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "EMQ",
@@ -139890,7 +140228,7 @@
         "unique_id": 6541
     },
     {
-        "id": "M09-57-SAQ",
+        "id": "M09-57-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "EMQ",
@@ -139916,7 +140254,7 @@
         "unique_id": 6542
     },
     {
-        "id": "M09-58-SAQ",
+        "id": "M09-58-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "EMQ",
@@ -139942,7 +140280,7 @@
         "unique_id": 6543
     },
     {
-        "id": "M09-59-SAQ",
+        "id": "M09-59-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "EMQ",
@@ -139968,7 +140306,7 @@
         "unique_id": 6544
     },
     {
-        "id": "M09-60-SAQ",
+        "id": "M09-60-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "EMQ",
@@ -139994,7 +140332,7 @@
         "unique_id": 6545
     },
     {
-        "id": "M17-61-SAQ",
+        "id": "M17-61-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "EMQ",
@@ -140021,7 +140359,7 @@
         "unique_id": 6546
     },
     {
-        "id": "M17-62-SAQ",
+        "id": "M17-62-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "EMQ",
@@ -140048,7 +140386,7 @@
         "unique_id": 6547
     },
     {
-        "id": "M17-63-SAQ",
+        "id": "M17-63-EMQ",
         "topic": "Psychiatry",
         "subtopic": "7 Neurotic, stress-related and somatoform disorders",
         "type": "EMQ",
@@ -140075,7 +140413,7 @@
         "unique_id": 6548
     },
     {
-        "id": "M17-64-SAQ",
+        "id": "M17-64-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "EMQ",
@@ -140102,7 +140440,7 @@
         "unique_id": 6549
     },
     {
-        "id": "M17-65-SAQ",
+        "id": "M17-65-EMQ",
         "topic": "Psychiatry",
         "subtopic": "6 Mood disorders",
         "type": "EMQ",
@@ -140129,7 +140467,7 @@
         "unique_id": 6550
     },
     {
-        "id": "M17-66-SAQ",
+        "id": "M17-66-EMQ",
         "topic": "Psychiatry",
         "subtopic": "5 Psychotic Disorders",
         "type": "EMQ",
@@ -140156,7 +140494,7 @@
         "unique_id": 6551
     },
     {
-        "id": "M17-67-SAQ",
+        "id": "M17-67-EMQ",
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "EMQ",
@@ -140529,7 +140867,7 @@
         "unique_id": 6568
     },
     {
-        "id": "M15-01-SAQ",
+        "id": "M15-01-EMQ",
         "topic": "Psychiatry",
         "subtopic": "5 Psychotic Disorders",
         "type": "EMQ",
@@ -140556,7 +140894,7 @@
         "correctAnswerIndex": 2
     },
     {
-        "id": "M15-02-SAQ",
+        "id": "M15-02-EMQ",
         "topic": "Psychiatry",
         "subtopic": "5 Psychotic Disorders",
         "type": "EMQ",
@@ -140583,7 +140921,7 @@
         "correctAnswerIndex": 3
     },
     {
-        "id": "M15-03-SAQ",
+        "id": "M15-03-EMQ",
         "topic": "Psychiatry",
         "subtopic": "5 Psychotic Disorders",
         "type": "EMQ",
@@ -140610,7 +140948,7 @@
         "correctAnswerIndex": 6
     },
     {
-        "id": "M15-04-SAQ",
+        "id": "M15-04-EMQ",
         "topic": "Psychiatry",
         "subtopic": "5 Psychotic Disorders",
         "type": "EMQ",
@@ -140637,7 +140975,7 @@
         "correctAnswerIndex": 1
     },
     {
-        "id": "M15-05-SAQ",
+        "id": "M15-05-EMQ",
         "topic": "Psychiatry",
         "subtopic": "5 Psychotic Disorders",
         "type": "EMQ",
@@ -140816,7 +141154,7 @@
         "unique_id": 6580
     },
     {
-        "id": "M09-01-SAQ",
+        "id": "M09-01-EMQ",
         "topic": "Psychiatry",
         "subtopic": "6 Mood disorders",
         "type": "EMQ",
@@ -140843,7 +141181,7 @@
         "correctAnswerIndex": 9
     },
     {
-        "id": "M09-02-SAQ",
+        "id": "M09-02-EMQ",
         "topic": "Psychiatry",
         "subtopic": "6 Mood disorders",
         "type": "EMQ",
