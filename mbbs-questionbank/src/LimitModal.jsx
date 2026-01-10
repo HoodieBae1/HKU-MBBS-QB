@@ -12,7 +12,6 @@ const LimitModal = ({ isOpen, onClose, onUpgrade, type, requiredAmount, currentB
   // --- SHARED FEATURES LIST ---
   // We reuse this for both Sales and Premium Status to show entitlements
   const FEATURES = [
-    { text: "Full Database Access (10,000+ Questions)", bold: true },
     { text: "50MB Cloud Storage", sub: "~10k notes & 30 images" },
     { text: "$100 HKD AI Credits", sub: "Enough for 1000 AI Consultations" },
     { text: "Live Progress & Accuracy Stats", sub: "By specialty and topic" },
