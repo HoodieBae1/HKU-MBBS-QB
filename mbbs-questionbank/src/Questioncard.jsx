@@ -51,7 +51,7 @@ const QuestionCard = ({
   const progressIntervalRef = useRef(null);
   const HOLD_DURATION = 800; 
 
-  const isMCQ = data.type === 'MCQ';
+  const isMCQ = data.type === 'MCQ' || data.type === 'EMQ';
   const isRevealed = isCompleted || isRevealedOverride || false;
 
   const isStandardUser = userProfile?.subscription_tier === 'standard';

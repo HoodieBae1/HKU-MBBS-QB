@@ -540,7 +540,7 @@ const App = () => {
 					(p.score !== null && p.score !== undefined) ||
 					(p.selected_option !== null && p.selected_option !== undefined);
 				if (hasAnswer) {
-					if (q.type === "MCQ") mcqCount++;
+					if (q.type === "MCQ" || q.type === "EMQ") mcqCount++;
 					else saqCount++;
 				}
 			}
@@ -910,7 +910,7 @@ const App = () => {
 			existingEntry &&
 			(existingEntry.score !== null || existingEntry.selected_option !== null);
 
-		if (questionData.type === "MCQ") {
+		if (questionData.type === "MCQ" || questionData.type === "EMQ") {
 			if (isCurrentlyCompleted && existingEntry.selected_option === mcqSelection) {
 				const hasDataToKeep =
 					(existingEntry.notes && cleanHtmlContent(existingEntry.notes) !== null) ||
@@ -1064,7 +1064,7 @@ const App = () => {
 		const currentProgress = userProgress[idString] || {};
 
 		let finalScore = modalData.score;
-		if (pendingQuestion.type === "MCQ") {
+		if (pendingQuestion.type === "MCQ" || pendingQuestion.type === "EMQ") {
 			if (pendingMCQSelection !== null) {
 				const isCorrect = pendingMCQSelection === pendingQuestion.correctAnswerIndex;
 				finalScore = isCorrect ? 1 : 0;
@@ -1074,7 +1074,7 @@ const App = () => {
 		}
 
 		const finalSelection =
-			pendingQuestion.type === "MCQ"
+			(pendingQuestion.type === "MCQ" || pendingQuestion.type === "EMQ")
 				? pendingMCQSelection ?? modalInitialData?.selected_option
 				: null;
 		const cleanedNotes = cleanHtmlContent(modalData.notes);
@@ -1216,7 +1216,7 @@ const App = () => {
 					const p = userProgress[String(qItem.unique_id)];
 					if (!p || p.score === null || p.score === undefined) return false;
 					let max = p.max_score;
-					if (!max && qItem.type === "MCQ") max = 1;
+					if (!max && (qItem.type === "MCQ" || qItem.type === "EMQ")) max = 1;
 					if (!max) return false;
 					return p.score < max;
 				};
@@ -1717,6 +1717,7 @@ const App = () => {
 											>
 												<option value="All">All Types</option>
 												<option value="MCQ">MCQ</option>
+												<option value="EMQ">EMQ</option>
 												<option value="SAQ">SAQ</option>
 											</select>
 										</div>
@@ -1848,8 +1849,8 @@ const App = () => {
 								userProfile.subscription_status === "trial"
 							) {
 								if (!isCompleted) {
-									if (q.type === "MCQ" && usageStats.mcqCount >= 10) isLocked = true;
-									else if (q.type !== "MCQ" && usageStats.saqCount >= 5)
+									if ((q.type === "MCQ" || q.type === "EMQ") && usageStats.mcqCount >= 10) isLocked = true;
+									else if (q.type !== "MCQ" && q.type !== "EMQ" && usageStats.saqCount >= 5)
 										isLocked = true;
 								}
 							}
