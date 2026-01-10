@@ -14,7 +14,7 @@ const LimitModal = ({ isOpen, onClose, onUpgrade, type, requiredAmount, currentB
   const FEATURES = [
     { text: "Full Database Access (10,000+ Questions)", bold: true },
     { text: "50MB Cloud Storage", sub: "~10k notes & 30 images" },
-    { text: "$100 HKD AI Credits", sub: "Enough for 10000 AI Consultations" },
+    { text: "$100 HKD AI Credits", sub: "Enough for 1000 AI Consultations" },
     { text: "Live Progress & Accuracy Stats", sub: "By specialty and topic" },
     { text: "Advanced Filtering", sub: "Specialty and subtopic filters" },
     { text: "Notes Panel Access", sub: "See notes with Q&A" }
@@ -84,7 +84,7 @@ const LimitModal = ({ isOpen, onClose, onUpgrade, type, requiredAmount, currentB
                 {/* Active Status Card */}
                 <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-center justify-between">
                     <div>
-                        <p className="text-xs font-bold text-emerald-600 uppercase tracking-wide">Current Plan - Active Until Feb 14</p>
+                        <p className="text-xs font-bold text-emerald-600 uppercase tracking-wide">Current Plan - Active Until Feb 14, 2026</p>
                         <p className="text-xl font-bold text-emerald-900">Premium</p>
                     </div>
                     <div className="h-10 w-10 bg-white rounded-full flex items-center justify-center shadow-sm border border-emerald-100">
@@ -131,16 +131,12 @@ const LimitModal = ({ isOpen, onClose, onUpgrade, type, requiredAmount, currentB
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 relative overflow-hidden">
                  <div className="flex justify-between items-end mb-2">
                     <div>
-                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Subscription (Valid till Feb 14)</p>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Subscription (Valid till Feb 14, 2026)</p>
                         <div className="flex items-center gap-2 mt-1">
                             <span className="text-3xl font-bold text-slate-800">$899</span>
                             <span className="text-sm font-bold text-slate-600">HKD</span>
                         </div>
                     </div>
-                 </div>
-                 <div className="flex items-center gap-1.5 text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded w-fit">
-                    <Clock className="w-3 h-3" />
-                    Early Bird Special (Ends Jan 7, 2026)
                  </div>
               </div>
 
