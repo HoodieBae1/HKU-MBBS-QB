@@ -206996,7 +206996,7 @@
         "topic": "Pediatrics",
         "subtopic": "2 Perinatal and Neonatal Medicine",
         "type": "SAQ",
-        "question": "What is the diagnosis?",
+        "question": "What is the diagnosis? <img src='https://i.imgur.com/9WOTDTS.png' />",
         "official_answer": "Cystic hygroma",
         "ai_answer": {
             "agreement": "Agree",
@@ -207010,7 +207010,7 @@
         "topic": "Pediatrics",
         "subtopic": "2 Perinatal and Neonatal Medicine",
         "type": "SAQ",
-        "question": "Other than surgical excision what can be done?",
+        "question": "Other than surgical excision what can be done? <img src='https://i.imgur.com/9WOTDTS.png' />",
         "official_answer": "Sclerotherapy (Cystic hygroma is basically a lymphatic malformation, injects glue called “Ok432” picibanil to stick the walls of the cyst tgt)",
         "ai_answer": {
             "agreement": "Agree",
@@ -207024,7 +207024,7 @@
         "topic": "Pediatrics",
         "subtopic": "6 Cardiology",
         "type": "SAQ",
-        "question": "Baby also has ejection systolic murmur at left upper sternal border with radiation to back. Femoral pulse absent (?weak) and radial pulse is normal. What CVS problem does baby have?",
+        "question": "Baby also has ejection systolic murmur at left upper sternal border with radiation to back. Femoral pulse absent (?weak) and radial pulse is normal. What CVS problem does baby have? <img src='https://i.imgur.com/9WOTDTS.png' />",
         "official_answer": "Coarctation of aorta",
         "ai_answer": {
             "agreement": "Agree",
@@ -207038,7 +207038,7 @@
         "topic": "Pediatrics",
         "subtopic": "1 General Pediatrics",
         "type": "SAQ",
-        "question": "Given karyotype. What is diagnosis?",
+        "question": "Given karyotype. What is diagnosis? <img src='https://imgur.com/mZvqouA.png'/>",
         "official_answer": "Turner syndrome (only one X)",
         "ai_answer": {
             "agreement": "Agree",
@@ -207052,7 +207052,7 @@
         "topic": "Pediatrics",
         "subtopic": "1 General Pediatrics",
         "type": "SAQ",
-        "question": "Name three physical features at birth.",
+        "question": "Name three physical features at birth. <img src='https://imgur.com/mZvqouA.png'/>",
         "official_answer": "Face: Low hairline, Low set ears, Narrow high arched palate, Retrognathia\nChest: Square shield chest, widely spaced nipples\nHands: Cubitus valgus, Shortened 4th metacarpal, Spoon-shaped and hypoplastic nails",
         "ai_answer": {
             "agreement": "Agree",
@@ -207066,7 +207066,7 @@
         "topic": "Pediatrics",
         "subtopic": "9 Nephrology and Urology",
         "type": "SAQ",
-        "question": "What renal problem may baby have in the future?",
+        "question": "What renal problem may baby have in the future? <img src='https://imgur.com/mZvqouA.png'/>",
         "official_answer": "Horseshoe kidneys, CKD",
         "ai_answer": {
             "agreement": "Agree",
@@ -207080,7 +207080,7 @@
         "topic": "Pediatrics",
         "subtopic": "8 Endocrinology",
         "type": "SAQ",
-        "question": "What problems may she have in puberty? List two.",
+        "question": "What problems may she have in puberty? List two. <img src='https://imgur.com/mZvqouA.png'/>",
         "official_answer": "Primary amenorrhea, short stature",
         "ai_answer": {
             "agreement": "Agree",
@@ -207787,7 +207787,7 @@
         "topic": "Pediatrics",
         "subtopic": "6 Cardiology",
         "type": "SAQ",
-        "question": "What are the most pertinent findings in history and physical examination of the patient? (3 marks)",
+        "question": "12/F Fever for 2-3 weeks. Chest pain for 2-3 days, worsen when lie down and with breathing. Joint pain (right mid finger PIP joint, right thumb for 3 weeks, left knee for 3 days), joint pain worsen after prolong resting, affecting writing. Rash (erythematous macular rash with central pallor, resolved before admission). TOCC -ve. P/E: Temp 38.3ºC, Pansystolic murmur at LLSB radiate to apex, few basal crepitation. Cervical LN+. Joint warm, swelling, tender. What are the most pertinent findings in history and physical examination of the patient? (3 marks)",
         "official_answer": "Rash / erythema marginatum, persistent fever, pericarditis pain, arthritis → JONES criteria (Rheumatic fever)",
         "ai_answer": {
             "agreement": "Agree",
@@ -207801,7 +207801,7 @@
         "topic": "Pediatrics",
         "subtopic": "6 Cardiology",
         "type": "SAQ",
-        "question": "What are the differential diagnoses? (3 marks)",
+        "question": "12/F Fever for 2-3 weeks. Chest pain for 2-3 days, worsen when lie down and with breathing. Joint pain (right mid finger PIP joint, right thumb for 3 weeks, left knee for 3 days), joint pain worsen after prolong resting, affecting writing. Rash (erythematous macular rash with central pallor, resolved before admission). TOCC -ve. P/E: Temp 38.3ºC, Pansystolic murmur at LLSB radiate to apex, few basal crepitation. Cervical LN+. Joint warm, swelling, tender. What are the differential diagnoses? (3 marks)",
         "official_answer": "Acute rheumatic fever, systemic onset JIA, systemic lupus erythematosus, infective endocarditis",
         "ai_answer": {
             "agreement": "Agree",
@@ -207815,7 +207815,7 @@
         "topic": "Pediatrics",
         "subtopic": "6 Cardiology",
         "type": "SAQ",
-        "question": "What are the appropriate investigations. (3 marks)",
+        "question": "12/F Fever for 2-3 weeks. Chest pain for 2-3 days, worsen when lie down and with breathing. Joint pain (right mid finger PIP joint, right thumb for 3 weeks, left knee for 3 days), joint pain worsen after prolong resting, affecting writing. Rash (erythematous macular rash with central pallor, resolved before admission). TOCC -ve. P/E: Temp 38.3ºC, Pansystolic murmur at LLSB radiate to apex, few basal crepitation. Cervical LN+. Joint warm, swelling, tender. What are the appropriate investigations. (3 marks)",
         "official_answer": "ECG, Echocardiogram, ASOT / throat culture for strep\nCBCdc, ESR CRP, ANA / anti-dsDNA, Complements, Rheumatoid factor, ?blood C/ST if still febrile",
         "ai_answer": {
             "agreement": "Agree",
@@ -207829,7 +207829,7 @@
         "topic": "Pediatrics",
         "subtopic": "6 Cardiology",
         "type": "SAQ",
-        "question": "How would you manage this patient? (1 mark)",
+        "question": "12/F Fever for 2-3 weeks. Chest pain for 2-3 days, worsen when lie down and with breathing. Joint pain (right mid finger PIP joint, right thumb for 3 weeks, left knee for 3 days), joint pain worsen after prolong resting, affecting writing. Rash (erythematous macular rash with central pallor, resolved before admission). TOCC -ve. P/E: Temp 38.3ºC, Pansystolic murmur at LLSB radiate to apex, few basal crepitation. Cervical LN+. Joint warm, swelling, tender. How would you manage this patient? (1 mark)",
         "official_answer": "Oral penicillin x 10d.",
         "ai_answer": {
             "agreement": "Agree",
