@@ -156516,7 +156516,7 @@
             "Near total thyroidectomy",
             "Total thyroidectomy"
         ],
-        "correctAnswerIndex": 3,
+        "correctAnswerIndex": 2,
         "official_answer": "C. Completion thyroidectomy",
         "ai_answer": {
             "agreement": "Agree",
