@@ -1,6 +1,14 @@
 {
-  "currentVersion": "4.2.2",
+  "currentVersion": "4.2.3",
   "history": [
+    {
+      "version": "4.2.3",
+      "date": "2026-1-10",
+      "title": "Allow filter by multiple question types",
+      "changes": [
+        "Refactor: Changed dropdown for question type to checkbox to select multiple question types (ie. MCQ + EMQ)."
+      ]
+    },
     {
       "version": "4.2.2",
       "date": "2026-1-10",
