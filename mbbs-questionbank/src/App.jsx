@@ -24,7 +24,9 @@ import {
 	ZapOff,
 	Lock,
 	ArrowRight,
-	ClipboardList
+	ClipboardList,
+	CheckSquare, 
+	Square 
 } from "lucide-react";
 import { Virtuoso } from "react-virtuoso";
 import { supabase } from "./supabase";
@@ -95,10 +97,8 @@ const App = () => {
 	const [userProgress, setUserProgress] = useState({});
 	const [aiUsageCount, setAiUsageCount] = useState(0);
 	
-	// --- NEW: Track if initial progress fetch is done to allow initial sort ---
 	const [progressLoaded, setProgressLoaded] = useState(false);
 
-	// --- NEW STATES ---
 	const [showLoginModal, setShowLoginModal] = useState(false);
 	const [limitModal, setLimitModal] = useState({
 		isOpen: false,
@@ -131,6 +131,8 @@ const App = () => {
 	const [modalViewMode, setModalViewMode] = useState("FULL");
 
 	const [filtersOpen, setFiltersOpen] = useStickyState(true, "app_filtersOpen");
+	// --- FIX: State to handle overflow timing for dropdown visibility ---
+	const [allowOverflow, setAllowOverflow] = useState(false);
   	const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
 	const [searchInput, setSearchInput] = useState("");
@@ -150,7 +152,14 @@ const App = () => {
 		"All",
 		"app_selectedSubtopic"
 	);
-	const [selectedType, setSelectedType] = useStickyState("All", "app_selectedType");
+	
+	const [selectedTypes, setSelectedTypes] = useStickyState(
+		["MCQ", "EMQ", "SAQ"], 
+		"app_selectedTypes_list"
+	);
+	const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+	const typeDropdownRef = useRef(null);
+
 	const [sortOrder, setSortOrder] = useStickyState("Newest", "app_sortOrder");
 
 	const initialScrollIndex = useMemo(() => {
@@ -168,10 +177,9 @@ const App = () => {
 
 	const lastUserId = useRef(null);
 
-	const [showReportListModal, setShowReportListModal] = useState(false); // <--- NEW STATE
+	const [showReportListModal, setShowReportListModal] = useState(false);
     const virtuosoRef = useRef(null);
 
-	// --- NEW: Ref to track previous status for auto-upgrade detection ---
 	const prevStatusRef = useRef(null); 
 
 	useEffect(() => {
@@ -181,68 +189,85 @@ const App = () => {
 		return () => clearTimeout(timer);
 	}, [searchInput]);
 
+	// --- FIX: Logic to handle CSS Overflow for Dropdown ---
+	// If filters are open, wait for animation (300ms) then set overflow to visible.
+	// If filters are closing, set overflow to hidden immediately so animation clips correctly.
+	useEffect(() => {
+		if (filtersOpen) {
+			const timer = setTimeout(() => setAllowOverflow(true), 300);
+			// Also set it immediately if mounting with open state (optional, helps on reload)
+			// But for smooth animation, the timeout is key. 
+			// We can check if it's the very first render, but simple timeout is usually robust enough.
+			return () => clearTimeout(timer);
+		} else {
+			setAllowOverflow(false);
+		}
+	}, [filtersOpen]);
+	
+	// Immediate sync on mount to prevent 300ms hidden state on reload
+	useEffect(() => {
+		if (filtersOpen) setAllowOverflow(true);
+	}, []); 
+	// --------------------------------------------------------
+
+	useEffect(() => {
+		function handleClickOutside(event) {
+			if (typeDropdownRef.current && !typeDropdownRef.current.contains(event.target)) {
+				setShowTypeDropdown(false);
+			}
+		}
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+		};
+	}, []);
+
 	// ------------------------------------------------------------
 	// START: POLLING & AUTO-REFRESH LOGIC
 	// ------------------------------------------------------------
 	
-	// 1. Background Polling (Every 5 minutes)
-	// Triggers ONLY if user is logged in AND not yet active.
 	useEffect(() => {
 		if (!session || userProfile?.subscription_status === 'active') return;
 
-		// console.log("Background Polling Active: Checking payment status every 5 mins...");
 		const intervalId = setInterval(() => {
 			if (session?.user?.id) {
 				fetchUserProfile(session.user.id);
 			}
-		}, 5 * 60 * 1000); // 5 minutes in milliseconds
+		}, 5 * 60 * 1000); 
 
 		return () => clearInterval(intervalId);
 	}, [session, userProfile?.subscription_status]);
 
-	// 2. State Transition Logic
-	// Detects if status flipped from (not active) -> (active) and opens modal
 	useEffect(() => {
 		const prevStatus = prevStatusRef.current;
 		const currentStatus = userProfile?.subscription_status;
 
 		if (userProfile) {
-			// Logic: If we had a previous status (so not a fresh page load),
-			// AND it wasn't active, AND it is now active...
 			if (prevStatus && prevStatus !== 'active' && currentStatus === 'active') {
-				// Force open the Success Modal
 				setLimitModal({
 					isOpen: true,
 					type: 'PREMIUM_INFO',
 					required: 0,
 					balance: 0
 				});
-				// Optional: if Payment modal was open, close it
 				setShowPaymentModal(false);
 			}
-			// Update the ref for the next comparison
 			prevStatusRef.current = currentStatus;
 		}
 	}, [userProfile]);
 
  	useEffect(() => {
         const fetchReports = async () => {
-            // Select question_id AND status
             const { data, error } = await supabase
                 .from('question_reports')
                 .select('question_id, status');
             
             if (!error && data) {
-                // Filter: Only add to the Set if the status is NOT 'resolved'
-                // This ensures that once an Admin fixes it, the red icon disappears for users.
                 const activeIssues = data.filter(r => r.status !== 'resolved');
-                
                 const ids = new Set(activeIssues.map(r => r.question_id));
                 setReportedQuestionIds(ids);
             }
         };
-
-        // Only run if not already loading profile to avoid duplicate calls on init
         fetchReports();
     }, []);
 	
@@ -251,32 +276,16 @@ const App = () => {
 	// ------------------------------------------------------------
 
 	const handleJumpToQuestion = (uniqueId) => {
-		// 1. Reset all filters to ensure the question is visible
 		setSearchInput("");
 		setSelectedTopic("All");
 		setSelectedSubtopic("All");
-		setSelectedType("All");
-		// Optional: Reset sort to ensure predictable indexing, or keep current sort.
-		// For consistency, let's reset to Newest so logic matches 'questions' array closely if needed
+		setSelectedTypes(["MCQ", "EMQ", "SAQ"]); 
 		setSortOrder("Newest"); 
 
-		// 2. Close the list modal
 		setShowReportListModal(false);
 
-		// 3. Find index and scroll (using setTimeout to allow React to re-render the list with "All" filters)
 		setTimeout(() => {
-			// We need to find the index within the *current filtered list*. 
-			// Since we reset filters to "All", this effectively searches the main list.
-			// Note: If you have complex sorting logic, this lookup must match the current 'filteredQuestions' logic.
-			// Since we reset sortOrder to "Newest" above, we should assume the list re-orders to Newest.
-			
-			// However, 'filteredQuestions' is derived. We can't access the *next* render's filteredQuestions here easily.
-			// A simple approach: The 'filteredQuestions' will update. 
-			// We search the 'questions' array based on the Default Sort (Newest).
-			
-			// Let's create a temporary sorted list matching "Newest" logic to find the index:
 			const sortedForIndex = [...questions].sort((a, b) => {
-					// Match "Newest" sort logic from your useMemo
 					const getYearFromId = (idStr) => {
 					if (!idStr || !idStr.startsWith("M")) return 0;
 					const yy = parseInt(idStr.substring(1, 3), 10);
@@ -296,11 +305,10 @@ const App = () => {
 			} else {
 				alert("Could not find question in the current list.");
 			}
-		}, 150); // Slight delay to ensure state updates and re-render
+		}, 150);
 	};
 	
 	useEffect(() => {
-		// 1. Initial Session Check
 		supabase.auth.getSession().then(({ data: { session } }) => {
 			setSession(session);
 			if (session) {
@@ -313,7 +321,6 @@ const App = () => {
 			}
 		});
 
-		// 2. Auth State Listener
 		const {
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -336,9 +343,9 @@ const App = () => {
 			} else {
 				lastUserId.current = null;
 				setUserProgress({});
-				setProgressLoaded(false); // Reset this to ensure clean sort on re-login
+				setProgressLoaded(false); 
 				setUserProfile(null);
-				prevStatusRef.current = null; // Reset polling ref on logout
+				prevStatusRef.current = null; 
 				setProfileLoading(false);
 				setIsAdmin(false);
 				setIsRecruiter(false);
@@ -454,7 +461,6 @@ const App = () => {
 			});
 			setUserProgress(progressMap);
 			
-			// --- Signal that progress is ready for the initial sort ---
 			setProgressLoaded(true);
 
 			const { count } = await supabase
@@ -549,13 +555,11 @@ const App = () => {
 	}, [userProgress, questions]);
 
 	const handleReportQuestion = (questionData) => {
-		// Guest Check
 		if (!session) {
 			setShowLoginModal(true);
 			return;
 		}
 		
-		// Set the question to be reported and open modal
 		setPendingReportQuestion(questionData);
 		setReportModalOpen(true);
 		};
@@ -567,30 +571,25 @@ const App = () => {
 		const idStr = String(pendingReportQuestion.unique_id);
 
 		try {
-			// 1. Optimistic UI update (make icon red immediately)
 			setReportedQuestionIds(prev => new Set(prev).add(idStr));
 
-			// 2. Send to Supabase
 			const { error } = await supabase
 				.from('question_reports')
 				.insert({
 					question_id: idStr,
 					user_id: session.user.id,
 					reason: reason,
-					status: 'new' // Explicitly setting status
+					status: 'new' 
 				});
 
 			if (error) throw error;
 
-			// 3. Success state
 			setReportModalOpen(false);
 			setPendingReportQuestion(null);
-			// Optional: You could show a small toast notification here
 			
 		} catch (error) {
 			console.error("Report error:", error);
 			alert("Failed to submit report. Please check your connection.");
-			// Revert optimistic update if failed
 			setReportedQuestionIds(prev => {
 				const next = new Set(prev);
 				next.delete(idStr);
@@ -615,7 +614,6 @@ const App = () => {
 	};
 
 	const handleDownloadData = async () => {
-		// --- GUEST BLOCK ---
 		if (!session) {
 			setShowLoginModal(true);
 			return;
@@ -697,7 +695,7 @@ const App = () => {
 
 	const cleanHtmlContent = (html) => {
 		if (!html) return null;
-		if (html.includes("<img")) return html; // Allow images
+		if (html.includes("<img")) return html; 
 		const textOnly = html
 			.replace(/<[^>]*>/g, "")
 			.replace(/&nbsp;/g, " ")
@@ -713,7 +711,6 @@ const App = () => {
 	};
 
 	const handleTextChange = (questionId, newText) => {
-		// --- GUEST BLOCK ---
 		if (!session) {
 			setShowLoginModal(true);
 			return;
@@ -730,7 +727,6 @@ const App = () => {
 	};
 
 	const handleAIRequest = async (questionData, modelId) => {
-		// --- GUEST BLOCK ---
 		if (!session) {
 			setShowLoginModal(true);
 			return;
@@ -739,7 +735,6 @@ const App = () => {
 		const idStr = String(questionData.unique_id);
 		const isCached = aiState[idStr]?.purchasedModels?.includes(modelId);
 
-		// GATEKEEPER
 		if (!isCached && userProfile?.subscription_tier === "standard") {
 			const isTrial = userProfile.subscription_status === "trial";
 			const balance = userProfile.ai_credit_balance || 0;
@@ -752,7 +747,6 @@ const App = () => {
 			if (!isTrial) {
 				const baseCost = AI_COST_MAP[modelId] || 0.03;
 				const requiredCredits = baseCost * 20;
-				// Overdraft logic: block only if ALREADY negative
 				if (balance < 0) {
 					setLimitModal({
 						isOpen: true,
@@ -838,13 +832,11 @@ const App = () => {
 	};
 
 	const handleToggleFlag = async (questionData, currentDraftText) => {
-		// --- GUEST BLOCK ---
 		if (!session) {
 			setShowLoginModal(true);
 			return;
 		}
 
-		// --- STORAGE CHECK ---
 		const idString = String(questionData.unique_id);
 		if (userProfile?.subscription_tier === "standard") {
 			const isTrial = userProfile.subscription_status === "trial";
@@ -861,7 +853,6 @@ const App = () => {
 				return;
 			}
 		}
-		// ---------------------
 
 		const currentProgress = userProgress[idString] || {};
 		const newFlagStatus = !currentProgress.is_flagged;
@@ -898,7 +889,6 @@ const App = () => {
 		saqResponse,
 		viewMode = "FULL"
 	) => {
-		// --- GUEST BLOCK ---
 		if (!session) {
 			setShowLoginModal(true);
 			return;
@@ -945,7 +935,6 @@ const App = () => {
 				return;
 			}
 
-			// --- STORAGE CHECK (MCQ) ---
 			if (userProfile?.subscription_tier === "standard") {
 				const isTrial = userProfile.subscription_status === "trial";
 				const limit = isTrial ? 51200 : userProfile.db_storage_limit || 52428800;
@@ -962,7 +951,6 @@ const App = () => {
 					return;
 				}
 			}
-			// ---------------------------
 
 			const isCorrect = mcqSelection === questionData.correctAnswerIndex;
 			const score = isCorrect ? 1 : 0;
@@ -1006,7 +994,6 @@ const App = () => {
 	};
 
 	const handleReviewNotes = (questionData, draftSaqResponse, viewMode = "FULL") => {
-		// --- GUEST BLOCK ---
 		if (!session) {
 			setShowLoginModal(true);
 			return;
@@ -1039,7 +1026,6 @@ const App = () => {
 	const handleConfirmCompletion = async (modalData) => {
 		if (!session || !pendingQuestion) return;
 
-		// --- STORAGE CHECK (SAQ / Notes) ---
 		if (userProfile?.subscription_tier === "standard") {
 			const isTrial = userProfile.subscription_status === "trial";
 			const limit = isTrial ? 51200 : userProfile.db_storage_limit || 52428800;
@@ -1058,7 +1044,6 @@ const App = () => {
 				return;
 			}
 		}
-		// -----------------------------------
 
 		const idString = String(pendingQuestion.unique_id);
 		const currentProgress = userProgress[idString] || {};
@@ -1143,6 +1128,17 @@ const App = () => {
 	const handleLogout = async () => {
 		await supabase.auth.signOut();
 	};
+
+	const handleTypeToggle = (type) => {
+		setSelectedTypes((prev) => {
+			if (prev.includes(type)) {
+				return prev.filter((t) => t !== type);
+			} else {
+				return [...prev, type];
+			}
+		});
+	};
+
 	const checkIsCompleted = (id) => {
 		const p = userProgress[String(id)];
 		if (!p) return false;
@@ -1152,10 +1148,12 @@ const App = () => {
 		);
 	};
 	const checkIsFlagged = (id) => userProgress[String(id)]?.is_flagged === true;
+	
 	const filterCounts = useMemo(() => {
 		const qLower = searchQuery.toLowerCase().trim();
 		const baseSet = questions.filter((q) => {
-			if (selectedType !== "All" && q.type !== selectedType) return false;
+			if (!selectedTypes.includes(q.type)) return false;
+			
 			if (!qLower) return true;
 			return (
 				q.question?.toLowerCase().includes(qLower) ||
@@ -1177,7 +1175,7 @@ const App = () => {
 			}
 		});
 		return { tCounts, sCounts, totalMatchingSearch: baseSet.length };
-	}, [questions, searchQuery, selectedType, selectedTopic]);
+	}, [questions, searchQuery, selectedTypes, selectedTopic]);
 	
 	const filteredQuestions = useMemo(() => {
 		const qLower = searchQuery.toLowerCase().trim();
@@ -1185,7 +1183,9 @@ const App = () => {
 			if (selectedTopic !== "All" && q.topic !== selectedTopic) return false;
 			if (selectedSubtopic !== "All" && q.subtopic !== selectedSubtopic)
 				return false;
-			if (selectedType !== "All" && q.type !== selectedType) return false;
+			
+			if (!selectedTypes.includes(q.type)) return false;
+
 			if (qLower) {
 				const match =
 					q.question?.toLowerCase().includes(qLower) ||
@@ -1257,15 +1257,13 @@ const App = () => {
 			}
 			return a.unique_id - b.unique_id;
 		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		questions,
 		selectedTopic,
 		selectedSubtopic,
-		selectedType,
+		selectedTypes,
 		sortOrder,
-		// userProgress, // <--- INTENTIONALLY REMOVED to prevent auto-resort jumping
-		progressLoaded, // <--- ADDED to ensure initial sort works
+		progressLoaded, 
 		searchQuery,
 	]);
 
@@ -1361,7 +1359,6 @@ const App = () => {
 				userProfile={userProfile} 
 			/>
 
-			{/* --- NEW: LOGIN MODAL FOR GUESTS --- */}
 			{showLoginModal && (
 				<div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in-95">
 					<div className="w-full max-w-md relative">
@@ -1461,7 +1458,6 @@ const App = () => {
                       <button
                           onClick={() => setLimitModal({ 
                               isOpen: true, 
-                              // LOGIC CHANGE: Check status to determine modal type
                               type: userProfile.subscription_status === 'active' ? 'PREMIUM_INFO' : 'TRIAL_LIMIT' 
                           })} 
                           className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition-colors cursor-pointer ${
@@ -1648,7 +1644,9 @@ const App = () => {
 
 						<div className="relative">
 							<div
-								className={`grid transition-all duration-300 ease-in-out overflow-hidden ${
+								className={`grid transition-all duration-300 ease-in-out ${
+									allowOverflow ? "overflow-visible" : "overflow-hidden"
+								} ${
 									filtersOpen
 										? "grid-rows-[1fr] opacity-100 mt-4 pb-2"
 										: "grid-rows-[0fr] opacity-0 mt-0 pb-0"
@@ -1709,18 +1707,41 @@ const App = () => {
 											</select>
 											<BookOpen className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none" />
 										</div>
-										<div className="relative">
-											<select
-												value={selectedType}
-												onChange={(e) => setSelectedType(e.target.value)}
-												className="w-full pl-3 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white"
+										
+										{/* --- REPLACED: Custom Dropdown for Types --- */}
+										<div className="relative" ref={typeDropdownRef}>
+											<button
+												onClick={() => setShowTypeDropdown(!showTypeDropdown)}
+												className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg text-sm bg-white text-left flex items-center justify-between truncate"
 											>
-												<option value="All">All Types</option>
-												<option value="MCQ">MCQ</option>
-												<option value="EMQ">EMQ</option>
-												<option value="SAQ">SAQ</option>
-											</select>
+												<span className="truncate">
+													{selectedTypes.length === 3
+														? "All Types"
+														: selectedTypes.length === 0
+														? "None"
+														: selectedTypes.join(", ")}
+												</span>
+												<ChevronDown className="w-4 h-4 text-gray-400 absolute right-3" />
+											</button>
+											{showTypeDropdown && (
+												<div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-50 p-2 space-y-1">
+													{["MCQ", "EMQ", "SAQ"].map((type) => (
+														<div
+															key={type}
+															onClick={() => handleTypeToggle(type)}
+															className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer select-none"
+														>
+															<div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedTypes.includes(type) ? 'bg-teal-600 border-teal-600' : 'border-gray-300 bg-white'}`}>
+																{selectedTypes.includes(type) && <CheckSquare className="w-3 h-3 text-white" />}
+															</div>
+															<span className="text-sm">{type}</span>
+														</div>
+													))}
+												</div>
+											)}
 										</div>
+										{/* ------------------------------------------- */}
+
 										<div className="relative">
 											<select
 												value={sortOrder}
@@ -1796,7 +1817,6 @@ const App = () => {
 						ref={virtuosoRef}
 						useWindowScroll
 						data={filteredQuestions}
-						// --- UPDATED: PASS isGuest to context ---
 						context={{
 							usageStats,
 							userProfile,
@@ -1840,9 +1860,6 @@ const App = () => {
 							const isReported = reportedQuestionIds.has(String(q.unique_id));
 
 							let isLocked = false;
-							// Only lock for standard users in trial mode. Guests can see questions (read-only) but cannot interact.
-							// If you want Guests to have locks too, remove the userProfile check.
-							// Assuming "Freemium" means guests can browse everything but do nothing.
 							if (
 								userProfile &&
 								userProfile.subscription_tier === "standard" &&
@@ -1879,11 +1896,8 @@ const App = () => {
 										isLocked={isLocked}
 										userProfile={userProfile}
 										aiUsageCount={aiUsageCount}
-										// --- NEW: Pass Guest Status ---
 										isGuest={isGuest}
 										onUnlock={() => setLimitModal({ isOpen: true, type: 'TRIAL_LIMIT' })}
-										// -----------------------------
-
 										onToggleComplete={(mcqSelection, saqResponse, viewMode) =>
 											handleInitiateCompletion(
 												q,
