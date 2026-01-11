@@ -1006,15 +1006,26 @@ const App = () => {
 			score: currentProgress.score ?? null,
 			max_score: currentProgress.max_score ?? null,
 			selected_option: currentProgress.selected_option ?? null,
-			notes: currentProgress.notes || null,
+			// notes: removed from here to be safe
 			...(currentProgress.id ? { id: currentProgress.id } : {}),
 		};
 
-		setUserProgress((prev) => ({ ...prev, [idString]: {
-			payload,
-			has_notes: notesBool,
-            notesLoaded: notesLoaded 
-			}
+		// 2. SAFETY CHECK: Only send notes if we actually loaded them
+		if (notesLoaded) {
+			payload.notes = currentProgress.notes || null;
+		}
+
+		// 3. Update State (Preserving Optimization Flags)
+		setUserProgress((prev) => ({
+			...prev,
+			[idString]: {
+				...payload, // This spreads the new values
+				has_notes: notesBool, // Keeps the yellow icon status
+				notesLoaded: notesLoaded, // Keeps the loaded status
+				// If we have an ID locally, keep it. 
+				// The payload spread above handles it, but this is a safety fallback for optimistic UI
+				id: currentProgress.id 
+			},
 		}));
 		await supabase
 			.from("user_progress")
@@ -1051,15 +1062,21 @@ const App = () => {
 					existingEntry.is_flagged;
 
 				if (hasDataToKeep) {
+					// Toggle OFF logic
 					const payload = {
 						...existingEntry,
 						score: null,
 						max_score: null,
 						selected_option: null,
-						notes: existingEntry.notes,
+						notes: existingEntry.notes, // If we are here, we have the entry, safe to keep
 						user_response: existingEntry.user_response,
 						is_flagged: existingEntry.is_flagged,
 					};
+					// Note: If toggling off, we generally have the data loaded or it's just a status update.
+					// However, for safety in "Toggle Off", we usually just update the specific fields.
+					// But to be 100% safe on the 'notes' field specifically:
+					if (!existingEntry.notesLoaded) delete payload.notes;
+
 					setUserProgress((prev) => ({ ...prev, [idString]: payload }));
 					await supabase
 						.from("user_progress")
@@ -1099,10 +1116,11 @@ const App = () => {
 			const isCorrect = mcqSelection === questionData.correctAnswerIndex;
 			const score = isCorrect ? 1 : 0;
 
+			// 1. Construct Base Payload
 			const payload = {
 				user_id: session.user.id,
 				question_id: idString,
-				notes: existingEntry?.notes || null,
+				// notes: Removed
 				user_response: existingEntry?.user_response || null,
 				score: score,
 				max_score: 1,
@@ -1110,16 +1128,37 @@ const App = () => {
 				is_flagged: existingEntry?.is_flagged || false,
 			};
 
+			// 2. SAFETY CHECK
+			if (existingEntry?.notesLoaded) {
+				payload.notes = existingEntry.notes || null;
+			}
+
+			// 3. Update State
 			setUserProgress((prev) => ({
 				...prev,
-				[idString]: { ...payload, id: existingEntry?.id },
+				[idString]: { 
+					...payload, 
+					id: existingEntry?.id,
+					has_notes: existingEntry?.has_notes, // Preserve Flag
+					notesLoaded: existingEntry?.notesLoaded // Preserve Flag
+				},
 			}));
+
 			const { data } = await supabase
 				.from("user_progress")
 				.upsert(payload, { onConflict: "user_id,question_id" })
 				.select();
+			
 			if (data && data.length > 0)
-				setUserProgress((prev) => ({ ...prev, [idString]: data[0] }));
+				setUserProgress((prev) => ({ 
+					...prev, 
+					[idString]: { 
+						...data[0],
+						// Re-attach flags after DB return
+						has_notes: existingEntry?.has_notes, 
+						notesLoaded: existingEntry?.notesLoaded 
+					} 
+				}));
 
 			fetchQuotaStats(session.user.id);
 			return;
@@ -1277,6 +1316,7 @@ const App = () => {
 		const existingEntry = userProgress[idString];
 		if (!existingEntry) return;
 
+		// 1. Copy existing entry
 		const payload = {
 			...existingEntry,
 			user_id: session.user.id,
@@ -1287,18 +1327,26 @@ const App = () => {
 			is_flagged: existingEntry.is_flagged,
 		};
 
-		setUserProgress((prev) => ({ 
-			...prev, 
+		// 2. SAFETY CHECK: If we haven't loaded notes, DO NOT send the null/undefined value
+		if (!existingEntry.notesLoaded) {
+			delete payload.notes;
+		}
+
+		// 3. Update State
+		setUserProgress((prev) => ({
+			...prev,
 			[idString]: {
-				payload,
+				...payload,
+				// Ensure flags are preserved
 				has_notes: existingEntry.has_notes,
-                notesLoaded: existingEntry.notesLoaded 
-			}
-			
+				notesLoaded: existingEntry.notesLoaded,
+			},
 		}));
+
 		await supabase
 			.from("user_progress")
 			.upsert(payload, { onConflict: "user_id,question_id" });
+			
 		handleViewStateChange(idString, "isRevealed", false);
 
 		fetchQuotaStats(session.user.id);
