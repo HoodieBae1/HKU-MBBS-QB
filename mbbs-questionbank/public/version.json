@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.2.6",
+  "currentVersion": "4.3.0",
   "history": [
+    {
+      "version": "4.3.0",
+      "date": "2026-1-11",
+      "title": "Fixed Jan 11 reported quesitons p2 and refactor data fetching",
+      "changes": [
+        "Questions: Fixed questions reported on Jan 11, 2026 p2",
+        "Internal: Optimise data fetching to try to stay below egress data limit"
+      ]
+    },
     {
       "version": "4.2.6",
       "date": "2026-1-11",
