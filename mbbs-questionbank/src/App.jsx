@@ -467,12 +467,11 @@ const App = () => {
 			let done = false;
 
 			while (!done) {
+				// OPTIMIZATION: Use RPC to get lightweight data (has_notes boolean instead of full text)
 				const { data, error } = await supabase
-					.from("user_progress")
-					.select(
-						"id, question_id, notes, user_response, score, max_score, selected_option, is_flagged, created_at"
-					)
-					.eq("user_id", userId)
+					.rpc("get_user_progress_optimized", {
+						target_user_id: userId,
+					})
 					.range(from, from + batchSize - 1);
 
 				if (error) {
@@ -490,7 +489,13 @@ const App = () => {
 
 			const progressMap = {};
 			allProgressData.forEach((row) => {
-				progressMap[String(row.question_id)] = row;
+				// Map the RPC response to the state object
+				// We initialize 'notesLoaded' to false because we haven't fetched the string content yet
+				progressMap[String(row.question_id)] = {
+					...row,
+					notes: null, // Don't hold string in memory initially
+					notesLoaded: false 
+				};
 			});
 			setUserProgress(progressMap);
 			
@@ -523,6 +528,85 @@ const App = () => {
 			}
 		} catch (err) {
 			console.error(err);
+		}
+	};
+
+	// 1. Fetch note content for a SINGLE question (for Modals/Clicking specific items)
+	const ensureNoteLoaded = async (uniqueId) => {
+		const idStr = String(uniqueId);
+		const current = userProgress[idStr];
+
+		// If we already have the string loaded, return it immediately
+		if (current?.notesLoaded && current?.notes) {
+			return current.notes;
+		}
+		
+		// If the RPC said there are no notes, return empty string
+		if (current && current.has_notes === false) {
+			return "";
+		}
+
+		// Otherwise, fetch from DB
+		const { data, error } = await supabase
+			.from("user_progress")
+			.select("notes")
+			.eq("user_id", session.user.id)
+			.eq("question_id", idStr)
+			.single();
+
+		if (!error && data) {
+			// Update state for next time
+			setUserProgress((prev) => ({
+				...prev,
+				[idStr]: {
+					...prev[idStr],
+					notes: data.notes,
+					notesLoaded: true,
+				},
+			}));
+			// RETURN the data for immediate use
+			return data.notes;
+		}
+		return "";
+	};
+
+	// 2. Fetch ALL missing notes (for Notes Panel / Export)
+	const loadAllNotesContent = async () => {
+		if (!session) return;
+
+		// Identify questions that have notes (boolean) but no text loaded yet
+		const idsToFetch = Object.values(userProgress)
+			.filter((p) => p.has_notes && !p.notesLoaded)
+			.map((p) => p.question_id);
+
+		if (idsToFetch.length === 0) return;
+
+		// Fetch in batches
+		const batchSize = 100;
+		for (let i = 0; i < idsToFetch.length; i += batchSize) {
+			const batchIds = idsToFetch.slice(i, i + batchSize);
+
+			const { data, error } = await supabase
+				.from("user_progress")
+				.select("question_id, notes")
+				.in("question_id", batchIds)
+				.eq("user_id", session.user.id);
+
+			if (!error && data) {
+				setUserProgress((prev) => {
+					const next = { ...prev };
+					data.forEach((row) => {
+						if (next[row.question_id]) {
+							next[row.question_id] = {
+								...next[row.question_id],
+								notes: row.notes,
+								notesLoaded: true,
+							};
+						}
+					});
+					return next;
+				});
+			}
 		}
 	};
 
@@ -905,6 +989,8 @@ const App = () => {
 
 		const currentProgress = userProgress[idString] || {};
 		const newFlagStatus = !currentProgress.is_flagged;
+		const notesBool = currentProgress.has_notes || false;
+        const notesLoaded = currentProgress.notesLoaded || false;
 
 		const rawText =
 			currentDraftText !== undefined
@@ -924,7 +1010,12 @@ const App = () => {
 			...(currentProgress.id ? { id: currentProgress.id } : {}),
 		};
 
-		setUserProgress((prev) => ({ ...prev, [idString]: payload }));
+		setUserProgress((prev) => ({ ...prev, [idString]: {
+			payload,
+			has_notes: notesBool,
+            notesLoaded: notesLoaded 
+			}
+		}));
 		await supabase
 			.from("user_progress")
 			.upsert(payload, { onConflict: "user_id,question_id" });
@@ -944,6 +1035,7 @@ const App = () => {
 			return;
 		}
 
+		const fetchedNotes = await ensureNoteLoaded(questionData.unique_id);
 		const idString = String(questionData.unique_id);
 		const existingEntry = userProgress[idString];
 		const isCurrentlyCompleted =
@@ -1040,33 +1132,44 @@ const App = () => {
 			user_response: saqResponse || "",
 			score: null,
 			max_score: null,
-			notes: existingEntry?.notes || "",
+			notes: fetchedNotes || existingEntry?.notes || "",
 		});
 		setModalOpen(true);
 	};
 
-	const handleReviewNotes = (questionData, draftSaqResponse, viewMode = "FULL") => {
+	const handleReviewNotes = async (questionData, draftSaqResponse, viewMode = "FULL") => {
 		// --- GUEST BLOCK ---
 		if (!session) {
 			setShowLoginModal(true);
 			return;
 		}
 
+		// 1. Fetch the notes (Wait for it!)
+		const fetchedNotes = await ensureNoteLoaded(questionData.unique_id);
+
 		const idString = String(questionData.unique_id);
 		const existingData = userProgress[idString];
+		
 		setPendingQuestion(questionData);
 		setModalViewMode(viewMode);
+		
 		let resolvedResponse = "";
 		if (draftSaqResponse !== undefined && draftSaqResponse !== null) {
 			resolvedResponse = draftSaqResponse;
 		} else if (existingData && existingData.user_response) {
 			resolvedResponse = existingData.user_response;
 		}
+
+		// 2. Use fetchedNotes here instead of existingData.notes
 		if (existingData) {
-			setModalInitialData({ ...existingData, user_response: resolvedResponse });
+			setModalInitialData({ 
+                ...existingData, 
+                user_response: resolvedResponse,
+                notes: fetchedNotes || existingData.notes || "" // Priority to fetched
+            });
 		} else {
 			setModalInitialData({
-				notes: "",
+				notes: fetchedNotes || "",
 				user_response: resolvedResponse,
 				score: null,
 				max_score: null,
@@ -1119,6 +1222,7 @@ const App = () => {
 				: null;
 		const cleanedNotes = cleanHtmlContent(modalData.notes);
 		const cleanedResponse = cleanHtmlContent(modalData.user_response);
+		const hasNotesBoolean = cleanedNotes !== null;
 
 		const payload = {
 			user_id: session.user.id,
@@ -1138,7 +1242,12 @@ const App = () => {
 		const optimisticId = currentProgress.id;
 		setUserProgress((prev) => ({
 			...prev,
-			[idString]: { ...payload, id: optimisticId },
+			[idString]: { 
+				...payload, 
+				id: optimisticId,
+				has_notes: hasNotesBoolean, 
+                notesLoaded: true
+			},
 		}));
 
 		const { data, error } = await supabase
@@ -1149,7 +1258,14 @@ const App = () => {
 			alert(`Error saving: ${error.message}`);
 			fetchUserProgress(session.user.id);
 		} else if (data && data.length > 0) {
-			setUserProgress((prev) => ({ ...prev, [idString]: data[0] }));
+			setUserProgress((prev) => ({ 
+				...prev, 
+				[idString]: { 
+					...data[0], // This raw row lacks 'has_notes'
+					has_notes: hasNotesBoolean, // So we re-add it here
+					notesLoaded: true 
+				} 
+			}));
 		}
 
 		fetchQuotaStats(session.user.id);
@@ -1171,7 +1287,15 @@ const App = () => {
 			is_flagged: existingEntry.is_flagged,
 		};
 
-		setUserProgress((prev) => ({ ...prev, [idString]: payload }));
+		setUserProgress((prev) => ({ 
+			...prev, 
+			[idString]: {
+				payload,
+				has_notes: existingEntry.has_notes,
+                notesLoaded: existingEntry.notesLoaded 
+			}
+			
+		}));
 		await supabase
 			.from("user_progress")
 			.upsert(payload, { onConflict: "user_id,question_id" });
@@ -1261,8 +1385,8 @@ const App = () => {
 			if (sortOrder === "Notes") {
 				const hasNotes = (qItem) => {
 					const p = userProgress[String(qItem.unique_id)];
-					if (!p || !p.notes) return false;
-					return cleanHtmlContent(p.notes) !== null;
+					// OPTIMIZATION: Check the RPC boolean directly
+					return p?.has_notes === true;
 				};
 				const aNotes = hasNotes(a);
 				const bNotes = hasNotes(b);
@@ -1595,14 +1719,21 @@ const App = () => {
                                     <ClipboardList className="w-5 h-5" />
                                     </button>
 									<button
-										onClick={() => setShowNotesPanel(true)}
+										onClick={async () => {
+											// Order matters: Start fetch, then show panel (or show loading state if you prefer)
+											await loadAllNotesContent(); 
+											setShowNotesPanel(true);
+										}}
 										className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white mr-1"
 										title="My Notes"
 									>
 										<StickyNote className="w-5 h-5" />
 									</button>
 									<button
-										onClick={() => setIsExportModalOpen(true)}
+										onClick={async () => {
+											await loadAllNotesContent();
+											setIsExportModalOpen(true);
+										}}
 										className="p-2 hover:bg-teal-600 rounded-full transition text-teal-100 hover:text-white"
 										title="Download My Data"
 									>
@@ -1914,7 +2045,7 @@ const App = () => {
 								((p.score !== null && p.score !== undefined) ||
 									(p.selected_option !== null && p.selected_option !== undefined));
 							const isFlagged = p?.is_flagged === true;
-							const hasNotes = p?.notes && cleanHtmlContent(p.notes) !== null;
+							const hasNotes = p?.has_notes === true || (p?.notes && cleanHtmlContent(p.notes) !== null);
 							const existingResponse = p?.user_response || "";
 							const score = p?.score;
 							const maxScore = p?.max_score;
