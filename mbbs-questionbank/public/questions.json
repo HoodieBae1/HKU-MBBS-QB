@@ -205498,7 +205498,7 @@
         "topic": "Pediatrics",
         "subtopic": "4 Neurology",
         "type": "SAQ",
-        "question": "A 24-month-old boy presents with irritability. He was able to walk and scribble at 19 months but now cannot walk independently and is unable to scribble. CT brain shows bilateral lateral ventricle dilatation with sulcal effacement. MRI shows a posterior fossa mass.\n1. What is your interpretation of the child's developmental history? (1 mark)\n2. What do you worry about? (1 mark)\n3. Describe an abnormal finding on the CT brain. (1 mark)\n4. What is the MRI brain differential diagnosis? (2 marks)",
+        "question": "A 24-month-old boy presents with irritability. He was able to walk and scribble at 19 months but now cannot walk independently and is unable to scribble. CT brain shows bilateral lateral ventricle dilatation with sulcal effacement. MRI shows a posterior fossa mass.\n1. What is your interpretation of the child's developmental history? (1 mark)\n2. What do you worry about? (1 mark)\n3. Describe an abnormal finding on the CT brain. (1 mark)<img src='https://i.imgur.com/fuPklPO.png'/>\n4. What is the MRI brain differential diagnosis? (2 marks)<img src='https://i.imgur.com/pBqW9uh.png'/>",
         "official_answer": "1. Global developmental delay with regression.\n2. Developmental regression.\n3. Bilateral lateral ventricles dilatation with sulcal effacement (indicative of hydrocephalus).\n4. Medulloblastoma, astrocytoma (specifically pilocytic astrocytoma or ependymoma given the location).",
         "ai_answer": {
             "agreement": "Agree",
@@ -205834,7 +205834,7 @@
         "topic": "Pediatrics",
         "subtopic": "4 Neurology",
         "type": "SAQ",
-        "question": "What are the LIKELY differential diagnoses? (3 marks)\nWhat investigation can help you to find out the underlying cause? (2 marks)\nWhat may be the triggering factors? (2 marks)\nHow would you manage this child and what is the prognosis? (3 marks)",
+        "question": "An 8-year-old girl has recent deterioration in school performance. Her teacher complained that she is inattentive in school. She was noted by her mom that she often stares blankly into space for a few seconds and then became alert again thereafter. It happens repeatedly within a way.\nWhat are the LIKELY differential diagnoses? (3 marks)\nWhat investigation can help you to find out the underlying cause? (2 marks)\nWhat may be the triggering factors? (2 marks)\nHow would you manage this child and what is the prognosis? (3 marks)",
         "official_answer": "Childhood absence seizure, ADHD (inattentive type), daydreaming\n12-lead EEG (Sunflower: “The EEG shows fast generalized spike and wave (3-4 Hz) discharges, bilaterally synchronous during and sometimes between absences”)\nHyperventilation (blowing on a piece of paper or windmill for 2–3 min useful during EEG). Others e.g. Lacking sleep, alcohol, drugs lowering seizure threshold, sedative withdrawal (from senior's answer)\nSunflower “Prognosis good with 80% remission in adolescence; a few evolve into juvenile absence or juvenile myoclonic epilepsy”. Medications e.g. Valproate, ethosuximide",
         "ai_answer": {
             "agreement": "Agree",
@@ -208109,7 +208109,7 @@
         "topic": "Pediatrics",
         "subtopic": "4 Neurology",
         "type": "SAQ",
-        "question": "Lumbar puncture was ordered. Gram stain of the CSF shows the following (see 2nd image above). What are the 2 abnormalities of the gram stain? (2 marks)",
+        "question": "Lumbar puncture was ordered. Gram stain of the CSF shows the following (see 2nd image above). What are the 2 abnormalities of the gram stain? (2 marks) <img src='https://i.imgur.com/JmoD9sq.png'/>",
         "official_answer": "Leukocytosis in CSF (neutrophils), Gram +ve diplococci (Streptococcus pneumoniae)",
         "ai_answer": {
             "agreement": "Agree",
@@ -210580,7 +210580,7 @@
         "topic": "Psychiatry",
         "subtopic": "6 Mood disorders",
         "type": "SAQ",
-        "question": "Diagnosis. (1 mark)",
+        "question": "41/F sent to hospital by husband, “I want to kill myself” she said. Low mood and loss of interest in life for recent 3 months. Weight loss 5kg despite no attempt to lose weight, reduced sleep and early morning awakening, reduced ability to do her job. Diagnosis. (1 mark)",
         "official_answer": "Major depressive disorder (Low mood + 3 or more depressive symptoms e.g. weight loss, reduced sleep, suicidal ideations, affecting function i.e. reduced ability to do her job)",
         "ai_answer": {
             "agreement": "Agree",
@@ -210594,7 +210594,7 @@
         "topic": "Psychiatry",
         "subtopic": "6 Mood disorders",
         "type": "SAQ",
-        "question": "4 additional symptoms that she does not have. (4 marks)",
+        "question": "41/F sent to hospital by husband, “I want to kill myself” she said. Low mood and loss of interest in life for recent 3 months. Weight loss 5kg despite no attempt to lose weight, reduced sleep and early morning awakening, reduced ability to do her job. 4 additional symptoms that she does not have. (4 marks)",
         "official_answer": "Senior's answer: Anhedonia, Anergia, Reduced self-esteem, Ideas of guilt and unworthiness, Black and pessimistic view towards future, Reduced appetite, Psychomotor retardation, Loss of libido\n: Depressive symptoms “SIG E CAPS” Guilty feelings / sense of worthlessness, Poor concentration, Psychomotor agitation / depression",
         "ai_answer": {
             "agreement": "Agree",
@@ -210608,7 +210608,7 @@
         "topic": "Psychiatry",
         "subtopic": "6 Mood disorders",
         "type": "SAQ",
-        "question": "4 associated conditions, 1 each of (neurological, endocrine, drug, infection). (4 marks)",
+        "question": "41/F sent to hospital by husband, “I want to kill myself” she said. Low mood and loss of interest in life for recent 3 months. Weight loss 5kg despite no attempt to lose weight, reduced sleep and early morning awakening, reduced ability to do her job. 4 associated conditions, 1 each of (neurological, endocrine, drug, infection). (4 marks)",
         "official_answer": "Neurological (Stroke, tumor, dementia e.g. Parkinson's), Endocrine (Hypothyroidism), Infections (HIV, Syphilis), Drugs (e.g. steroids, antipsychotics)",
         "ai_answer": {
             "agreement": "Agree",
@@ -212302,7 +212302,7 @@
         "topic": "Psychiatry",
         "subtopic": "4 Substance abuse",
         "type": "SAQ",
-        "question": "What are “2 non-psychoactive substance related psychiatric conditions” which may be associated with this condition?",
+        "question": "A 20 year old university student with depression, anxiety, poor concentration, and insomnia admits to cannabis use but stopped for a week, and now has hand tremor. What are “2 non-psychoactive substance related psychiatric conditions” which may be associated with this condition?",
         "official_answer": "Schizophrenia, Mood disorders (depression / anxiety) with psychotic features",
         "ai_answer": {
             "agreement": "Agree",
@@ -213408,7 +213408,7 @@
         "topic": "Psychiatry",
         "subtopic": "5 Psychotic Disorders",
         "type": "SAQ",
-        "question": "List 4 symptoms above that support your diagnosis.",
+        "question": "Patient presents with a bunch of first rank symptoms for 2 months. Also felt abnormal sensations on his limbs, as if aliens were to abduct him. List 4 symptoms above that support your diagnosis.",
         "official_answer": "(Could list the first-ranked symptoms first) Somatic hallucinations, delusions of perception, thought echo, delusion of control / passivity, 3rd person auditory hallucinations, running commentary, delusion of thought alienation / insertion",
         "ai_answer": {
             "agreement": "Agree",
@@ -213450,7 +213450,7 @@
         "topic": "Psychiatry",
         "subtopic": "2 Treatment in psychiatry",
         "type": "SAQ",
-        "question": "Name three additional signs that you expect to see in this patient now.",
+        "question": "Patient presents with a bunch of first rank symptoms for 2 months. Also felt abnormal sensations on his limbs, as if aliens were to abduct him. Name three additional signs that you expect to see in this patient now.",
         "official_answer": "Other extrapyramidal symptoms: Acute dystonia, dyskinesia (~pseudoparkinsonism e.g. cogwheel rigidity, intentional tremor, shuffling gait), akathisia (restlessness), tardive dyskinesia (stereotypical involuntary painless orofacial movements)",
         "ai_answer": {
             "agreement": "Agree",
@@ -213464,7 +213464,7 @@
         "topic": "Psychiatry",
         "subtopic": "2 Treatment in psychiatry",
         "type": "SAQ",
-        "question": "Name two drugs that can improve his condition.",
+        "question": "Patient presents with a bunch of first rank symptoms for 2 months. Also felt abnormal sensations on his limbs, as if aliens were to abduct him. Name two drugs that can improve his condition.",
         "official_answer": "Anticholinergics e.g. Benztropine, diphenhydramine trihexyphenidyl?",
         "ai_answer": {
             "agreement": "Agree",
