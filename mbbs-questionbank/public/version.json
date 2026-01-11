@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.2.5",
+  "currentVersion": "4.2.6",
   "history": [
+    {
+      "version": "4.2.6",
+      "date": "2026-1-11",
+      "title": "Fixed questions and system security updates",
+      "changes": [
+        "Questions: Fixed questions reported on Jan 11, 2026",
+        "Internal: Security updates on user authentication"
+      ]
+    },
     {
       "version": "4.2.5",
       "date": "2026-1-10",
