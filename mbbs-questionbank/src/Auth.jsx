@@ -2,16 +2,29 @@ import React, { useState } from 'react';
 import { supabase } from './supabase';
 import { Loader2, Lock, Mail, Key, ArrowRight, RefreshCw, AlertCircle, UserPlus } from 'lucide-react';
 
-const Auth = ({ onSuccess }) => { // <--- Added onSuccess prop to close modal
+const Auth = ({ onSuccess }) => {
   const [authMode, setAuthMode] = useState('magic'); // 'magic', 'login', 'signup'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
+  // --- NEW: Helper function to validate domain ---
+  const isHkuEmail = (email) => {
+    return email.trim().toLowerCase().endsWith('@connect.hku.hk');
+  };
+
   const handleMagicLink = async (e) => {
     e.preventDefault();
-    setLoading(true); setMessage(null);
+    setMessage(null);
+
+    // --- NEW: Validation Check ---
+    if (!isHkuEmail(email)) {
+      setMessage({ type: 'error', text: 'Access restricted to @connect.hku.hk emails only.' });
+      return;
+    }
+
+    setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({ 
       email, options: { emailRedirectTo: window.location.origin }
     });
@@ -23,17 +36,31 @@ const Auth = ({ onSuccess }) => { // <--- Added onSuccess prop to close modal
   const handlePasswordSignIn = async (e) => {
     e.preventDefault();
     setLoading(true); setMessage(null);
+    
+    // Note: We don't strictly enforce the check on Login (in case you have an admin account), 
+    // but the DB won't let non-HKU users exist anyway.
+    
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) setMessage({ type: 'error', text: 'Invalid login credentials.' });
-    else if (onSuccess) onSuccess(); // Close modal
+    else if (onSuccess) onSuccess(); 
     setLoading(false);
   };
 
   const handleSignUp = async (e) => {
     e.preventDefault();
-    setLoading(true); setMessage(null);
+    setMessage(null);
+
+    // --- NEW: Validation Check ---
+    if (!isHkuEmail(email)) {
+      setMessage({ type: 'error', text: 'You must use a valid @connect.hku.hk student email.' });
+      return;
+    }
+
+    setLoading(true);
     const { data, error } = await supabase.auth.signUp({ email, password });
+    
     if (error) {
+        // If they bypassed JS, the SQL trigger error message appears here
         setMessage({ type: 'error', text: error.message });
     } else if (data.user && !data.session) {
         setMessage({ type: 'success', text: 'Registration successful! Check email to confirm.' });
@@ -71,12 +98,19 @@ const Auth = ({ onSuccess }) => { // <--- Added onSuccess prop to close modal
       <div className="p-8">
         <div className="mb-4">
           <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Email</label>
-          <input type="email" placeholder="doctor@hku.hk" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" required />
+          <input 
+            type="email" 
+            placeholder="u1234567@connect.hku.hk" 
+            value={email} 
+            onChange={(e) => setEmail(e.target.value)} 
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" 
+            required 
+          />
         </div>
 
         {authMode === 'magic' && (
           <form onSubmit={handleMagicLink}>
-            <p className="text-xs text-gray-500 mb-4">We'll send a secure login link. No password needed.</p>
+            <p className="text-xs text-gray-500 mb-4">We'll send a secure login link to your student email.</p>
             <button disabled={loading} className="w-full py-3 bg-teal-700 text-white rounded-lg font-bold hover:bg-teal-800 disabled:opacity-50">{loading ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : 'Send Link'}</button>
           </form>
         )}
