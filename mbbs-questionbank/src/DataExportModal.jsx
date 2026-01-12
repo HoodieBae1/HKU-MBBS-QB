@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Copy, Check, FileJson, Download, FileText, AlertCircle, Loader2 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { X, Copy, Check, FileJson, Download, FileText, AlertCircle, Loader2, ChevronDown } from 'lucide-react';
 import { supabase } from './supabase';
 
 const DataExportModal = ({ 
@@ -8,13 +8,65 @@ const DataExportModal = ({
     questions, 
     userProgress, 
     onDownloadJson,
-    userId // Required
+    userId 
 }) => {
   const [copyStatus, setCopyStatus] = useState('idle');
+  
+  // --- NEW: Filter States for Export ---
+  const [exportTopic, setExportTopic] = useState('All');
+  const [exportSubtopic, setExportSubtopic] = useState('All');
 
+  // --- 1. DERIVE AVAILABLE TOPICS (Only for flagged questions) ---
+  // MOVED HERE to satisfy Rules of Hooks
+  const availableTopics = useMemo(() => {
+    // Find all questions that are flagged
+    const flaggedQuestions = questions.filter(q => {
+        const progress = userProgress[String(q.unique_id)];
+        return progress && progress.is_flagged === true;
+    });
+    
+    // Extract unique topics
+    const topics = [...new Set(flaggedQuestions.map(q => q.topic))];
+    // Sort alphabetically and prepend 'All'
+    return ['All', ...topics.sort()];
+  }, [questions, userProgress]);
+
+  // --- 2. DERIVE AVAILABLE SUBTOPICS (Based on selected Topic) ---
+  // MOVED HERE to satisfy Rules of Hooks
+  const availableSubtopics = useMemo(() => {
+    if (exportTopic === 'All') return ['All']; // No specific subtopics if viewing all topics
+
+    // Find flagged questions within the selected topic
+    const flaggedInTopic = questions.filter(q => {
+        const progress = userProgress[String(q.unique_id)];
+        return progress && progress.is_flagged === true && q.topic === exportTopic;
+    });
+
+    const subtopics = [...new Set(flaggedInTopic.map(q => q.subtopic))];
+    return ['All', ...subtopics.sort()];
+  }, [questions, userProgress, exportTopic]);
+
+  // --- 3. CALCULATE MATCHING COUNT FOR BUTTON LABEL ---
+  // MOVED HERE to satisfy Rules of Hooks
+  const filteredFlaggedCount = useMemo(() => {
+    return questions.filter(q => {
+        const progress = userProgress[String(q.unique_id)];
+        const isFlagged = progress && progress.is_flagged === true;
+        const matchesTopic = exportTopic === 'All' || q.topic === exportTopic;
+        const matchesSubtopic = exportSubtopic === 'All' || q.subtopic === exportSubtopic;
+        return isFlagged && matchesTopic && matchesSubtopic;
+    }).length;
+  }, [questions, userProgress, exportTopic, exportSubtopic]);
+
+  // --- EARLY RETURN MUST BE AFTER ALL HOOKS ---
   if (!isOpen) return null;
 
-  // --- UPDATED LOGGING FUNCTION ---
+  // Handle Topic Change: Reset Subtopic to 'All'
+  const handleTopicChange = (e) => {
+    setExportTopic(e.target.value);
+    setExportSubtopic('All');
+  };
+
   const logExportAction = async (type, count) => {
     if (!userId) return;
 
@@ -23,9 +75,9 @@ const DataExportModal = ({
         .from('export_logs')
         .insert({
           user_id: userId,
-          export_type: type,            // Now writing to the new column
+          export_type: type,
           record_count: count,
-          user_agent: navigator.userAgent // Keeping user_agent clean
+          user_agent: navigator.userAgent
         });
 
       if (error) console.error("Failed to log export:", error);
@@ -34,19 +86,22 @@ const DataExportModal = ({
     }
   };
 
-  // --- LOGIC: PROCESS FLAGGED QUESTIONS FOR GOOGLE DOCS ---
   const handleCopyFlagged = async () => {
     setCopyStatus('loading');
 
     try {
-      // 1. Filter Questions
+      // 1. Filter Questions (Flagged + Topic/Subtopic Filters)
       const flaggedQuestions = questions.filter(q => {
         const progress = userProgress[String(q.unique_id)];
-        return progress && progress.is_flagged === true; 
+        const isFlagged = progress && progress.is_flagged === true;
+        const matchesTopic = exportTopic === 'All' || q.topic === exportTopic;
+        const matchesSubtopic = exportSubtopic === 'All' || q.subtopic === exportSubtopic;
+        
+        return isFlagged && matchesTopic && matchesSubtopic; 
       });
 
       if (flaggedQuestions.length === 0) {
-        alert("No flagged questions found.");
+        alert("No flagged questions match your selection.");
         setCopyStatus('idle');
         return;
       }
@@ -69,7 +124,8 @@ const DataExportModal = ({
           <h1 style="color: #0f766e; border-bottom: 3px solid #0f766e; padding-bottom: 10px;">Flagged Questions Export</h1>
           <p style="color: #666; margin-bottom: 30px;">
             <strong>Generated:</strong> ${new Date().toLocaleString()}<br/>
-            <strong>Total Questions:</strong> ${flaggedQuestions.length}
+            <strong>Total Questions:</strong> ${flaggedQuestions.length}<br/>
+            <strong>Filter:</strong> ${exportTopic} ${exportSubtopic !== 'All' ? `/ ${exportSubtopic}` : ''}
           </p>
       `;
 
@@ -167,9 +223,7 @@ const DataExportModal = ({
     }
   };
 
-  // --- LOGIC: RAW JSON BACKUP ---
   const handleJSONClick = async () => {
-      // --- LOGGING ---
       await logExportAction('JSON_BACKUP', Object.keys(userProgress).length);
 
       if (onDownloadJson) {
@@ -208,27 +262,67 @@ const DataExportModal = ({
                 <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
                     <FileText className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="flex-1">
                     <h4 className="font-bold text-indigo-900 text-sm">Copy Flagged for Google Docs</h4>
                     <p className="text-xs text-indigo-700/70 mt-1 leading-relaxed">
                         Compiles flagged items into a formatted list. Includes your <strong>selected choice</strong>, correct answers, and notes.
                     </p>
                 </div>
              </div>
+
+             {/* --- NEW: FILTERS --- */}
+             {availableTopics.length > 1 && (
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                    <div className="relative">
+                        <select 
+                            value={exportTopic}
+                            onChange={handleTopicChange}
+                            className="w-full appearance-none bg-white border border-gray-300 text-gray-700 text-xs py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-indigo-500 font-medium"
+                        >
+                            {availableTopics.map(topic => (
+                                <option key={topic} value={topic}>{topic}</option>
+                            ))}
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <ChevronDown className="w-3 h-3" />
+                        </div>
+                    </div>
+
+                    <div className="relative">
+                        <select 
+                            value={exportSubtopic}
+                            onChange={(e) => setExportSubtopic(e.target.value)}
+                            disabled={exportTopic === 'All'}
+                            className={`w-full appearance-none border text-gray-700 text-xs py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:border-indigo-500 font-medium
+                                ${exportTopic === 'All' ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border-gray-300 focus:bg-white'}`}
+                        >
+                            {availableSubtopics.map(sub => (
+                                <option key={sub} value={sub}>{sub}</option>
+                            ))}
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <ChevronDown className="w-3 h-3" />
+                        </div>
+                    </div>
+                </div>
+             )}
              
              <button 
                 onClick={handleCopyFlagged}
-                disabled={copyStatus === 'loading'}
-                className={`w-full py-2.5 rounded-lg font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 ${copyStatus === 'success' ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
+                disabled={copyStatus === 'loading' || filteredFlaggedCount === 0}
+                className={`w-full py-2.5 rounded-lg font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 
+                  ${copyStatus === 'success' ? 'bg-green-600 text-white hover:bg-green-700' : 
+                    filteredFlaggedCount === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 
+                    'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
              >
                 {copyStatus === 'loading' ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Generating HTML...</>
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
                 ) : copyStatus === 'success' ? (
                     <><Check className="w-4 h-4" /> Copied! Ready to Paste.</>
                 ) : copyStatus === 'error' ? (
                     <><AlertCircle className="w-4 h-4" /> Error Copying</>
                 ) : (
-                    <><Copy className="w-4 h-4" /> Copy to Clipboard</>
+                    <><Copy className="w-4 h-4" /> Copy {filteredFlaggedCount} Flagged Question{filteredFlaggedCount !== 1 ? 's' : ''}</>
                 )}
              </button>
              {copyStatus === 'success' && (
