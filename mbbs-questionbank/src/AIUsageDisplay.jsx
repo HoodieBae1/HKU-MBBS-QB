@@ -29,7 +29,7 @@ const AIUsageDisplay = ({ session, userProfile }) => {
   const fetchData = async () => {
     const { data, error } = await supabase
       .from('ai_usage_logs')
-      .select('*')
+      .select('id, created_at, question_id, model, cost')
       .eq('user_id', session.user.id)
       .order('created_at', { ascending: false });
 
