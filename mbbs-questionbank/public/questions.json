@@ -10422,10 +10422,10 @@
             "Iron chelating therapy",
             "Rituximab"
         ],
-        "correctAnswerIndex": 1,
-        "official_answer": "Option B.",
+        "correctAnswerIndex": 0,
+        "official_answer": "Option A is correct In a young patient (<40–50 years) with severe aplastic anaemia, first‑line therapy is allogeneic haematopoietic stem cell transplantation from an HLA‑matched sibling",
         "ai_answer": {
-            "agreement": "Disagree",
+            "agreement": "Agree",
             "explanation": "For a young patient (23 years old) with severe aplastic anemia, allogeneic bone marrow transplant from a matched sibling donor is the first-line curative treatment."
         },
         "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P18.pdf",
@@ -21802,7 +21802,7 @@
         "topic": "Medicine",
         "subtopic": "14 Rheumatology",
         "type": "MCQ",
-        "question": "Exactly same scenario as above. What is the diagnosis?",
+        "question": "In April, a 34-year-old woman presented with a complaint of pain in wrists and poor peripheral perfusion. She gave a one year history of her fingers turning from purple to white in the cold. She also had a history of intermittent heartburn for one year and and mild dyspnoea for two months. P/E: Hand and fingers cold and dusky. Telangiectasia on face and upper chest. Auscultation late inspiratory crackles. CXR: Bilateral lower zone haziness. What is the diagnosis?",
         "options": [
             "Idiopathic pulmonary fibrosis",
             "Primary Sjögren's syndrome",
@@ -152689,7 +152689,7 @@
         "type": "MCQ",
         "question": "A young male presented with pleuritic chest pain and shortness of breath. Physical examination revealed decreased air entry on left side and trachea is deviated to the right. He is cyanotic, BP 80/60?. What is the most appropriate immediate treatment?",
         "options": [
-            "Urgent needle aspiration",
+            "Urgent needle decompression",
             "Observation",
             "Oxygen",
             "Chest drain insertion"
@@ -154920,7 +154920,7 @@
         "topic": "Surgery",
         "subtopic": "3 Cardiothoracic Surgery (CTS)",
         "type": "MCQ",
-        "question": "Patient underwent lobectomy for ?NSCLC. Chest drain was inserted with drainage of pleural fluid of 2L in the first day (shown below). What investigation should be done with the pleural fluid to confirm the diagnosis?",
+        "question": "Patient underwent lobectomy for ?NSCLC. Chest drain was inserted with drainage of pleural fluid of 2L in the first day (shown below). What investigation should be done with the pleural fluid to confirm the diagnosis? <img src='https://i.imgur.com/bCfzLOF.png'/>",
         "options": [
             "Check fluid LDH, protein and match with serum LDH and protein",
             "Culture and sensitivity",
@@ -164822,7 +164822,7 @@
         "topic": "Medicine",
         "subtopic": "8 Hematology / Immunology / Medical Oncology",
         "type": "MCQ",
-        "question": "F/80 with a history of hypothyroidism and vitiligo, on thyroxine treatment. Today presents with pancytopenia, MCV high (117). Blood film given below. What is the most approrpiate initial investigation?",
+        "question": "F/80 with a history of hypothyroidism and vitiligo, on thyroxine treatment. Today presents with pancytopenia, MCV high (117). Blood film given below. What is the most approrpiate initial investigation? <img src='https://i.imgur.com/PeWdDlZ.png'/>",
         "options": [
             "Vitamin B12 level",
             "Folate level",
