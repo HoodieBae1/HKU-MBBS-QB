@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.3.0",
+  "currentVersion": "4.3.1",
   "history": [
+    {
+      "version": "4.3.1",
+      "date": "2026-1-11",
+      "title": "Added feature to export flagged questions by topic.",
+      "changes": [
+        "Feature: Added feature to export flagged questions by topic. Open download panel, filter by topics, then export flagged questions to Google Docs / Word",
+        "Internal: Optimise data fetching on AI usage statistics to stay below egress data limit"
+      ]
+    },
     {
       "version": "4.3.0",
       "date": "2026-1-11",
