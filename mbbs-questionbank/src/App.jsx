@@ -2111,8 +2111,8 @@ const App = () => {
 								userProfile.subscription_status === "trial"
 							) {
 								if (!isCompleted) {
-									if ((q.type === "MCQ" || q.type === "EMQ") && usageStats.mcqCount >= 10) isLocked = true;
-									else if (q.type !== "MCQ" && q.type !== "EMQ" && usageStats.saqCount >= 5)
+									if ((q.type === "MCQ" || q.type === "EMQ") && usageStats.mcqCount >= 25) isLocked = true;
+									else if (q.type !== "MCQ" && q.type !== "EMQ" && usageStats.saqCount >= 25)
 										isLocked = true;
 								}
 							}
