@@ -85904,7 +85904,7 @@
         "topic": "Psychiatry",
         "subtopic": "3 Organic mental disorders",
         "type": "SAQ",
-        "question": "What would you do to differentiate his condition from a delusion?",
+        "question": "A civil servant admitted for suicide attempt by charcoal burning. After he regained consciousness he confessed for the first time that someone was trying to “get him” and whatever the nurses did was to persecute him. His family member said that he had never been like that before. What would you do to differentiate his condition from delusion?",
         "official_answer": "A delusion is a fixed, unshakeable belief held with absolute conviction. A confabulation is a false memory that is not fixed; the patient can often be persuaded to change their story with suggestion, and they do not hold the belief with the same delusional intensity.",
         "ai_answer": {
             "agreement": "Agree",
@@ -202964,7 +202964,7 @@
         "topic": "Medicine",
         "subtopic": "1 Cardiology",
         "type": "SAQ",
-        "question": "A 65-year old presents with anterior chest pressure after working out in a gym. His LOC is impaired when he arrives in the hospital. An attached 12-lead ECG is provided.\n1. What is the most likely dx on the ECG?\n2. List 3 important urgent investigations and briefly state purpose of each test.\n3. In addition, to administrating O2, list 3 acute tx that are proven effective in improving the survival of this patient's condition.\n4. List 1 complication that can occur in this patient.",
+        "question": "A 65-year old presents with anterior chest pressure after working out in a gym. His LOC is impaired when he arrives in the hospital. An attached 12-lead ECG is provided.<img src='https://i.imgur.com/kB4U3QY.png'/>\n1. What is the most likely dx on the ECG?\n2. List 3 important urgent investigations and briefly state purpose of each test.\n3. In addition, to administrating O2, list 3 acute tx that are proven effective in improving the survival of this patient's condition.\n4. List 1 complication that can occur in this patient.",
         "official_answer": "No answer from Goddisk",
         "ai_answer": {
             "agreement": "Agree",
@@ -211616,7 +211616,7 @@
         "topic": "Psychiatry",
         "subtopic": "2 Treatment in psychiatry",
         "type": "SAQ",
-        "question": "What are the 2 classes of drugs that could be used? (4 marks)",
+        "question": "What are the two classes of drugs available to treat ADHD, and give examples of drugs in the two classes? (4 marks)",
         "official_answer": "Psychostimulants e.g. Ritalin (methyphenylate), Dextroamphetamine, Adderal (dextroamphetamine and amphetamine salts), Atomoxetine (Straterra), Pamolene (Clylert)\nNon-psychostimulant e.g. SNRI, Bupropion, alpha-2 agonist e.g clonidine",
         "ai_answer": {
             "agreement": "Agree",
@@ -214491,5 +214491,289 @@
         },
         "_source_file": "Processed\\M25_Superpass\\surg\\surg_P30.pdf",
         "unique_id": 10397
+    },
+    {
+        "id": "M25-31-MCQ",
+        "topic": "Psychiatry",
+        "subtopic": "11 Child Psychiatry",
+        "type": "MCQ",
+        "question": "Tourette syndrome. What drug? (modified pp, pp was haloperidol)",
+        "options": [
+            "Aripiprazole",
+            "Chlordiazepoxide",
+            "Ritalin",
+            "Parnate"
+        ],
+        "correctAnswerIndex": 0,
+        "official_answer": "Answer: A",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "Atypical antipsychotics like aripiprazole are often used to manage the tics in Tourette syndrome, offering a better side-effect profile than older typical antipsychotics like haloperidol."
+        },
+        "_source_file": "Processed\\M25\\Psy\\M25 Final MB Psy Written .docx - Google Docs_P1.pdf",
+        "unique_id": 10398
+    },
+    {
+        "id": "M25-36-MCQ",
+        "topic": "Psychiatry",
+        "subtopic": "5 Psychotic Disorders",
+        "type": "MCQ",
+        "question": "Thinks others can read his mind: (PP)",
+        "options": [
+            "Hallucination",
+            "Ideas of reference",
+            "Delusion",
+            "D"
+        ],
+        "correctAnswerIndex": 2,
+        "official_answer": "Answer: A?+1 B? C? (Adrian lui pp)",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "The belief that one's thoughts are being read by others is a classic example of a delusion, specifically thought broadcasting, a first-rank symptom of schizophrenia."
+        },
+        "_source_file": "Processed\\M25\\Psy\\M25 Final MB Psy Written .docx - Google Docs_P1.pdf",
+        "unique_id": 10399
+    },
+    {
+        "id": "M25-41-EMQ",
+        "topic": "Psychiatry",
+        "subtopic": "1 introduction",
+        "type": "EMQ",
+        "question": "Comprise of caudate and putamen",
+        "options": [
+            "Amygdala",
+            "Cerebellum",
+            "Striatum",
+            "Corpus callosum",
+            "Hippocampus",
+            "Hypothalamus",
+            "Thalamus",
+            "Ventral tegmental area",
+            "Substantia nigra"
+        ],
+        "correctAnswerIndex": 2,
+        "official_answer": "Ans: Striatum",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "The striatum is a key component of the basal ganglia and is anatomically composed of the caudate nucleus and the putamen."
+        },
+        "_source_file": "Processed\\M25\\Psy\\M25 Final MB Psy Written .docx - Google Docs_P1.pdf",
+        "unique_id": 10400
+    },
+    {
+        "id": "M25-42-EMQ",
+        "topic": "Psychiatry",
+        "subtopic": "1 introduction",
+        "type": "EMQ",
+        "question": "Target of A9 neuron",
+        "options": [
+            "Amygdala",
+            "Cerebellum",
+            "Striatum",
+            "Corpus callosum",
+            "Hippocampus",
+            "Hypothalamus",
+            "Thalamus",
+            "Ventral tegmental area",
+            "Substantia nigra"
+        ],
+        "correctAnswerIndex": 2,
+        "official_answer": "Ans: Striatum",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "The A9 dopaminergic neurons originate in the substantia nigra pars compacta and project primarily to the striatum, forming the nigrostriatal pathway."
+        },
+        "_source_file": "Processed\\M25\\Psy\\M25 Final MB Psy Written .docx - Google Docs_P1.pdf",
+        "unique_id": 10401
+    },
+    {
+        "id": "M25-43-EMQ",
+        "topic": "Psychiatry",
+        "subtopic": "1 introduction",
+        "type": "EMQ",
+        "question": "Cell body of A10 neuron",
+        "options": [
+            "Amygdala",
+            "Cerebellum",
+            "Striatum",
+            "Corpus callosum",
+            "Hippocampus",
+            "Hypothalamus",
+            "Thalamus",
+            "Ventral tegmental area",
+            "Substantia nigra"
+        ],
+        "correctAnswerIndex": 7,
+        "official_answer": "Ans: Ventral tegmental area",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "The A10 dopaminergic neurons have their cell bodies located in the ventral tegmental area (VTA), forming the mesolimbic and mesocortical pathways."
+        },
+        "_source_file": "Processed\\M25\\Psy\\M25 Final MB Psy Written .docx - Google Docs_P1.pdf",
+        "unique_id": 10402
+    },
+    {
+        "id": "M25-52-EMQ",
+        "topic": "Psychiatry",
+        "subtopic": "5 Psychotic Disorders",
+        "type": "EMQ",
+        "question": "Muscle rigidity and immobility",
+        "options": [
+            "Ambivalence",
+            "Automatism",
+            "Waxy flexibility",
+            "Stereotypy",
+            "Mitgehen",
+            "Stupor",
+            "Negativism",
+            "Schnauzkrampf",
+            "Advertence",
+            "Echopraxia"
+        ],
+        "correctAnswerIndex": 5,
+        "official_answer": "Ans: C or F??",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "Stupor is a state of akinesis and mutism, representing profound immobility, and is a key feature of catatonia."
+        },
+        "_source_file": "Processed\\M25\\Psy\\M25 Final MB Psy Written .docx - Google Docs_P1.pdf",
+        "unique_id": 10403
+    },
+    {
+        "id": "M25-53-EMQ",
+        "topic": "Psychiatry",
+        "subtopic": "5 Psychotic Disorders",
+        "type": "EMQ",
+        "question": "Alternate between co-operative and opposition",
+        "options": [
+            "Ambivalence",
+            "Automatism",
+            "Waxy flexibility",
+            "Stereotypy",
+            "Mitgehen",
+            "Stupor",
+            "Negativism",
+            "Schnauzkrampf",
+            "Advertence",
+            "Echopraxia"
+        ],
+        "correctAnswerIndex": 0,
+        "official_answer": "Ans: A (Ambivalence)",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "Catatonic ambivalence is characterized by the patient alternating between automatic obedience and opposition, appearing 'stuck' in indecision."
+        },
+        "_source_file": "Processed\\M25\\Psy\\M25 Final MB Psy Written .docx - Google Docs_P1.pdf",
+        "unique_id": 10404
+    },
+    {
+        "id": "M25-54-EMQ",
+        "topic": "Psychiatry",
+        "subtopic": "5 Psychotic Disorders",
+        "type": "EMQ",
+        "question": "Interviewer can instruct patient to move upon fingertip pressure on limb",
+        "options": [
+            "Ambivalence",
+            "Automatism",
+            "Waxy flexibility",
+            "Stereotypy",
+            "Mitgehen",
+            "Stupor",
+            "Negativism",
+            "Schnauzkrampf",
+            "Advertence",
+            "Echopraxia"
+        ],
+        "correctAnswerIndex": 4,
+        "official_answer": "Ans: E (Mitgehen)",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "Mitgehen, or automatic obedience, is a catatonic sign where the patient moves a limb in response to the slightest pressure, despite being told to resist."
+        },
+        "_source_file": "Processed\\M25\\Psy\\M25 Final MB Psy Written .docx - Google Docs_P1.pdf",
+        "unique_id": 10405
+    },
+    {
+        "id": "M25-55-EMQ",
+        "topic": "Psychiatry",
+        "subtopic": "5 Psychotic Disorders",
+        "type": "EMQ",
+        "question": "Pouting of lips and nose",
+        "options": [
+            "Ambivalence",
+            "Automatism",
+            "Waxy flexibility",
+            "Stereotypy",
+            "Mitgehen",
+            "Stupor",
+            "Negativism",
+            "Schnauzkrampf",
+            "Advertence",
+            "Echopraxia"
+        ],
+        "correctAnswerIndex": 7,
+        "official_answer": "Ans: H (Schnauzkrampf)",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "Schnauzkrampf is a German term for a catatonic feature characterized by a snout-like puckering or pouting of the lips."
+        },
+        "_source_file": "Processed\\M25\\Psy\\M25 Final MB Psy Written .docx - Google Docs_P1.pdf",
+        "unique_id": 10406
+    },
+    {
+        "id": "M25-01-SAQ",
+        "topic": "Psychiatry",
+        "subtopic": "5 Psychotic Disorders",
+        "type": "SAQ",
+        "question": "Mark is a 26/M university students. He can hear his friends laughing at him. Deteriorating mental state in recent 3 months. He also feels his hand is controlled by external force sometimes.\n1. List TWO Schneider's first-rank symptoms present in this patient. (2 marks)\n2. Urine toxicology, blood test all normal. What is the most likely psychiatric diagnosis? (1 mark)\n3. Which neurotransmitter is responsible? (1 mark) + Mechanisms (3 marks)\n4. Which neurotransmitter pathway accounts for his symptoms? (1 mark)\n5. Sth about being sensitive to people's gestures and gaze. Which neurocognitive mechanism? (2 marks)\n6. Another hypothesis for this condition. Which neurotransmitter is involved? What is the neurocognitive receptor and mechanism? (1 mark) + (2 marks)\n7. What psychotropic agents will you prescribe for this patient? (1 mark)\n8. What is the main mechanism of action of the medication that you prescribed? (2 marks)\nSymptoms resolved. Now present with lack of motivation and withdrawal from social activities. No symptoms from index admission. No pessimistic thoughts.\n9. (1 mark) What core symptom of the diagnosis is Mark experiencing right now?\n10. (2 marks) Name two other subdomains within this core symptom that Mark might experience.\n11. List THREE environmental risk factors for this psychiatric diagnosis. (3 marks)\n12. List THREE possible explanations as to why patient with this psychiatric diagnosis has higher incidence of premature death? (3 marks)",
+        "official_answer": "1. Passivity (delusion of control), 3rd person auditory hallucinations (commenting/discussing).\n2. Schizophreniform disorder (due to <6 months duration).\n3. Dopamine. Hyperactivity in the mesolimbic pathway.\n4. Mesolimbic pathway.\n5. Aberrant salience / Salience misattribution hypothesis.\n6. Glutamate. NMDA receptor hypofunction.\n7. A second-generation (atypical) antipsychotic (e.g., risperidone, olanzapine).\n8. Dopamine D2 receptor antagonist.\n9. Negative symptoms.\n10. Avolition (lack of motivation), asociality (social withdrawal), anhedonia, alogia, blunted affect.\n11. Urban upbringing, migration, cannabis use during adolescence.\n12. Higher rates of suicide, comorbid medical conditions (e.g., cardiovascular disease due to medication side effects and lifestyle), and accidents.",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "The case describes classic first-rank symptoms of schizophrenia, with the management and pathophysiology focusing on the dopamine and glutamate hypotheses."
+        },
+        "_source_file": "Processed\\M25\\Psy\\M25 Final MB Psy Written .docx - Google Docs_P1.pdf",
+        "unique_id": 10407
+    },
+    {
+        "id": "M25-02-SAQ",
+        "topic": "Psychiatry",
+        "subtopic": "6 Mood disorders",
+        "type": "SAQ",
+        "question": "Mandy is a 20/F with no history of alcohol or illicit drug use. She has low mood and is suicidal. Her mother is worried that she has depression and requires treatment.\n13. (5 marks) List any 5 symptoms of depression.\n14. (1 mark) How long do the symptoms need to be to make the diagnosis? Minimal duration.\n15. (6 marks) Name THREE classes of oral antidepressants with minimal serotonin action\n16. (2 marks) 1 evidence-based psychotherapy.\n17. (2 marks) Refuse to eat – said that she felt that her GI tract is rotten. NAD after Ix. What is the psychopathology called?\n18. (2 marks) What class of medication to add on?\n19. (2 marks) What is the physical treatment for treatment-resistant depression as shown in the photo?\n20. (2 marks) What area of the brain does it target?\n21. (2 marks) What are the TWO common side effects of the above treatment?\n22. (1 mark) Name ONE another physical treatment.",
+        "official_answer": "13. Depressed mood, anhedonia, change in sleep, change in appetite/weight, fatigue, psychomotor changes, feelings of worthlessness/guilt, poor concentration, suicidal ideation.\n14. At least 2 weeks.\n15. Norepinephrine-dopamine reuptake inhibitor (NDRI - Bupropion), Noradrenergic and specific serotonergic antidepressant (NaSSA - Mirtazapine), Tricyclic antidepressant (TCA - e.g., nortriptyline, which has more noradrenergic effects).\n16. Cognitive Behavioural Therapy (CBT).\n17. Cotard's delusion (a nihilistic delusion).\n18. An antipsychotic medication (typically a second-generation agent).\n19. Repetitive Transcranial Magnetic Stimulation (rTMS).\n20. Dorsolateral prefrontal cortex (DLPFC).\n21. Headache, scalp discomfort at the site of stimulation.\n22. Electroconvulsive therapy (ECT).",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "The questions cover the diagnosis, psychopharmacology, and treatment modalities for major depressive disorder, including psychotic features and treatment resistance."
+        },
+        "_source_file": "Processed\\M25\\Psy\\M25 Final MB Psy Written .docx - Google Docs_P1.pdf",
+        "unique_id": 10408
+    },
+    {
+        "id": "M25-03-SAQ",
+        "topic": "Psychiatry",
+        "subtopic": "7 Neurotic, stress-related and somatoform disorders",
+        "type": "SAQ",
+        "question": "Lady early 20s presented with an episode of palpitations, SOB, tremor, feeling of 'impending doom' just before interview. She reported that since adolescence, she is afraid of interacting with others and concerned of becoming other's focus of attention. She would avoid meeting others, giving public speeches or even eating in public.\n23. (2 marks) What is the diagnosis?\n24. (3 marks) Aside from urine toxicology, suggest THREE useful investigations to rule out organic causes of her symptoms.\n25. (2 marks) Suggest TWO features how the above condition is different from normal anxiety.\n26. (2 marks) What is one evidence-based non-pharmacological treatment that you could provide? (2 marks) In the treatment you suggested, name the TWO therapeutic components.\nReceived psychotherapy. Given lorazepam by friends and buying it from pharmacy. Required increasing amount of lorazepam to control her anxiety. Sometimes drinks alcohol when unable to purchase lorazepam\n27. (4 marks) List 4 diagnostic criteria of dependence syndrome\n28. (4 marks) Suggest TWO risk factors of BZD dependence in this patient\n29. (2 marks) List 2 pharmacokinetic differences between lorazepam and diazepam\n30. (4 marks) Name 2 evidence based non-BZD drugs for this patient",
+        "official_answer": "23. Social Anxiety Disorder (Social Phobia).\n24. Thyroid function tests (to rule out hyperthyroidism), ECG (to rule out arrhythmia), Full blood count (to rule out anemia).\n25. The anxiety is persistent and excessive, and it leads to significant functional impairment or avoidance behavior.\n26. Cognitive Behavioural Therapy (CBT). Therapeutic components are cognitive restructuring and exposure therapy.\n27. Tolerance, withdrawal symptoms, impaired control over use, persistent desire or unsuccessful efforts to cut down.\n28. Using a high-potency benzodiazepine (lorazepam), and co-use of other substances (alcohol).\n29. Lorazepam has a shorter half-life and is metabolized by glucuronidation (no active metabolites), while diazepam has a long half-life and is metabolized by oxidation (has active metabolites).\n30. SSRIs (e.g., sertraline, escitalopram) and SNRIs (e.g., venlafaxine).",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "This case correctly identifies Social Anxiety Disorder and explores its differential diagnosis, treatment with CBT, and the complications of iatrogenic benzodiazepine dependence."
+        },
+        "_source_file": "Processed\\M25\\Psy\\M25 Final MB Psy Written .docx - Google Docs_P1.pdf",
+        "unique_id": 10409
+    },
+    {
+        "id": "M25-04-SAQ",
+        "topic": "Psychiatry",
+        "subtopic": "11 Child Psychiatry",
+        "type": "SAQ",
+        "question": "You are asked to see Jack, a 7-year-old boy. He always forgets his homework, and if turned in are full of careless mistakes. He makes no effort to study and ranked last in exam last year. Teachers complain about class behaviour, as Jack is always making noises, talking, leaving his seat. His schoolbag is very poorly organized with unnecessary stuff like old candy wrappers and rubbish. Most classmates do not like him. His mother works at a busy fruit stall, does not find his behaviour problematic, says it is normal for children to play actively and hate homework, says he is not like this at home.\n31. (2 marks) According to the vignette, what is the diagnosis?\n32. (2 marks) Name TWO areas of functional impairment as above.\n33. (1 mark) Name ONE feature that is against the diagnosis.\n34. (4 marks) Suggest TWO clinical features you expect to see during mental state examination.\n35. (2 marks) Suggest TWO risk factors for this diagnosis.\n36. (8 marks) Name 2 drugs from different classes and explain their psychopharmacological mechanism\n37. (2 marks) Name 1 non-pharmacological intervention that you could offer.\n38. (2 marks) Name 1 associated neurodevelopmental psychiatric disease\n39. (2 marks) Name 1 associated non-neurodevelopmental psychiatric disease",
+        "official_answer": "31. Attention-Deficit/Hyperactivity Disorder (ADHD), combined presentation.\n32. Academic impairment (poor grades, careless mistakes) and social impairment (classmates do not like him).\n33. The mother's report that the symptoms are not present at home (symptoms must be present in ≥2 settings for diagnosis).\n34. Distractibility, psychomotor agitation (fidgeting).\n35. Genetic predisposition (family history), prenatal exposure to toxins (e.g., alcohol, nicotine).\n36. 1. Methylphenidate (CNS Stimulant): Blocks dopamine and norepinephrine reuptake transporters, increasing their availability in the synaptic cleft, particularly in the prefrontal cortex. 2. Atomoxetine (Norepinephrine Reuptake Inhibitor): Selectively inhibits the presynaptic norepinephrine transporter, increasing levels of norepinephrine.\n37. Parent management training / Behavioural therapy.\n38. Autism Spectrum Disorder.\n39. Oppositional Defiant Disorder.",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "The vignette is a classic presentation of ADHD, and the questions correctly probe diagnostic criteria, functional impairment, comorbidities, and standard pharmacological and non-pharmacological treatments."
+        },
+        "_source_file": "Processed\\M25\\Psy\\M25 Final MB Psy Written .docx - Google Docs_P1.pdf",
+        "unique_id": 10410
     }
 ]
