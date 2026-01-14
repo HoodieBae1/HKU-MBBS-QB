@@ -22224,11 +22224,11 @@
             "Pleurodesis",
             "VATS pleurodesis"
         ],
-        "correctAnswerIndex": 1,
-        "official_answer": "Option B. According to BTS guidelines for a primary spontaneous pneumothorax >2cm or if the patient is symptomatic, needle aspiration is the recommended initial intervention.",
+        "correctAnswerIndex": 0,
+        "official_answer": "20% does not actually reach the cut off, so observation (A) should be correct. - \"A visible rim <2 cm corresponds to <~50% collapse and is classified as “small” in classic BTS schemes.\" (Original goddisk answer was B, updated to A on Jan 14, 2026)",
         "ai_answer": {
             "agreement": "Agree",
-            "explanation": "For a symptomatic 20% primary spontaneous pneumothorax, active intervention is required, and simple needle aspiration is the preferred first-line treatment."
+            "explanation": "No explanation because of the manual update"
         },
         "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P30.pdf",
         "unique_id": 1115
@@ -185640,7 +185640,7 @@
         "topic": "Pediatrics",
         "subtopic": "2 Perinatal and Neonatal Medicine",
         "type": "SAQ",
-        "question": "A term newborn baby was found to have respiratory distress and excessive salivary secretion. An attempt to insert a Replogle tube failed; the tube was left in situ at the most distal site. An X-ray was taken. [Image of babygram showing coiled NG tube in upper esophagus]\na. Taking the clinical scenario into consideration, describe 3 important findings in the X-ray. (3)\nb. An echocardiogram performed for the baby found Tetralogy of Fallot. What are the 4 features of TOF? (4)\nc. What syndrome or association could explain the above findings? (1)\nd. Name 1 radiological test to look for other features of this association. (1)\ne. The baby is referred for chromosome study. Name one chromosomal abnormality that is associated with TOF and DiGeorge syndrome. (1)",
+        "question": "A term newborn baby was found to have respiratory distress and excessive salivary secretion. An attempt to insert a Replogle tube failed; the tube was left in situ at the most distal site. An X-ray was taken. <img src='https://i.imgur.com/PwdAJGw.png'/>\na. Taking the clinical scenario into consideration, describe 3 important findings in the X-ray. (3)\nb. An echocardiogram performed for the baby found Tetralogy of Fallot. What are the 4 features of TOF? (4)\nc. What syndrome or association could explain the above findings? (1)\nd. Name 1 radiological test to look for other features of this association. (1)\ne. The baby is referred for chromosome study. Name one chromosomal abnormality that is associated with TOF and DiGeorge syndrome. (1)",
         "official_answer": "a. Failure of advancement of Replogle tube to stomach, dilated small bowels, hemivertebrae.\nb. Right ventricular outflow tract obstruction, right ventricular hypertrophy, ventricular septal defect, overriding aorta.\nc. VACTERL association.\nd. Babygram (limb hypoplasia), Invertogram (anal atresia).\ne. 22q11.2 microdeletion.",
         "ai_answer": {
             "agreement": "Agree",
@@ -204236,7 +204236,7 @@
     {
         "id": "M16-06-SAQ",
         "topic": "Surgery",
-        "subtopic": "13 Pediatric Surgery (PS)",
+        "subtopic": "12 Orthopaedics & Traumatology (O&T)",
         "type": "SAQ",
         "question": "An 8-year-old male falls on an outstretched hand, resulting in a supracondylar fracture of the humerus with complete posterolateral displacement.\n1. What is the diagnosis?\n2. Name 2 associated injuries.\n3. What are the principles and goals of treatment?\n4. What would you do if the distal perfusion is poor?\n5. Name one of the common deformities at the elbow afterwards.",
         "official_answer": "1. Displaced supracondylar fracture of the humerus.\n2. Brachial artery injury and anterior interosseous nerve (AIN) injury.\n3. The principle is to achieve and maintain anatomical reduction. The goal is to restore alignment (e.g., Baumann's angle) to prevent malunion and restore function, typically via closed reduction and percutaneous pinning.\n4. If distal perfusion is poor, urgent reduction of the fracture is paramount. If perfusion does not return, vascular exploration via US Doppler or angiogram and potential surgical repair is necessary.\n5. Cubitus varus (gunstock deformity).",
@@ -205848,7 +205848,7 @@
         "topic": "Pediatrics",
         "subtopic": "2 Perinatal and Neonatal Medicine",
         "type": "SAQ",
-        "question": "At the corrected age, what neuro developmental problem does she have? (2 marks)\nBased on the clinical information above and below, what other medical problems may Yan Yan have? (2 marks)\nYan Yan had an MRI brain performed at 2 year olds. (A long paragraph of MRI report basically saying she has bilateral periventricular leukomalacia.) Which neuro imaging feature mentioned in the report is commonly seen in premature babies with history of brain insult?",
+        "question": "Yan Yan, a 9 month old extreme-prematurity born at 28 weeks with birth weight 1100g, had right grade 3 intraventricular haemorrhage and left grade 2 IVH. At 9m, can turn from supine to prone but not the other way round, cannot transfer object between hands. Has right hand predominance, can put right hand into mouth but not left hand. Babbling, turn her head when called. Recognise strangers and smiled. At the corrected age, what neuro developmental problem does she have? (2 marks)\nBased on the clinical information above and below, what other medical problems may Yan Yan have? (2 marks)\nYan Yan had an MRI brain performed at 2 year olds. (A long paragraph of MRI report basically saying she has bilateral periventricular leukomalacia.) Which neuro imaging feature mentioned in the report is commonly seen in premature babies with history of brain insult?",
         "official_answer": "Senior's answer: Cannot transfer object (7 months), early hand predominance (should not have until age 2)→ motor delay\nFailure to thrive, poor feeding, bowel e.g. constipation, sleeping problems\nPVL Periventricular leukomalacia",
         "ai_answer": {
             "agreement": "Agree",
