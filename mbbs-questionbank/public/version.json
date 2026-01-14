@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.3.3",
+  "currentVersion": "4.3.4",
   "history": [
+    {
+      "version": "4.3.4",
+      "date": "2026-1-14",
+      "title": "Fixed questions reported on Jan 14, 2026",
+      "changes": [
+        "Questions: Fixed questions reported on Jan 14, 2026",
+        "Internal: Upgraded system security and user management"
+      ]
+    },
     {
       "version": "4.3.3",
       "date": "2026-1-13",
