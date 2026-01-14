@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'; 
-import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, Square, StickyNote, Flag, Sparkles, Loader2, AlertCircle, RotateCcw, Lock, AlertTriangle  } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle2, Bot, BrainCircuit, CheckSquare, Square, StickyNote, Flag, Sparkles, Loader2, AlertCircle, RotateCcw, Lock, AlertTriangle, EyeOff  } from 'lucide-react';
 import ReactMarkdown from 'react-markdown'; 
 import RichTextEditor from './RichTextEditor'; 
 import DOMPurify from 'dompurify'; 
 
-// --- 1. IMPORT KATEX & PLUGINS ---
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css'; 
@@ -29,7 +28,8 @@ const QuestionCard = ({
     isGuest = false,
     onUnlock,
     isReported = false,
-    onReport 
+    onReport,
+    isReadOnly = false // NEW PROP
 }) => {
   
   const [selectedOption, setSelectedOption] = useState(null);
@@ -88,7 +88,7 @@ const QuestionCard = ({
   };
 
   const handleMCQSelect = (idx) => {
-    if (isCompleted || isLocked || isGuest) return; // Block input if guest
+    if (isCompleted || isLocked || isGuest || isReadOnly) return; // Add isReadOnly check
     if (selectedOption !== null) return; 
     setSelectedOption(idx);
     onToggleReveal(true);
@@ -96,7 +96,7 @@ const QuestionCard = ({
   };
 
   const startHold = () => {
-    if (!isCompleted || isLocked || isGuest) return; // Block input if guest
+    if (!isCompleted || isLocked || isGuest || isReadOnly) return; // Add isReadOnly check
     setIsHolding(true);
     setHoldProgress(0);
     const startTime = Date.now();
@@ -129,8 +129,8 @@ const QuestionCard = ({
   };
 
   const handleMainButtonClick = () => {
-    if (isLocked) return;
-    if (isGuest && !isMCQ) { onTextChange('TRIGGER_LOGIN'); return; } // Explicit trigger for SAQ button
+    if (isLocked || isReadOnly) return; // Block
+    if (isGuest && !isMCQ) { onTextChange('TRIGGER_LOGIN'); return; } 
     if (!isCompleted && !isMCQ) {
          if (debouncedUpdateRef.current) clearTimeout(debouncedUpdateRef.current);
          onTextChange(localInput);
@@ -139,7 +139,10 @@ const QuestionCard = ({
   };
 
   const getOptionStyle = (idx) => {
-    if (!isCompleted && selectedOption === null) return isGuest ? 'border-gray-200' : 'hover:bg-slate-50 cursor-pointer border-gray-200'; // Remove hover for guest
+    // If read only and nothing selected, no hover
+    if (isReadOnly && selectedOption === null) return 'border-gray-200 opacity-60'; 
+
+    if (!isCompleted && selectedOption === null) return isGuest ? 'border-gray-200' : 'hover:bg-slate-50 cursor-pointer border-gray-200';
     if (idx === data.correctAnswerIndex) return 'bg-emerald-100 border-emerald-500 text-emerald-800 font-medium';
     if (idx === selectedOption) return 'bg-red-50 border-red-300 text-red-700'; 
     return 'opacity-50 border-gray-100'; 
@@ -163,8 +166,9 @@ const QuestionCard = ({
   };
 
   const getDoneButtonStyle = () => {
+      if (isReadOnly) return 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60'; // READ ONLY STYLE
       if (isLocked) return 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed';
-      if (isGuest) return 'bg-white text-gray-400 border-gray-200 hover:text-teal-600 hover:border-teal-300 cursor-pointer'; // Allow click to trigger login
+      if (isGuest) return 'bg-white text-gray-400 border-gray-200 hover:text-teal-600 hover:border-teal-300 cursor-pointer'; 
       if (isCompleted) return 'bg-green-100 text-green-700 border-green-200 cursor-pointer';
       if (isMCQ) return 'bg-white text-gray-300 border-gray-200 cursor-default';
       return 'bg-white text-gray-400 border-gray-200 hover:text-teal-600 hover:border-teal-300 cursor-pointer';
@@ -207,19 +211,19 @@ const QuestionCard = ({
               <div className={`flex items-center gap-1 px-2 py-1 border rounded text-xs font-bold font-mono mr-1 ${score === displayMaxScore ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'}`}>{score} / {displayMaxScore}</div>
           )}
           <button 
-            onClick={() => onReport()} 
+            onClick={() => !isReadOnly && onReport()} // Disable if read only? Up to you.
             title={isReported ? "This question has been reported as problematic." : "Report an issue with this question"}
             className={`flex items-center justify-center p-1.5 rounded transition-colors ${
                 isReported 
                 ? 'bg-red-100 text-red-600 border border-red-200 cursor-help' 
                 : 'text-gray-300 hover:text-red-500 hover:bg-red-50'
-            }`}
+            } ${isReadOnly ? 'cursor-not-allowed opacity-50' : ''}`}
           >
              <AlertTriangle className={`w-4 h-4 ${isReported ? 'fill-current' : ''}`} />
              {isReported && <span className="ml-1 text-[10px] font-bold uppercase hidden md:inline">Reported</span>}
           </button>
 
-          <button onClick={() => onToggleFlag(localInput)} className={`flex items-center justify-center p-1.5 rounded transition-colors ${isFlagged ? 'bg-orange-100 text-orange-600 border border-orange-200' : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50'}`}><Flag className={`w-4 h-4 ${isFlagged ? 'fill-current' : ''}`} /></button>
+          <button onClick={() => !isReadOnly && onToggleFlag(localInput)} className={`flex items-center justify-center p-1.5 rounded transition-colors ${isFlagged ? 'bg-orange-100 text-orange-600 border border-orange-200' : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50'} ${isReadOnly ? 'cursor-not-allowed opacity-50' : ''}`}><Flag className={`w-4 h-4 ${isFlagged ? 'fill-current' : ''}`} /></button>
 
           <button onClick={handleNotesClick} className={`flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded transition-colors ${hasNotes ? 'bg-yellow-100 text-yellow-700 border border-yellow-200 hover:bg-yellow-200' : 'bg-white text-gray-500 border border-gray-200 hover:text-teal-600 hover:border-teal-300'}`}>
             <StickyNote className={`w-4 h-4 ${hasNotes ? 'fill-yellow-500 text-yellow-600' : ''}`} />
@@ -229,7 +233,7 @@ const QuestionCard = ({
           <button onClick={handleMainButtonClick} onMouseDown={startHold} onMouseUp={cancelHold} onMouseLeave={cancelHold} onTouchStart={startHold} onTouchEnd={cancelHold} onContextMenu={(e) => e.preventDefault()} className={`relative overflow-hidden flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded border transition-all select-none ${getDoneButtonStyle()}`}>
             {isCompleted && (<div className="absolute inset-0 bg-red-100 z-0 transition-all duration-75 ease-linear" style={{ width: `${holdProgress}%` }} />)}
             <div className="relative z-10 flex items-center gap-1.5">
-                {isCompleted ? (isHolding ? <><RotateCcw className="w-4 h-4 animate-spin-slow text-red-600" /><span className="text-red-700">Hold to Redo</span></> : <><CheckSquare className="w-4 h-4" />Done</>) : (<><Square className="w-4 h-4" />Mark Done</>)}
+                {isReadOnly ? <><EyeOff className="w-4 h-4" />Read Only</> : isCompleted ? (isHolding ? <><RotateCcw className="w-4 h-4 animate-spin-slow text-red-600" /><span className="text-red-700">Hold to Redo</span></> : <><CheckSquare className="w-4 h-4" />Done</>) : (<><Square className="w-4 h-4" />Mark Done</>)}
             </div>
           </button>
           
@@ -252,8 +256,8 @@ const QuestionCard = ({
             {data.options.map((opt, i) => (
               <button 
                 key={i} 
-                onClick={() => isGuest ? onToggleComplete('TRIGGER_LOGIN') : handleMCQSelect(i)} // Trigger login if guest
-                disabled={isCompleted} 
+                onClick={() => isGuest ? onToggleComplete('TRIGGER_LOGIN') : handleMCQSelect(i)} 
+                disabled={isCompleted || isReadOnly} 
                 className={`w-full text-left px-4 py-3 border rounded-lg transition-all duration-200 ${getOptionStyle(i)}`}
               >
                 <span className="mr-3 font-mono text-xs uppercase text-gray-500">{String.fromCharCode(65 + i)}</span>
@@ -270,7 +274,7 @@ const QuestionCard = ({
                         value={localInput} 
                         onChange={handleSaqChange} 
                         placeholder={isGuest ? "Sign in to answer..." : "Type your answer here..."} 
-                        readOnly={isLocked || isGuest} 
+                        readOnly={isLocked || isGuest || isReadOnly} // Disable editor if Read Only
                     />
                 </div>
             </div>

@@ -14,7 +14,6 @@ import {
 	GitCommit,
 	Trophy,
 	BarChart3,
-	PieChart,
 	StickyNote,
 	Users,
 	MessageCircleWarning,
@@ -22,11 +21,11 @@ import {
 	Download,
 	Zap,
 	ZapOff,
-	Lock,
 	ArrowRight,
 	ClipboardList,
-	CheckSquare, // New Import
-	Square // New Import
+	CheckSquare,
+	Eye, // New Import
+    GraduationCap // New Import
 } from "lucide-react";
 import { Virtuoso } from "react-virtuoso";
 import { supabase } from "./supabase";
@@ -40,6 +39,7 @@ import UserStats from "./UserStats";
 import NotesPanel from "./NotesPanel";
 import ProgressPanel from "./ProgressPanel";
 import RecruiterDashboard from "./RecruiterDashboard";
+import TeacherDashboard from "./TeacherDashboard"; // New Import
 import FeedbackModal from "./FeedbackModal";
 import QuotaDisplay from "./QuotaDisplay";
 import ReleaseNotesModal from "./ReleaseNotesModal";
@@ -97,10 +97,8 @@ const App = () => {
 	const [userProgress, setUserProgress] = useState({});
 	const [aiUsageCount, setAiUsageCount] = useState(0);
 	
-	// --- NEW: Track if initial progress fetch is done to allow initial sort ---
 	const [progressLoaded, setProgressLoaded] = useState(false);
 
-	// --- NEW STATES ---
 	const [showLoginModal, setShowLoginModal] = useState(false);
 	const [limitModal, setLimitModal] = useState({
 		isOpen: false,
@@ -118,6 +116,11 @@ const App = () => {
 
 	const [isAdmin, setIsAdmin] = useState(false);
 	const [isRecruiter, setIsRecruiter] = useState(false);
+	
+    // --- NEW TEACHER STATES ---
+	const [isTeacher, setIsTeacher] = useState(false);
+	const [showTeacherDash, setShowTeacherDash] = useState(false);
+	const [impersonatedUser, setImpersonatedUser] = useState(null);
 
 	const [showDashboard, setShowDashboard] = useState(false);
 	const [showRecruiterDash, setShowRecruiterDash] = useState(false);
@@ -153,14 +156,12 @@ const App = () => {
 		"app_selectedSubtopic"
 	);
 
-	// --- MODIFIED: Multi-select state for Types ---
 	const [selectedTypes, setSelectedTypes] = useStickyState(
 		["MCQ", "EMQ", "SAQ"], 
-		"app_selectedTypes_list" // New key to avoid conflict with old string string
+		"app_selectedTypes_list" 
 	);
 	const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 	const typeDropdownRef = useRef(null);
-	// --- MODIFIED: State to control CSS overflow for dropdown visibility ---
 	const [allowOverflow, setAllowOverflow] = useState(false); 
 
 	const [sortOrder, setSortOrder] = useStickyState("Newest", "app_sortOrder");
@@ -180,10 +181,9 @@ const App = () => {
 
 	const lastUserId = useRef(null);
 
-	const [showReportListModal, setShowReportListModal] = useState(false); // <--- NEW STATE
+	const [showReportListModal, setShowReportListModal] = useState(false);
     const virtuosoRef = useRef(null);
 
-	// --- NEW: Ref to track previous status for auto-upgrade detection ---
 	const prevStatusRef = useRef(null); 
 
 	useEffect(() => {
@@ -193,25 +193,19 @@ const App = () => {
 		return () => clearTimeout(timer);
 	}, [searchInput]);
 
-	// --- NEW: Handle Overflow timing for Dropdown Visibility ---
 	useEffect(() => {
 		if (filtersOpen) {
-			// Wait for animation (approx 300ms) then allow overflow
 			const timer = setTimeout(() => setAllowOverflow(true), 300);
 			return () => clearTimeout(timer);
 		} else {
-			// Immediately hide overflow when closing to clip animation
 			setAllowOverflow(false);
 		}
 	}, [filtersOpen]);
 
-	// Immediate sync on mount
 	useEffect(() => {
 		if (filtersOpen) setAllowOverflow(true);
 	}, []);
-	// --------------------------------------------------------
 
-	// --- NEW: Handle Click Outside Type Dropdown ---
 	useEffect(() => {
 		function handleClickOutside(event) {
 			if (typeDropdownRef.current && !typeDropdownRef.current.contains(event.target)) {
@@ -224,99 +218,61 @@ const App = () => {
 		};
 	}, []);
 
-	// ------------------------------------------------------------
-	// START: POLLING & AUTO-REFRESH LOGIC
-	// ------------------------------------------------------------
-	
-	// 1. Background Polling (Every 5 minutes)
-	// Triggers ONLY if user is logged in AND not yet active.
+	// POLLING
 	useEffect(() => {
 		if (!session || userProfile?.subscription_status === 'active') return;
-
-		// console.log("Background Polling Active: Checking payment status every 5 mins...");
 		const intervalId = setInterval(() => {
 			if (session?.user?.id) {
 				fetchUserProfile(session.user.id);
 			}
-		}, 5 * 60 * 1000); // 5 minutes in milliseconds
+		}, 5 * 60 * 1000); 
 
 		return () => clearInterval(intervalId);
 	}, [session, userProfile?.subscription_status]);
 
-	// 2. State Transition Logic
-	// Detects if status flipped from (not active) -> (active) and opens modal
 	useEffect(() => {
 		const prevStatus = prevStatusRef.current;
 		const currentStatus = userProfile?.subscription_status;
 
 		if (userProfile) {
-			// Logic: If we had a previous status (so not a fresh page load),
-			// AND it wasn't active, AND it is now active...
 			if (prevStatus && prevStatus !== 'active' && currentStatus === 'active') {
-				// Force open the Success Modal
 				setLimitModal({
 					isOpen: true,
 					type: 'PREMIUM_INFO',
 					required: 0,
 					balance: 0
 				});
-				// Optional: if Payment modal was open, close it
 				setShowPaymentModal(false);
 			}
-			// Update the ref for the next comparison
 			prevStatusRef.current = currentStatus;
 		}
 	}, [userProfile]);
 
  	useEffect(() => {
         const fetchReports = async () => {
-            // Select question_id AND status
             const { data, error } = await supabase
                 .from('question_reports')
                 .select('question_id, status');
             
             if (!error && data) {
-                // Filter: Only add to the Set if the status is NOT 'resolved'
-                // This ensures that once an Admin fixes it, the red icon disappears for users.
                 const activeIssues = data.filter(r => r.status !== 'resolved');
-                
                 const ids = new Set(activeIssues.map(r => r.question_id));
                 setReportedQuestionIds(ids);
             }
         };
-
-        // Only run if not already loading profile to avoid duplicate calls on init
         fetchReports();
     }, []);
 	
-	// ------------------------------------------------------------
-	// END: POLLING LOGIC
-	// ------------------------------------------------------------
-
 	const handleJumpToQuestion = (uniqueId) => {
-		// 1. Reset all filters to ensure the question is visible
 		setSearchInput("");
 		setSelectedTopic("All");
 		setSelectedSubtopic("All");
-		// --- MODIFIED: Reset types array to all ---
 		setSelectedTypes(["MCQ", "EMQ", "SAQ"]); 
-		// Optional: Reset sort to ensure predictable indexing, or keep current sort.
-		// For consistency, let's reset to Newest so logic matches 'questions' array closely if needed
 		setSortOrder("Newest"); 
-
-		// 2. Close the list modal
 		setShowReportListModal(false);
 
-		// 3. Find index and scroll (using setTimeout to allow React to re-render the list with "All" filters)
 		setTimeout(() => {
-			// We need to find the index within the *current filtered list*. 
-			// Since we reset filters to "All", this effectively searches the main list.
-			// Note: If you have complex sorting logic, this lookup must match the current 'filteredQuestions' logic.
-			// Since we reset sortOrder to "Newest" above, we should assume the list re-orders to Newest.
-			
-			// Let's create a temporary sorted list matching "Newest" logic to find the index:
 			const sortedForIndex = [...questions].sort((a, b) => {
-					// Match "Newest" sort logic from your useMemo
 					const getYearFromId = (idStr) => {
 					if (!idStr || !idStr.startsWith("M")) return 0;
 					const yy = parseInt(idStr.substring(1, 3), 10);
@@ -336,11 +292,10 @@ const App = () => {
 			} else {
 				alert("Could not find question in the current list.");
 			}
-		}, 150); // Slight delay to ensure state updates and re-render
+		}, 150); 
 	};
 	
 	useEffect(() => {
-		// 1. Initial Session Check
 		supabase.auth.getSession().then(({ data: { session } }) => {
 			setSession(session);
 			if (session) {
@@ -353,7 +308,6 @@ const App = () => {
 			}
 		});
 
-		// 2. Auth State Listener
 		const {
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -363,12 +317,17 @@ const App = () => {
 			if (session) {
 				const currentUserId = session.user.id;
 				if (lastUserId.current === currentUserId) {
-					fetchUserProgress(currentUserId);
+					// We might be impersonating, so check state before blindly fetching
+					if (!impersonatedUser) {
+						fetchUserProgress(currentUserId);
+						fetchQuotaStats(currentUserId);
+					}
 					fetchUserProfile(currentUserId);
-					fetchQuotaStats(currentUserId);
 				} else {
 					lastUserId.current = currentUserId;
 					setProfileLoading(true);
+					// Reset impersonation on user switch
+					setImpersonatedUser(null);
 					fetchUserProgress(currentUserId);
 					fetchUserProfile(currentUserId);
 					fetchQuotaStats(currentUserId);
@@ -376,12 +335,14 @@ const App = () => {
 			} else {
 				lastUserId.current = null;
 				setUserProgress({});
-				setProgressLoaded(false); // Reset this to ensure clean sort on re-login
+				setProgressLoaded(false); 
 				setUserProfile(null);
-				prevStatusRef.current = null; // Reset polling ref on logout
+				prevStatusRef.current = null; 
 				setProfileLoading(false);
 				setIsAdmin(false);
 				setIsRecruiter(false);
+				setIsTeacher(false);
+				setImpersonatedUser(null);
 			}
 		});
 
@@ -467,7 +428,6 @@ const App = () => {
 			let done = false;
 
 			while (!done) {
-				// OPTIMIZATION: Use RPC to get lightweight data (has_notes boolean instead of full text)
 				const { data, error } = await supabase
 					.rpc("get_user_progress_optimized", {
 						target_user_id: userId,
@@ -489,17 +449,14 @@ const App = () => {
 
 			const progressMap = {};
 			allProgressData.forEach((row) => {
-				// Map the RPC response to the state object
-				// We initialize 'notesLoaded' to false because we haven't fetched the string content yet
 				progressMap[String(row.question_id)] = {
 					...row,
-					notes: null, // Don't hold string in memory initially
+					notes: null, 
 					notesLoaded: false 
 				};
 			});
 			setUserProgress(progressMap);
 			
-			// --- Signal that progress is ready for the initial sort ---
 			setProgressLoaded(true);
 
 			const { count } = await supabase
@@ -531,31 +488,29 @@ const App = () => {
 		}
 	};
 
-	// 1. Fetch note content for a SINGLE question (for Modals/Clicking specific items)
 	const ensureNoteLoaded = async (uniqueId) => {
 		const idStr = String(uniqueId);
 		const current = userProgress[idStr];
 
-		// If we already have the string loaded, return it immediately
 		if (current?.notesLoaded && current?.notes) {
 			return current.notes;
 		}
 		
-		// If the RPC said there are no notes, return empty string
 		if (current && current.has_notes === false) {
 			return "";
 		}
 
-		// Otherwise, fetch from DB
+		// Use the correct user ID (impersonated or self)
+        const targetId = impersonatedUser ? impersonatedUser.id : session.user.id;
+
 		const { data, error } = await supabase
 			.from("user_progress")
 			.select("notes")
-			.eq("user_id", session.user.id)
+			.eq("user_id", targetId)
 			.eq("question_id", idStr)
 			.single();
 
 		if (!error && data) {
-			// Update state for next time
 			setUserProgress((prev) => ({
 				...prev,
 				[idStr]: {
@@ -564,24 +519,23 @@ const App = () => {
 					notesLoaded: true,
 				},
 			}));
-			// RETURN the data for immediate use
 			return data.notes;
 		}
 		return "";
 	};
 
-	// 2. Fetch ALL missing notes (for Notes Panel / Export)
 	const loadAllNotesContent = async () => {
 		if (!session) return;
 
-		// Identify questions that have notes (boolean) but no text loaded yet
+        // Use correct ID
+        const targetId = impersonatedUser ? impersonatedUser.id : session.user.id;
+
 		const idsToFetch = Object.values(userProgress)
 			.filter((p) => p.has_notes && !p.notesLoaded)
 			.map((p) => p.question_id);
 
 		if (idsToFetch.length === 0) return;
 
-		// Fetch in batches
 		const batchSize = 100;
 		for (let i = 0; i < idsToFetch.length; i += batchSize) {
 			const batchIds = idsToFetch.slice(i, i + batchSize);
@@ -590,7 +544,7 @@ const App = () => {
 				.from("user_progress")
 				.select("question_id, notes")
 				.in("question_id", batchIds)
-				.eq("user_id", session.user.id);
+				.eq("user_id", targetId);
 
 			if (!error && data) {
 				setUserProgress((prev) => {
@@ -625,7 +579,11 @@ const App = () => {
 				if (data.role === "admin") {
 					setIsAdmin(true);
 					setIsRecruiter(true);
+                    setIsTeacher(true);
 				}
+                if (data.role === "teacher") {
+                    setIsTeacher(true);
+                }
 				if (data.role === "superrecruiter" || data.role === "recruiter") {
 					setIsRecruiter(true);
 				}
@@ -672,17 +630,42 @@ const App = () => {
 		return { mcqCount, saqCount };
 	}, [userProgress, questions]);
 
+    // --- TEACHER ACTIONS ---
+    const handleImpersonate = (studentProfile) => {
+        setImpersonatedUser(studentProfile);
+        setShowTeacherDash(false);
+        
+        // Refresh progress with STUDENT ID
+        setLoading(true);
+        fetchUserProgress(studentProfile.id).then(() => {
+            setLoading(false);
+        });
+        
+        // Also fetch their quota stats so the bar updates
+        fetchQuotaStats(studentProfile.id);
+    };
+
+    const handleStopImpersonation = () => {
+        setImpersonatedUser(null);
+        if (session?.user?.id) {
+            setLoading(true);
+            // Revert to MY progress
+            fetchUserProgress(session.user.id).then(() => {
+                setLoading(false);
+            });
+            fetchQuotaStats(session.user.id);
+        }
+    };
+    // -----------------------
+
 	const handleReportQuestion = (questionData) => {
-		// Guest Check
 		if (!session) {
 			setShowLoginModal(true);
 			return;
 		}
-		
-		// Set the question to be reported and open modal
 		setPendingReportQuestion(questionData);
 		setReportModalOpen(true);
-		};
+	};
 
 	const handleSubmitReport = async (reason) => {
 		if (!session || !pendingReportQuestion) return;
@@ -691,30 +674,25 @@ const App = () => {
 		const idStr = String(pendingReportQuestion.unique_id);
 
 		try {
-			// 1. Optimistic UI update (make icon red immediately)
 			setReportedQuestionIds(prev => new Set(prev).add(idStr));
 
-			// 2. Send to Supabase
 			const { error } = await supabase
 				.from('question_reports')
 				.insert({
 					question_id: idStr,
 					user_id: session.user.id,
 					reason: reason,
-					status: 'new' // Explicitly setting status
+					status: 'new' 
 				});
 
 			if (error) throw error;
 
-			// 3. Success state
 			setReportModalOpen(false);
 			setPendingReportQuestion(null);
-			// Optional: You could show a small toast notification here
 			
 		} catch (error) {
 			console.error("Report error:", error);
 			alert("Failed to submit report. Please check your connection.");
-			// Revert optimistic update if failed
 			setReportedQuestionIds(prev => {
 				const next = new Set(prev);
 				next.delete(idStr);
@@ -725,7 +703,7 @@ const App = () => {
 		}
 	};
 	
-		const handleUpdatePassword = async () => {
+	const handleUpdatePassword = async () => {
 		if (!newPassword) return alert("Please enter a password");
 		setResetLoading(true);
 		const { error } = await supabase.auth.updateUser({ password: newPassword });
@@ -739,7 +717,6 @@ const App = () => {
 	};
 
 	const handleDownloadData = async () => {
-		// --- GUEST BLOCK ---
 		if (!session) {
 			setShowLoginModal(true);
 			return;
@@ -774,6 +751,7 @@ const App = () => {
 			return;
 		}
 		try {
+            // Log for actual user
 			await supabase
 				.from("export_logs")
 				.insert({
@@ -821,7 +799,7 @@ const App = () => {
 
 	const cleanHtmlContent = (html) => {
 		if (!html) return null;
-		if (html.includes("<img")) return html; // Allow images
+		if (html.includes("<img")) return html; 
 		const textOnly = html
 			.replace(/<[^>]*>/g, "")
 			.replace(/&nbsp;/g, " ")
@@ -837,7 +815,6 @@ const App = () => {
 	};
 
 	const handleTextChange = (questionId, newText) => {
-		// --- GUEST BLOCK ---
 		if (!session) {
 			setShowLoginModal(true);
 			return;
@@ -854,11 +831,13 @@ const App = () => {
 	};
 
 	const handleAIRequest = async (questionData, modelId) => {
-		// --- GUEST BLOCK ---
 		if (!session) {
 			setShowLoginModal(true);
 			return;
 		}
+        // Disable AI in impersonation mode if preferred, or keep enabled
+        // Currently keeping it enabled as it might use teacher credits
+        if (impersonatedUser) return;
 
 		const idStr = String(questionData.unique_id);
 		const isCached = aiState[idStr]?.purchasedModels?.includes(modelId);
@@ -876,7 +855,6 @@ const App = () => {
 			if (!isTrial) {
 				const baseCost = AI_COST_MAP[modelId] || 0.03;
 				const requiredCredits = baseCost * 20;
-				// Overdraft logic: block only if ALREADY negative
 				if (balance < 0) {
 					setLimitModal({
 						isOpen: true,
@@ -962,13 +940,13 @@ const App = () => {
 	};
 
 	const handleToggleFlag = async (questionData, currentDraftText) => {
-		// --- GUEST BLOCK ---
+        if (impersonatedUser) return; // Block logic
+
 		if (!session) {
 			setShowLoginModal(true);
 			return;
 		}
 
-		// --- STORAGE CHECK ---
 		const idString = String(questionData.unique_id);
 		if (userProfile?.subscription_tier === "standard") {
 			const isTrial = userProfile.subscription_status === "trial";
@@ -985,7 +963,6 @@ const App = () => {
 				return;
 			}
 		}
-		// ---------------------
 
 		const currentProgress = userProgress[idString] || {};
 		const newFlagStatus = !currentProgress.is_flagged;
@@ -1006,24 +983,19 @@ const App = () => {
 			score: currentProgress.score ?? null,
 			max_score: currentProgress.max_score ?? null,
 			selected_option: currentProgress.selected_option ?? null,
-			// notes: removed from here to be safe
 			...(currentProgress.id ? { id: currentProgress.id } : {}),
 		};
 
-		// 2. SAFETY CHECK: Only send notes if we actually loaded them
 		if (notesLoaded) {
 			payload.notes = currentProgress.notes || null;
 		}
 
-		// 3. Update State (Preserving Optimization Flags)
 		setUserProgress((prev) => ({
 			...prev,
 			[idString]: {
-				...payload, // This spreads the new values
-				has_notes: notesBool, // Keeps the yellow icon status
-				notesLoaded: notesLoaded, // Keeps the loaded status
-				// If we have an ID locally, keep it. 
-				// The payload spread above handles it, but this is a safety fallback for optimistic UI
+				...payload, 
+				has_notes: notesBool, 
+				notesLoaded: notesLoaded, 
 				id: currentProgress.id 
 			},
 		}));
@@ -1040,7 +1012,8 @@ const App = () => {
 		saqResponse,
 		viewMode = "FULL"
 	) => {
-		// --- GUEST BLOCK ---
+        if (impersonatedUser) return; // Block logic
+
 		if (!session) {
 			setShowLoginModal(true);
 			return;
@@ -1068,13 +1041,10 @@ const App = () => {
 						score: null,
 						max_score: null,
 						selected_option: null,
-						notes: existingEntry.notes, // If we are here, we have the entry, safe to keep
+						notes: existingEntry.notes, 
 						user_response: existingEntry.user_response,
 						is_flagged: existingEntry.is_flagged,
 					};
-					// Note: If toggling off, we generally have the data loaded or it's just a status update.
-					// However, for safety in "Toggle Off", we usually just update the specific fields.
-					// But to be 100% safe on the 'notes' field specifically:
 					if (!existingEntry.notesLoaded) delete payload.notes;
 
 					setUserProgress((prev) => ({ ...prev, [idString]: payload }));
@@ -1111,16 +1081,13 @@ const App = () => {
 					return;
 				}
 			}
-			// ---------------------------
 
 			const isCorrect = mcqSelection === questionData.correctAnswerIndex;
 			const score = isCorrect ? 1 : 0;
 
-			// 1. Construct Base Payload
 			const payload = {
 				user_id: session.user.id,
 				question_id: idString,
-				// notes: Removed
 				user_response: existingEntry?.user_response || null,
 				score: score,
 				max_score: 1,
@@ -1128,19 +1095,17 @@ const App = () => {
 				is_flagged: existingEntry?.is_flagged || false,
 			};
 
-			// 2. SAFETY CHECK
 			if (existingEntry?.notesLoaded) {
 				payload.notes = existingEntry.notes || null;
 			}
 
-			// 3. Update State
 			setUserProgress((prev) => ({
 				...prev,
 				[idString]: { 
 					...payload, 
 					id: existingEntry?.id,
-					has_notes: existingEntry?.has_notes, // Preserve Flag
-					notesLoaded: existingEntry?.notesLoaded // Preserve Flag
+					has_notes: existingEntry?.has_notes, 
+					notesLoaded: existingEntry?.notesLoaded 
 				},
 			}));
 
@@ -1154,7 +1119,6 @@ const App = () => {
 					...prev, 
 					[idString]: { 
 						...data[0],
-						// Re-attach flags after DB return
 						has_notes: existingEntry?.has_notes, 
 						notesLoaded: existingEntry?.notesLoaded 
 					} 
@@ -1177,13 +1141,11 @@ const App = () => {
 	};
 
 	const handleReviewNotes = async (questionData, draftSaqResponse, viewMode = "FULL") => {
-		// --- GUEST BLOCK ---
 		if (!session) {
 			setShowLoginModal(true);
 			return;
 		}
 
-		// 1. Fetch the notes (Wait for it!)
 		const fetchedNotes = await ensureNoteLoaded(questionData.unique_id);
 
 		const idString = String(questionData.unique_id);
@@ -1199,12 +1161,11 @@ const App = () => {
 			resolvedResponse = existingData.user_response;
 		}
 
-		// 2. Use fetchedNotes here instead of existingData.notes
 		if (existingData) {
 			setModalInitialData({ 
                 ...existingData, 
                 user_response: resolvedResponse,
-                notes: fetchedNotes || existingData.notes || "" // Priority to fetched
+                notes: fetchedNotes || existingData.notes || "" 
             });
 		} else {
 			setModalInitialData({
@@ -1219,9 +1180,10 @@ const App = () => {
 	};
 
 	const handleConfirmCompletion = async (modalData) => {
+        if (impersonatedUser) return; // Block
 		if (!session || !pendingQuestion) return;
 
-		// --- STORAGE CHECK (SAQ / Notes) ---
+		// --- STORAGE CHECK ---
 		if (userProfile?.subscription_tier === "standard") {
 			const isTrial = userProfile.subscription_status === "trial";
 			const limit = isTrial ? 51200 : userProfile.db_storage_limit || 52428800;
@@ -1240,7 +1202,6 @@ const App = () => {
 				return;
 			}
 		}
-		// -----------------------------------
 
 		const idString = String(pendingQuestion.unique_id);
 		const currentProgress = userProgress[idString] || {};
@@ -1300,8 +1261,8 @@ const App = () => {
 			setUserProgress((prev) => ({ 
 				...prev, 
 				[idString]: { 
-					...data[0], // This raw row lacks 'has_notes'
-					has_notes: hasNotesBoolean, // So we re-add it here
+					...data[0], 
+					has_notes: hasNotesBoolean, 
 					notesLoaded: true 
 				} 
 			}));
@@ -1311,12 +1272,12 @@ const App = () => {
 	};
 
 	const handleRedo = async (questionData) => {
+        if (impersonatedUser) return; // Block
 		if (!session) return;
 		const idString = String(questionData.unique_id);
 		const existingEntry = userProgress[idString];
 		if (!existingEntry) return;
 
-		// 1. Copy existing entry
 		const payload = {
 			...existingEntry,
 			user_id: session.user.id,
@@ -1327,17 +1288,14 @@ const App = () => {
 			is_flagged: existingEntry.is_flagged,
 		};
 
-		// 2. SAFETY CHECK: If we haven't loaded notes, DO NOT send the null/undefined value
 		if (!existingEntry.notesLoaded) {
 			delete payload.notes;
 		}
 
-		// 3. Update State
 		setUserProgress((prev) => ({
 			...prev,
 			[idString]: {
 				...payload,
-				// Ensure flags are preserved
 				has_notes: existingEntry.has_notes,
 				notesLoaded: existingEntry.notesLoaded,
 			},
@@ -1356,7 +1314,6 @@ const App = () => {
 		await supabase.auth.signOut();
 	};
 
-	// --- NEW: Toggle Type Handler ---
 	const handleTypeToggle = (type) => {
 		setSelectedTypes((prev) => {
 			if (prev.includes(type)) {
@@ -1380,7 +1337,6 @@ const App = () => {
 	const filterCounts = useMemo(() => {
 		const qLower = searchQuery.toLowerCase().trim();
 		const baseSet = questions.filter((q) => {
-			// --- MODIFIED: Check array inclusion ---
 			if (!selectedTypes.includes(q.type)) return false;
 			
 			if (!qLower) return true;
@@ -1404,7 +1360,7 @@ const App = () => {
 			}
 		});
 		return { tCounts, sCounts, totalMatchingSearch: baseSet.length };
-	}, [questions, searchQuery, selectedTypes, selectedTopic]); // Added selectedTypes
+	}, [questions, searchQuery, selectedTypes, selectedTopic]);
 	
 	const filteredQuestions = useMemo(() => {
 		const qLower = searchQuery.toLowerCase().trim();
@@ -1413,7 +1369,6 @@ const App = () => {
 			if (selectedSubtopic !== "All" && q.subtopic !== selectedSubtopic)
 				return false;
 			
-			// --- MODIFIED: Check array inclusion ---
 			if (!selectedTypes.includes(q.type)) return false;
 
 			if (qLower) {
@@ -1433,7 +1388,6 @@ const App = () => {
 			if (sortOrder === "Notes") {
 				const hasNotes = (qItem) => {
 					const p = userProgress[String(qItem.unique_id)];
-					// OPTIMIZATION: Check the RPC boolean directly
 					return p?.has_notes === true;
 				};
 				const aNotes = hasNotes(a);
@@ -1487,14 +1441,13 @@ const App = () => {
 			}
 			return a.unique_id - b.unique_id;
 		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		questions,
 		selectedTopic,
 		selectedSubtopic,
-		selectedTypes, // Added selectedTypes
+		selectedTypes,
 		sortOrder,
-		progressLoaded, // <--- ADDED to ensure initial sort works
+		progressLoaded,
 		searchQuery,
 	]);
 
@@ -1539,36 +1492,33 @@ const App = () => {
 				user={session?.user}
 				isAdmin={isAdmin}
 			/>
-      <DataExportModal 
-        isOpen={isExportModalOpen}
-        onClose={() => setIsExportModalOpen(false)}
-        questions={questions}
-        userProgress={userProgress}
-        onDownloadJson={handleDownloadData}
-        userId={session?.user?.id}
-      />
+            <DataExportModal 
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+                questions={questions}
+                userProgress={userProgress}
+                onDownloadJson={handleDownloadData}
+                userId={session?.user?.id}
+            />
 			{showPasswordResetModal && (
 				<div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-					{" "}
 					<div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95">
-						{" "}
 						<div className="flex flex-col items-center text-center mb-6">
-							{" "}
 							<div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-3">
 								<KeyRound className="w-6 h-6 text-teal-600" />
-							</div>{" "}
-							<h2 className="text-xl font-bold text-gray-800">Set New Password</h2>{" "}
+							</div>
+							<h2 className="text-xl font-bold text-gray-800">Set New Password</h2>
 							<p className="text-sm text-gray-500">
 								Please enter your new password below.
-							</p>{" "}
-						</div>{" "}
+							</p>
+						</div>
 						<input
 							type="password"
 							placeholder="New Password"
 							value={newPassword}
 							onChange={(e) => setNewPassword(e.target.value)}
 							className="w-full px-4 py-3 border border-gray-300 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-teal-500"
-						/>{" "}
+						/>
 						<button
 							onClick={handleUpdatePassword}
 							disabled={resetLoading}
@@ -1579,8 +1529,8 @@ const App = () => {
 							) : (
 								"Save New Password"
 							)}
-						</button>{" "}
-					</div>{" "}
+						</button>
+					</div>
 				</div>
 			)}
 
@@ -1590,7 +1540,6 @@ const App = () => {
 				userProfile={userProfile} 
 			/>
 
-			{/* --- NEW: LOGIN MODAL FOR GUESTS --- */}
 			{showLoginModal && (
 				<div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in-95">
 					<div className="w-full max-w-md relative">
@@ -1628,7 +1577,6 @@ const App = () => {
 				onSubmit={handleSubmitReport}
 				isSubmitting={isReportSubmitting}
 				questionId={pendingReportQuestion?.unique_id}
-				isAlreadyReported={pendingReportQuestion && reportedQuestionIds.has(String(pendingReportQuestion.unique_id))}
 				sourceFile={pendingReportQuestion?._source_file}
 			/>
 
@@ -1646,6 +1594,7 @@ const App = () => {
 				type={pendingQuestion?.type}
 				initialData={modalInitialData}
 				viewMode={modalViewMode}
+                isReadOnly={!!impersonatedUser} // BLOCK SAVE
 			/>
 
 			{showDashboard && (
@@ -1665,6 +1614,13 @@ const App = () => {
 			{showRecruiterDash && (
 				<RecruiterDashboard onClose={() => setShowRecruiterDash(false)} />
 			)}
+            {/* TEACHER DASHBOARD */}
+            {showTeacherDash && (
+				<TeacherDashboard 
+                    onClose={() => setShowTeacherDash(false)} 
+                    onImpersonate={handleImpersonate}
+                />
+			)}
 
 			<div className="sticky top-0 z-40">
 				<header className="bg-teal-700 text-white shadow-md relative">
@@ -1681,8 +1637,7 @@ const App = () => {
 
 									{isGuest && (
 										<span className="px-1.5 py-0.5 rounded text-[9px] font-bold border bg-gray-600 text-gray-200 border-gray-500">
-											{" "}
-											GUEST PREVIEW{" "}
+											GUEST PREVIEW
 										</span>
 									)}
                   
@@ -1690,7 +1645,6 @@ const App = () => {
                       <button
                           onClick={() => setLimitModal({ 
                               isOpen: true, 
-                              // LOGIC CHANGE: Check status to determine modal type
                               type: userProfile.subscription_status === 'active' ? 'PREMIUM_INFO' : 'TRIAL_LIMIT' 
                           })} 
                           className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition-colors cursor-pointer ${
@@ -1750,6 +1704,17 @@ const App = () => {
 											<Users className="w-5 h-5" />
 										</button>
 									)}
+                                    {/* TEACHER DASHBOARD BUTTON */}
+                                    {isTeacher && !impersonatedUser && (
+                                        <button
+                                            onClick={() => setShowTeacherDash(true)}
+                                            className="p-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-full transition shadow-sm border border-emerald-500 mr-2"
+                                            title="Teacher Dashboard"
+                                        >
+                                            <GraduationCap className="w-5 h-5" />
+                                        </button>
+                                    )}
+
 									{isAdmin && (
 										<button
 											onClick={() => setShowDashboard(true)}
@@ -1768,7 +1733,6 @@ const App = () => {
                                     </button>
 									<button
 										onClick={async () => {
-											// Order matters: Start fetch, then show panel (or show loading state if you prefer)
 											await loadAllNotesContent(); 
 											setShowNotesPanel(true);
 										}}
@@ -1816,6 +1780,29 @@ const App = () => {
 						</div>
 					</div>
 				</header>
+                
+                {/* IMPERSONATION BANNER */}
+                {impersonatedUser && (
+                    <div className="bg-amber-100 border-b border-amber-200 px-4 py-3 flex items-center justify-between sticky top-[60px] z-30 shadow-md">
+                        <div className="flex items-center gap-3">
+                            <div className="p-1.5 bg-amber-200 rounded text-amber-800">
+                                <Eye className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-amber-900">
+                                    Viewing as: {impersonatedUser.display_name || 'Student'} <span className="font-normal font-mono text-xs opacity-75">({impersonatedUser.email})</span>
+                                </p>
+                                <p className="text-xs text-amber-700 font-medium">Read-Only Mode. You cannot edit answers or notes.</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={handleStopImpersonation}
+                            className="px-4 py-2 bg-amber-800 hover:bg-amber-900 text-white text-sm font-bold rounded-lg transition-colors shadow-sm"
+                        >
+                            Exit View
+                        </button>
+                    </div>
+                )}
 
 				<div className="bg-white border-b border-gray-200 shadow-sm relative">
 					<div className="max-w-6xl mx-auto px-4 py-3">
@@ -1883,7 +1870,6 @@ const App = () => {
 						</div>
 
 						<div className="relative">
-							{/* --- MODIFIED: Added overflow logic to allow dropdowns --- */}
 							<div
 								className={`grid transition-all duration-300 ease-in-out ${
 									allowOverflow ? "overflow-visible" : "overflow-hidden"
@@ -1949,7 +1935,6 @@ const App = () => {
 											<BookOpen className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none" />
 										</div>
 
-										{/* --- REPLACED: Custom Dropdown for Types --- */}
 										<div className="relative" ref={typeDropdownRef}>
 											<button
 												onClick={() => setShowTypeDropdown(!showTypeDropdown)}
@@ -1981,7 +1966,6 @@ const App = () => {
 												</div>
 											)}
 										</div>
-										{/* ------------------------------------------- */}
 
 										<div className="relative">
 											<select
@@ -2058,7 +2042,6 @@ const App = () => {
 						ref={virtuosoRef}
 						useWindowScroll
 						data={filteredQuestions}
-						// --- UPDATED: PASS isGuest to context ---
 						context={{
 							usageStats,
 							userProfile,
@@ -2068,7 +2051,8 @@ const App = () => {
 							aiEnabled,
 							aiUsageCount,
 							isGuest,
-							reportedQuestionIds
+							reportedQuestionIds,
+                            impersonatedUser // PASS THIS
 						}}
 						initialTopMostItemIndex={initialScrollIndex}
 						rangeChanged={({ startIndex }) => {
@@ -2084,7 +2068,8 @@ const App = () => {
 								aiEnabled,
 								aiUsageCount,
 								isGuest,
-								reportedQuestionIds
+								reportedQuestionIds,
+                                impersonatedUser
 							} = context;
 							const idStr = String(q.unique_id);
 							const p = userProgress[idStr];
@@ -2102,9 +2087,6 @@ const App = () => {
 							const isReported = reportedQuestionIds.has(String(q.unique_id));
 
 							let isLocked = false;
-							// Only lock for standard users in trial mode. Guests can see questions (read-only) but cannot interact.
-							// If you want Guests to have locks too, remove the userProfile check.
-							// Assuming "Freemium" means guests can browse everything but do nothing.
 							if (
 								userProfile &&
 								userProfile.subscription_tier === "standard" &&
@@ -2116,6 +2098,9 @@ const App = () => {
 										isLocked = true;
 								}
 							}
+                            
+                            // CALCULATE READ ONLY
+                            const isReadOnly = !!impersonatedUser;
 
 							return (
 								<div className="pb-6">
@@ -2141,11 +2126,8 @@ const App = () => {
 										isLocked={isLocked}
 										userProfile={userProfile}
 										aiUsageCount={aiUsageCount}
-										// --- NEW: Pass Guest Status ---
 										isGuest={isGuest}
 										onUnlock={() => setLimitModal({ isOpen: true, type: 'TRIAL_LIMIT' })}
-										// -----------------------------
-
 										onToggleComplete={(mcqSelection, saqResponse, viewMode) =>
 											handleInitiateCompletion(
 												q,
@@ -2161,6 +2143,8 @@ const App = () => {
 										onRedo={() => handleRedo(q)}
 										isReported={reportedQuestionIds.has(String(q.unique_id))}
     									onReport={() => handleReportQuestion(q)}
+                                        // PASS READ ONLY
+                                        isReadOnly={isReadOnly}
 									/>
 								</div>
 							);
