@@ -1,6 +1,14 @@
 {
-  "currentVersion": "4.3.4",
+  "currentVersion": "4.3.5",
   "history": [
+    {
+      "version": "4.3.5",
+      "date": "2026-1-15",
+      "title": "Fixed questions reported on Jan 15, 2026",
+      "changes": [
+        "Questions: Fixed questions reported on Jan 15, 2026"
+      ]
+    },
     {
       "version": "4.3.4",
       "date": "2026-1-14",
