@@ -121966,7 +121966,7 @@
             "Observe",
             "Review menstrual history"
         ],
-        "correctAnswerIndex": 3
+        "correctAnswerIndex": 6
     },
     {
         "id": "M22-E06-02-SAQ",
@@ -140458,6 +140458,7 @@
             "J. Vascular dementia",
             "K. Persistent delusional disorder"
         ],
+        "correctAnswerIndex": 5,
         "official_answer": "F. Depressive episode.",
         "ai_answer": {
             "agreement": "Agree",
@@ -169255,7 +169256,7 @@
             "60",
             "120"
         ],
-        "correctAnswerIndex": 2,
+        "correctAnswerIndex": 0,
         "official_answer": "Option A. A+1+1+1+1+1 (no suspicious features =0 mark)",
         "ai_answer": {
             "agreement": "Disagree",
@@ -169851,10 +169852,10 @@
             "Mefenamic Acid",
             "Laparoscopic ovarian cystectomy"
         ],
-        "correctAnswerIndex": 1,
-        "official_answer": "(COC pills)",
+        "correctAnswerIndex": 2,
+        "official_answer": "Levonorgestrel-releasing IUCd (Mirena) for >= 18-24m (Was COC pills, changed Jan 15, 2026)",
         "ai_answer": {
-            "agreement": "Agree",
+            "agreement": "Disagree",
             "explanation": "Combined oral contraceptive pills (COCP) are commonly prescribed post-operatively for endometriosis to suppress ovulation and reduce the risk of cyst recurrence."
         },
         "_source_file": "Processed\\M25\\OG\\M25 Final MB O&G Written .docx - Google Docs_P2.pdf",
@@ -205260,7 +205261,7 @@
         "topic": "Pediatrics",
         "subtopic": "2 Perinatal and Neonatal Medicine",
         "type": "SAQ",
-        "question": "Low Apgar score at birth (7,9 at 0 and 5 min)\nWhat is this rash? (1 mark)\nName the immediate investigation. (1 mark)\nName 2 abnormalities on this CT brain. (2 marks)\nName 2 long-term complications of CMV infection. (2 marks)\nHe is now 6 months old and which of the followings is appropriate for his developmental age. Please tick. (2 marks): Social smile, Roll over, Sit with support, Right hand dominance\nA venous blood gas was given. (the “venous” was highlighted with NO reference range given): pH 7.12, pCO2 7.7, pO2 5.5, HCO3 34. What is the abnormality? (1 mark)\nHe is now 1 year-old old presented with fever and cough. Diagnosed with bronchopneumonia. Clinically dehydrated. Ix shows: Na 124, K 4.2. Give two reasons for the electrolyte abnormalities. (1 mark)",
+        "question": "Low Apgar score at birth (7,9 at 0 and 5 min)<img src='https://i.imgur.com/2XDmfqZ.png'/>What is this rash? (1 mark)\nName the immediate investigation. (1 mark)\n<img src='https://i.imgur.com/iXMzT02.png'/>Name 2 abnormalities on this CT brain. (2 marks)\nName 2 long-term complications of CMV infection. (2 marks)\nHe is now 6 months old and which of the followings is appropriate for his developmental age. Please tick. (2 marks): Social smile, Roll over, Sit with support, Right hand dominance\nA venous blood gas was given. (the “venous” was highlighted with NO reference range given): pH 7.12, pCO2 7.7, pO2 5.5, HCO3 34. What is the abnormality? (1 mark)\nHe is now 1 year-old old presented with fever and cough. Diagnosed with bronchopneumonia. Clinically dehydrated. Ix shows: Na 124, K 4.2. Give two reasons for the electrolyte abnormalities. (1 mark)",
         "official_answer": "Question 1: Petechiae\nQuestion 2: Complete blood count\nQuestion 3: Dilated ventricles, periventricular calcification, cerebral atrophy\nQuestion 4: Sensorineural hearing loss, Vision loss, Developmental delay, intellectual disability, seizure, cerebral palsy\nQuestion 5: Social smile (normal), Roll over (normal), Sit with support (normal), Right hand dominance (abnormal, develops in 18 months)\nQuestion 6: Respiratory acidosis with renal compensation (Normal range: pH 7.30-7.45, 4.7-6.0 kPa, pO2 8.0-10.7 kPa, and HCO3 18-22 mEq/L. pH low indicating acidosis, O2 is low and CO2 is high indicating respiratory acidosis, bicarbonate high indicating renal compensation.\nQuestion 7: SIADH. Acute kidney injury of various causes (e.g. dehydration, S. pneumoniae-associated HUS)",
         "ai_answer": {
             "agreement": "Agree",
@@ -214456,7 +214457,7 @@
             "Pedicled latissimus dorsi flap",
             "Skin graft"
         ],
-        "correctAnswerIndex": null,
+        "correctAnswerIndex": 0,
         "official_answer": "Not provided in source",
         "ai_answer": {
             "agreement": "Disagree",
