@@ -5040,7 +5040,7 @@
         "topic": "Medicine",
         "subtopic": "6 Gastroenterology & Hepatology",
         "type": "SAQ",
-        "question": "(a) What 4 blood samples would you obtain immediately, and why?\n(b) What are the advantages and disadvantages of an early upper gastrointestinal endoscopy?\n(c) What can be done to prevent this patient having another episode of bleeding after discharge from hospital?",
+        "question": "A 46-year-old man is admitted with an acute haematemesis and melaena.\n(a) What 4 blood samples would you obtain immediately, and why?\n(b) What are the advantages and disadvantages of an early upper gastrointestinal endoscopy?\n(c) What can be done to prevent this patient having another episode of bleeding after discharge from hospital?",
         "official_answer": "(a) Blood samples: 1. Type & screen (for potential blood transfusion). 2. CBC (to assess Hb and platelet levels). 3. Clotting profile (to assess for coagulopathy). 4. L/RFT (to assess for underlying liver disease and electrolyte disturbance).\n(b) Advantages of early OGD: Diagnostic (finds cause), prognostic (assesses re-bleeding risk), therapeutic (allows for intervention). Disadvantages: Patient may be unstable, risk of sedation/aspiration, view may be obscured by blood.\n(c) Prevention: Avoid NSAIDs/steroids. Treat underlying cause (e.g., H. pylori eradication for peptic ulcer, beta-blockers for varices).",
         "ai_answer": {
             "agreement": "Agree",
@@ -140404,6 +140404,7 @@
             "J. Vascular dementia",
             "K. Persistent delusional disorder"
         ],
+        "correctAnswerIndex": 8,
         "official_answer": "I. OCD.",
         "ai_answer": {
             "agreement": "Agree",
@@ -140513,6 +140514,7 @@
             "J. Vascular dementia",
             "K. Persistent delusional disorder"
         ],
+        "correctAnswerIndex": 1,
         "official_answer": "B. Dementia of Alzheimer's disease. The followings flavour dementia over depression: - memory problems predate husband's death - clear, documented cognitive impairment with disorientation - poor performance despite currently euthymic The depressive symptoms may be manifestation of underlying dementia, or related to psychosocial stressors.",
         "ai_answer": {
             "agreement": "Agree",
@@ -204169,7 +204171,7 @@
         "topic": "Surgery",
         "subtopic": "13 Pediatric Surgery (PS)",
         "type": "SAQ",
-        "question": "A 7-year-old child presents with a bruised and deformed left elbow after a fall, with X-rays provided.\n1. What is the diagnosis?\n2. Name 2 associated injuries.\n3. What are the principles and goals of treatment?\n4. What would you do if the distal perfusion is poor?\n5. Name one common late deformity.",
+        "question": "A 7-year-old child presents with a bruised and deformed left elbow after a fall, with X-rays provided.<img src='https://i.imgur.com/oEqzXdD.png'/><img src='https://i.imgur.com/x6wmLZn.png'/>\n1. What is the diagnosis?\n2. Name 2 associated injuries.\n3. What are the principles and goals of treatment?\n4. What would you do if the distal perfusion is poor?\n5. Name one common late deformity.",
         "official_answer": "1. Displaced supracondylar fracture of the humerus.\n2. Brachial artery injury and anterior interosseous nerve (AIN) injury.\n3. The principle is to achieve and maintain anatomical reduction. The goal is to restore alignment (e.g., Baumann's angle) to prevent malunion and restore function, typically via closed reduction and percutaneous pinning.\n4. If distal perfusion is poor ('pink pulseless hand'), the fracture should be urgently reduced; if perfusion does not return, surgical exploration of the brachial artery is required.\n5. Cubitus varus (gunstock deformity).",
         "ai_answer": {
             "agreement": "Agree",
@@ -208208,7 +208210,7 @@
         "topic": "Pediatrics",
         "subtopic": "2 Perinatal and Neonatal Medicine",
         "type": "SAQ",
-        "question": "Lumbar puncture comes back to be like this (see image on Rt). What can you see on the Gram smear? (1 mark)",
+        "question": "Lumbar puncture comes back to be like this <img src='https://i.imgur.com/cmsjC1F.png'/>. What can you see on the Gram smear? (1 mark)",
         "official_answer": "Gram +ve cocci in chains (streptococcus)",
         "ai_answer": {
             "agreement": "Agree",
