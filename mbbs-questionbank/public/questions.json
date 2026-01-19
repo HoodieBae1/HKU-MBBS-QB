@@ -11597,10 +11597,10 @@
             "Levofloxacin",
             "Rifampicin"
         ],
-        "correctAnswerIndex": 3,
-        "official_answer": "Option D. According to the answer key on page 383.",
+        "correctAnswerIndex": 0,
+        "official_answer": "From IMPACT: Augmentin is first line.",
         "ai_answer": {
-            "agreement": "Agree",
+            "agreement": "Disagree",
             "explanation": "Levofloxacin is a fluoroquinolone with excellent coverage for common uropathogens like E. coli and is a first-line option for uncomplicated pyelonephritis."
         },
         "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P20.pdf",
@@ -11989,10 +11989,10 @@
             "Trimethoprim 200 mg twice daily for 3 days",
             "Send MSU for culture and sensitivity"
         ],
-        "correctAnswerIndex": 1,
-        "official_answer": "Option B?",
+        "correctAnswerIndex": 0,
+        "official_answer": "A. Augmentin more preferred than quinolone due to high resistance with quinolone",
         "ai_answer": {
-            "agreement": "Agree",
+            "agreement": "Disagree",
             "explanation": "Nitrofurantoin (C) is contraindicated in G6PD deficiency due to the risk of hemolytic anemia, making Levofloxacin (B) a suitable alternative for uncomplicated cystitis."
         },
         "_source_file": "Processed\\superpass_matthew_cheung\\Medicine\\1 Medicine Final MB_P20.pdf",
@@ -139468,6 +139468,7 @@
             "Flight of health"
         ],
         "official_answer": "D. Resistance. Resistance is defined as an unwillingness to engage in psychotherapy.",
+        "correctAnswerIndex": 4,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "Forgetting appointments is a classic example of resistance, where the patient unconsciously avoids engaging with the therapeutic process."
@@ -139494,6 +139495,7 @@
             "Flight of health"
         ],
         "official_answer": "E. Acting out. Acting out is performing an action considered 'bad' to garner attention.",
+        "correctAnswerIndex": 4,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "Withholding payment can be a form of 'acting out,' expressing unconscious conflicts or feelings towards the therapist through behavior rather than words."
@@ -139598,6 +139600,7 @@
             "Punishment"
         ],
         "official_answer": "F. Fluoxetine. The symptoms are suggestive of Generalized Anxiety Disorder (GAD), for which an SSRI like Fluoxetine is a first-line pharmacological treatment.",
+        "correctAnswerIndex": 5,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "This presentation is consistent with Generalized Anxiety Disorder, for which SSRIs like fluoxetine are a first-line pharmacological treatment."
@@ -139624,6 +139627,7 @@
             "Punishment"
         ],
         "official_answer": "G. CBT. The symptoms are suggestive of Post-Traumatic Stress Disorder (PTSD), for which trauma-focused CBT is a first-line treatment.",
+        "correctAnswerIndex": 6,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "This clinical picture is classic for Post-Traumatic Stress Disorder (PTSD), and trauma-focused Cognitive Behavioral Therapy is a primary evidence-based treatment."
@@ -139702,6 +139706,7 @@
             "Punishment"
         ],
         "official_answer": "B. Graded exposure and relaxation. This is a specific phobia (blood-injection-injury type), which is best treated with systematic desensitization, involving graded exposure and relaxation techniques.",
+        "correctAnswerIndex": 1,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "The symptoms are characteristic of a specific phobia (blood-injection-injury type), which is effectively treated with systematic desensitization using graded exposure and relaxation."
@@ -140090,6 +140095,7 @@
             "J. Munchausen syndrome"
         ],
         "official_answer": "A. Immediate memory.",
+        "correctAnswerIndex": 0,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "The digit span test, which involves repeating a series of numbers immediately after hearing them, is a classic neuropsychological test of immediate memory and attention."
@@ -140116,6 +140122,7 @@
             "J. Munchausen syndrome"
         ],
         "official_answer": "I. Confabulation.",
+        "correctAnswerIndex": 8,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "Confabulation is the production of fabricated or misinterpreted memories about oneself or the world, without the conscious intention to deceive, to fill in gaps in memory."
@@ -140142,6 +140149,7 @@
             "J. Munchausen syndrome"
         ],
         "official_answer": "H. Perseveration.",
+        "correctAnswerIndex": 7,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "Perseveration is the uncontrollable repetition of a particular response, such as a word, phrase, or gesture, despite the absence or cessation of a stimulus."
@@ -140168,6 +140176,7 @@
             "J. Munchausen syndrome"
         ],
         "official_answer": "E. Amnesic syndrome.",
+        "correctAnswerIndex": 4,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "Amnesic syndromes, characterized by profound memory deficits, are classically caused by damage to medial temporal lobe structures like the hippocampus or diencephalic structures."
@@ -140220,6 +140229,7 @@
             "J. Mild cognitive impairment"
         ],
         "official_answer": "F. Lewy body dementia. Lewy body dementia - cognitive fluctuation, vivid VH, parkinsonism, also a/w early impairment of attention, executive and visuospatial function.",
+        "correctAnswerIndex": 5,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "The core features of fluctuating cognition, visual hallucinations, and parkinsonism (shuffling gait) are classic for Dementia with Lewy Bodies."
@@ -140246,6 +140256,7 @@
             "J. Mild cognitive impairment"
         ],
         "official_answer": "H. Normal pressure hydrocephalus. NPH - classical triad of urinary incontinence, frontal dementia and gait apraxia.",
+        "correctAnswerIndex": 7,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "The triad of cognitive impairment ('poor memory'), urinary incontinence ('wet his bed'), and gait disturbance ('funny walk') is the classic presentation of Normal Pressure Hydrocephalus."
@@ -140272,6 +140283,7 @@
             "J. Mild cognitive impairment"
         ],
         "official_answer": "D. Vascular dementia.",
+        "correctAnswerIndex": 3,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "The presence of focal neurological signs, such as hemiplegia, strongly points towards a vascular etiology for dementia, resulting from strokes."
@@ -140298,6 +140310,7 @@
             "J. Mild cognitive impairment"
         ],
         "official_answer": "B. Alzheimer's disease, late onset. The answer key notes 'why not vascular?', but given the lack of focal signs and insidious onset, Alzheimer's is most likely.",
+        "correctAnswerIndex": 1,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "In the absence of other specific features, a progressive dementia in this age group with vascular risk factors but no focal deficits is most commonly late-onset Alzheimer's disease."
@@ -165798,6 +165811,7 @@
             "explanation": "The Hong Kong government actively promotes screening for colorectal cancer, breast cancer, and cervical cancer through various public health programs."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7736
     },
     {
@@ -165812,6 +165826,7 @@
             "explanation": "These cancers meet the Wilson and Jungner screening criteria: they are significant health problems with a detectable early stage, and effective treatments are available."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7737
     },
     {
@@ -165826,6 +165841,7 @@
             "explanation": "The internationally recognized principles for screening are known as the Wilson and Jungner criteria, established by the WHO."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7738
     },
     {
@@ -165840,6 +165856,7 @@
             "explanation": "Common screening methods for colorectal cancer include the Fecal Immunochemical Test (FIT) and colonoscopy for follow-up or primary screening."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7739
     },
     {
@@ -165854,6 +165871,7 @@
             "explanation": "Other screening modalities include flexible sigmoidoscopy, CT colonography (virtual colonoscopy), and stool DNA tests."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7740
     },
     {
@@ -165868,6 +165886,7 @@
             "explanation": "The combination of fever, thrombocytopenia, microangiopathic hemolytic anemia, and acute kidney injury points to a thrombotic microangiopathy, with TTP, HUS, and DIC as top differentials."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7741
     },
     {
@@ -165882,6 +165901,7 @@
             "explanation": "Essential investigations include a peripheral blood smear to look for schistocytes, ADAMTS13 activity level, coagulation studies, LDH, and a direct Coombs test."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7742
     },
     {
@@ -165896,6 +165916,7 @@
             "explanation": "Differentiation relies on ADAMTS13 activity (severely low in TTP), coagulation profile (abnormal in DIC), and clinical context like preceding diarrheal illness (typical HUS)."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7743
     },
     {
@@ -165910,6 +165931,7 @@
             "explanation": "ADAMTS13 is a plasma metalloprotease that cleaves large von Willebrand factor multimers, preventing spontaneous microvascular thrombosis."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7744
     },
     {
@@ -165924,6 +165946,7 @@
             "explanation": "Recurrent thrombotic microangiopathy not caused by Shiga toxin or severe ADAMTS13 deficiency is characteristic of atypical Hemolytic Uremic Syndrome (aHUS)."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7745
     },
     {
@@ -165938,6 +165961,7 @@
             "explanation": "Atypical HUS is caused by uncontrolled activation of the alternative complement pathway, leading to endothelial damage and systemic thrombotic microangiopathy."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7746
     },
     {
@@ -165952,6 +165976,7 @@
             "explanation": "The alternative complement pathway is the primary system dysregulated in atypical HUS."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7747
     },
     {
@@ -165966,6 +165991,7 @@
             "explanation": "C3, a central component of the complement system, can be activated by the classical, lectin, and alternative pathways."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7748
     },
     {
@@ -165980,6 +166006,7 @@
             "explanation": "C3 activation is mediated by C3 convertases, which are C4b2a for the classical/lectin pathways and C3bBb for the alternative pathway."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7749
     },
     {
@@ -165994,6 +166021,7 @@
             "explanation": "Factor H and Factor I are crucial soluble regulatory proteins that inhibit the alternative complement pathway, and mutations in them are a common cause of aHUS."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7750
     },
     {
@@ -166008,6 +166036,7 @@
             "explanation": "CRISPR-Cas9 is a revolutionary gene-editing tool that uses a guide RNA to direct the Cas9 enzyme to a specific DNA sequence to create a double-strand break."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7751
     },
     {
@@ -166022,6 +166051,7 @@
             "explanation": "Gene expression is clinically modified using gene therapies like CAR-T for cancers, RNA interference for conditions like hereditary amyloidosis, and antisense oligonucleotides for spinal muscular atrophy."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7752
     },
     {
@@ -166036,6 +166066,7 @@
             "explanation": "CAR-T therapy involves engineering a patient's own T-cells with Chimeric Antigen Receptors to specifically target and destroy cancer cells."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7753
     },
     {
@@ -166050,6 +166081,7 @@
             "explanation": "The gene for the chimeric antigen receptor is typically inserted into T-cells using a disabled viral vector, most commonly a lentivirus."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7754
     },
     {
@@ -166064,6 +166096,7 @@
             "explanation": "Major concerns include the risk of off-target mutations in the host genome, the potential for creating escape mutant viruses, and profound ethical issues."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7755
     },
     {
@@ -166078,6 +166111,7 @@
             "explanation": "The most critical blood test is for serum Aquaporin-4 (AQP4-IgG) antibodies, which are highly specific for Neuromyelitis Optica Spectrum Disorder (NMOSD)."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7756
     },
     {
@@ -166092,6 +166126,7 @@
             "explanation": "In Multiple Sclerosis, CSF analysis typically shows unique oligoclonal bands not present in the serum, whereas this finding is usually absent in NMOSD."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7757
     },
     {
@@ -166106,6 +166141,7 @@
             "explanation": "MS typically shows ovoid, periventricular white matter lesions in the brain, while NMOSD characteristically involves longitudinally extensive transverse myelitis spanning three or more vertebral segments."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7758
     },
     {
@@ -166120,6 +166156,7 @@
             "explanation": "The McDonald criteria integrate clinical and MRI findings to establish the core MS principles of dissemination of lesions in anatomical space and in time."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7759
     },
     {
@@ -166134,6 +166171,7 @@
             "explanation": "Yes, a single MRI scan can demonstrate dissemination in time by showing the coexistence of gadolinium-enhancing (new) and non-enhancing (old) lesions."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7760
     },
     {
@@ -166148,6 +166186,7 @@
             "explanation": "This is false; trafficking of autoreactive T cells and B cells across the blood-brain barrier is a fundamental step in the pathogenesis of multiple sclerosis."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7761
     },
     {
@@ -166162,6 +166201,7 @@
             "explanation": "First-line treatments for relapsing-remitting MS include disease-modifying therapies like interferon-beta, glatiramer acetate, and newer oral agents or monoclonal antibodies."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7762
     },
     {
@@ -166176,6 +166216,7 @@
             "explanation": "Glatiramer acetate is an immunomodulatory drug for MS, composed of synthetic polypeptides that may act as a decoy for the immune system and promote anti-inflammatory responses."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7763
     },
     {
@@ -166190,6 +166231,7 @@
             "explanation": "Fingolimod is an oral sphingosine-1-phosphate receptor modulator that traps lymphocytes in lymph nodes, preventing their migration into the central nervous system."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7764
     },
     {
@@ -166204,6 +166246,7 @@
             "explanation": "Natalizumab is a monoclonal antibody that blocks lymphocyte trafficking across the blood-brain barrier by binding to the α4-integrin on leukocytes."
         },
         "_source_file": "Processed\\M25\\Medicine\\M25 Final MB Medicine Written.docx - Google Docs_P3.pdf",
+        "isObsolete": true,
         "unique_id": 7765
     },
     {
@@ -204169,7 +204212,7 @@
     {
         "id": "M14-01-SAQ",
         "topic": "Surgery",
-        "subtopic": "13 Pediatric Surgery (PS)",
+        "subtopic": "12 Orthopaedics & Traumatology (O&T)",
         "type": "SAQ",
         "question": "A 7-year-old child presents with a bruised and deformed left elbow after a fall, with X-rays provided.<img src='https://i.imgur.com/oEqzXdD.png'/><img src='https://i.imgur.com/x6wmLZn.png'/>\n1. What is the diagnosis?\n2. Name 2 associated injuries.\n3. What are the principles and goals of treatment?\n4. What would you do if the distal perfusion is poor?\n5. Name one common late deformity.",
         "official_answer": "1. Displaced supracondylar fracture of the humerus.\n2. Brachial artery injury and anterior interosseous nerve (AIN) injury.\n3. The principle is to achieve and maintain anatomical reduction. The goal is to restore alignment (e.g., Baumann's angle) to prevent malunion and restore function, typically via closed reduction and percutaneous pinning.\n4. If distal perfusion is poor ('pink pulseless hand'), the fracture should be urgently reduced; if perfusion does not return, surgical exploration of the brachial artery is required.\n5. Cubitus varus (gunstock deformity).",
@@ -204267,7 +204310,7 @@
     {
         "id": "M17-11-SAQ",
         "topic": "Surgery",
-        "subtopic": "13 Pediatric Surgery (PS)",
+        "subtopic": "12 Orthopaedics & Traumatology (O&T)",
         "type": "SAQ",
         "question": "A 12-year-old obese boy presents with a sudden onset of knee and then hip pain, and is unable to walk. He is afebrile. On examination, his hip is externally rotated with limited range of motion.\n1. What is the MOST LIKELY diagnosis?\n2. What ONE imaging do you do to confirm?\n3. What ONE laboratory test would you order?\n4. OUTLINE the management principle for this patient.\n5. What are the complications of this condition?",
         "official_answer": "1. Slipped Capital Femoral Epiphysis (SCFE).\n2. AP and frog-leg lateral X-rays of the pelvis/hips.\n3. Thyroid function tests to screen for endocrinopathies like hypothyroidism that can predispose to SCFE.\n4. The management principle is urgent surgical stabilization to prevent further slippage, typically with in-situ fixation using a single cannulated screw.\n5. Complications include avascular necrosis (AVN) of the femoral head, chondrolysis (cartilage death), and premature osteoarthritis.",
@@ -205935,7 +205978,7 @@
         "topic": "Pediatrics",
         "subtopic": "5 Respirology",
         "type": "SAQ",
-        "question": "What are the LIKELY differential diagnoses? (2 marks)\nHow can you confirm your diagnosis? (2 marks)\nWhat is your management plan? (6 marks)",
+        "question": "An 18-month-old girl has fever and cough for the past 2 days. Her respiratory rate is 30/mins with intercostal and subcostal retraction with flaring ala nasi. There are diffused inspiratory crepitation and expiratory rhonchi.\nWhat are the LIKELY differential diagnoses? (2 marks)\nHow can you confirm your diagnosis? (2 marks)\nWhat is your management plan? (6 marks)",
         "official_answer": "Pneumonia, acute bronchiolitis (<2 yo).\nNasopharyngeal aspirate for respiratory viruses (e.g. RSV, HMPV); CXR to rule out pneumonia.\nSupportive management e.g. fluids, O2, nebulized hypertonic saline.",
         "ai_answer": {
             "agreement": "Agree",
@@ -205949,7 +205992,7 @@
         "topic": "Pediatrics",
         "subtopic": "5 Respirology",
         "type": "SAQ",
-        "question": "Interpret the blood gas. (1 mark)\nHow will you treat the patient? (2 marks)\n2 hours later the nurse called and said the respiratory rate of the girl has come down but she appeared tired. SaO2 90% on 4L oxygen. Use of accessory muscle. No rhonchi, decreased breath sound.\nInterpret the blood gas. (1 mark)\nHow will you treat the patient now? (1 mark)",
+        "question": "13/F with a history of asthma. Complained of difficulty in breathing for 2 days. Physical exam: 36oC, BP 110/70, Mild insucking, Rhonchi, RR 30, SaO2 93% on 2L/ min Blood Gas: ph7.5 (7.35-7.45); PaO2 11 (10-15); PaCO2 3.2 (4.5-6); HCO3 24; BE +1.\nInterpret the blood gas. (1 mark)\nHow will you treat the patient? (2 marks)\n2 hours later the nurse called and said the respiratory rate of the girl has come down but she appeared tired. SaO2 90% on 4L oxygen. Use of accessory muscle. No rhonchi, decreased breath sound.\nInterpret the blood gas. (1 mark)\nHow will you treat the patient now? (1 mark)",
         "official_answer": "First ABG: Respiratory alkalosis (pH high, low PaCO2 from hyperventilation).\nInitial Treatment: Supplemental O2, SABA (10 puffs / Nebulized 5mg), Oral prednisolone / IV hydrocortisone, +/- Ipratropium; consider IV medications (Salbutamol, Aminophylline, Mg), Consult PICU.\nSecond ABG: Mixed respiratory and metabolic acidosis (base excess -4, low PaO2, high PaCO2), indicating Type 2 respiratory failure.\nSubsequent Treatment: This is life-threatening asthma. Intubation / Non-invasive ventilation, PICU support.",
         "ai_answer": {
             "agreement": "Agree",
@@ -208336,7 +208379,7 @@
         "topic": "Pediatrics",
         "subtopic": "1 General Pediatrics",
         "type": "SAQ",
-        "question": "What is the causative agent? (1 mark)",
+        "question": "14/M returned from UK. Fever + anosmia when in hotel quarantine. What is the most likely causative agent for the most likely diagnosis? What is the causative agent? (1 mark)",
         "official_answer": "Senior's answer: Severe acute respiratory syndrome coronavirus 2 (SARS-CoV-2)",
         "ai_answer": {
             "agreement": "Agree",
@@ -208364,7 +208407,7 @@
         "topic": "Pediatrics",
         "subtopic": "1 General Pediatrics",
         "type": "SAQ",
-        "question": "Name 2 potential complications of the disease. (2 marks)",
+        "question": "Name 2 complications of SARS-COV2 (2 marks)",
         "official_answer": "Senior's answer: Many..., e.g. pneumonia, encephalitis, brain fog, exacerbation of A/I and dermatological conditions, MIS-C",
         "ai_answer": {
             "agreement": "Agree",
