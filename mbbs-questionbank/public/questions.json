@@ -139679,6 +139679,7 @@
             "Flooding",
             "Punishment"
         ],
+        "correctAnswerIndex": 4,
         "official_answer": "E. Diazepam. The patient is experiencing alcohol withdrawal, potentially delirium tremens, which is managed with benzodiazepines like Diazepam.",
         "ai_answer": {
             "agreement": "Agree",
@@ -204170,7 +204171,7 @@
     {
         "id": "M12-10-SAQ",
         "topic": "Surgery",
-        "subtopic": "13 Pediatric Surgery (PS)",
+        "subtopic": "12 Orthopaedics & Traumatology (O&T)",
         "type": "SAQ",
         "question": "A 4-month-old baby girl is found to have asymmetrical groin skin creases with her left lower limb shorter than the other side. She is the first born in the family and was delivered by Caesarean section due to breech presentation.\n1. State the most likely diagnosis.\n2. Name 2 clinical maneuvers to test for the diagnosis.\n3. Give one investigation to confirm the pathology.\n4. Name the most appropriate treatment at this stage.\n5. List the treatment principles if the treatment listed above is unsuccessful.",
         "official_answer": "1. Developmental dysplasia of the hip (DDH). Risk factor: breech presentation.\n2. Ortolani test (reduces a dislocated hip) and Barlow's test (dislocates a dislocatable hip).\n3. Ultrasound of the hip is the gold standard for infants under 6 months.\n4. Abduction splinting with a Pavlik harness.\n5. For infants over 6 months or failed Pavlik harness treatment, options include closed or open reduction followed by spica casting. Older children may require femoral or pelvic osteotomy.",
@@ -208001,7 +208002,7 @@
         "topic": "Pediatrics",
         "subtopic": "1 General Pediatrics",
         "type": "SAQ",
-        "question": "What is the diagnosis? (2 marks)",
+        "question": "<img src='https://i.imgur.com/1N2g3lT.png'/><img src='https://i.imgur.com/YtzF7O6.png'/>What is the diagnosis? (2 marks)",
         "official_answer": "Scarlet fever (DDx e.g. Kawasaki, depends on duration of fever, associated symptoms)",
         "ai_answer": {
             "agreement": "Agree",
@@ -208015,7 +208016,7 @@
         "topic": "Pediatrics",
         "subtopic": "1 General Pediatrics",
         "type": "SAQ",
-        "question": "What is the most appropriate investigation to confirm the diagnosis? (1 mark)",
+        "question": "<img src='https://i.imgur.com/1N2g3lT.png'/><img src='https://i.imgur.com/YtzF7O6.png'/>What is the most appropriate investigation to confirm the diagnosis? (1 mark)",
         "official_answer": "Throat swab x Gram smear, C/ST; rapid strep test (serology e.g. anti-streptolysin O not useful because only present in delayed phase)",
         "ai_answer": {
             "agreement": "Agree",
@@ -208029,7 +208030,7 @@
         "topic": "Pediatrics",
         "subtopic": "1 General Pediatrics",
         "type": "SAQ",
-        "question": "What is the treatment? (1 mark)",
+        "question": "<img src='https://i.imgur.com/1N2g3lT.png'/><img src='https://i.imgur.com/YtzF7O6.png'/>What is the treatment? (1 mark)",
         "official_answer": "Senior's answer: PO Penicillin x 10 d",
         "ai_answer": {
             "agreement": "Agree",
@@ -208043,7 +208044,7 @@
         "topic": "Pediatrics",
         "subtopic": "1 General Pediatrics",
         "type": "SAQ",
-        "question": "What complication would you like to look out for? (1 mark)",
+        "question": "<img src='https://i.imgur.com/1N2g3lT.png'/><img src='https://i.imgur.com/YtzF7O6.png'/>What complication would you like to look out for? (1 mark)",
         "official_answer": "Suppurative / spread of infections: otitis media, sinusitis, paratonsillar abscess / retropharyngeal abscess, facial cellulitis, sepsis...\nNon-suppurative: Acute renal failure, Post-strep glomerulonephritis, toxic shock syndrome, chronic rheumatic heart disease",
         "ai_answer": {
             "agreement": "Agree",
@@ -208225,7 +208226,7 @@
         "topic": "Pediatrics",
         "subtopic": "5 Respirology",
         "type": "SAQ",
-        "question": "3 common organisms for the disease. (3 marks)",
+        "question": "Timmy is a 3 year old boy who presented with fever, sore throat for 2 days. He has some mild neck pain. There was limited neck movement. He speaks in a muffled voice. Physical exam shows he has a temperature of 39.4C, respiratory rate 28/min, SpO2 98%. He has mild stridor. There are multiple shotty cervical lymph nodes. Oral cavity examination shows mildly enlarged tonsils. 3 common organisms for the disease. (3 marks)",
         "official_answer": "UpToDate / Senior's answer: S. pyogenes, S. aureus, Anaerobes (Fusobacteria, prevotella, veillonella), Haemophilus",
         "ai_answer": {
             "agreement": "Agree",
@@ -208281,7 +208282,7 @@
         "topic": "Pediatrics",
         "subtopic": "3 Growth & development",
         "type": "SAQ",
-        "question": "7 month old TT presented with 2 months history of poor appetite, low grade fever, perianal and oral candidiasis.\nDescribe the growth from birth to 7 months and give an interpretation of each phase. (3 marks)",
+        "question": "<img src='https://i.imgur.com/dNCuC5K.png'/>7 month old TT presented with 2 months history of poor appetite, low grade fever, perianal and oral candidiasis.\nDescribe the growth from birth to 7 months and give an interpretation of each phase. (3 marks)",
         "official_answer": "Started off with SGA (3rd percentile on birth) → Catch up growth from 0-2 months → slowed down growth from 3-6 months (downward crossing of 3 major centiles i.e. failure to thrive) → protracted acute illness in 6-7th month.",
         "ai_answer": {
             "agreement": "Agree",
@@ -208295,7 +208296,7 @@
         "topic": "Pediatrics",
         "subtopic": "10 Hematology & immunology",
         "type": "SAQ",
-        "question": "TT was treated with nystatin and oral fluconazole. What is one blood test you would order and why? (1 mark)",
+        "question": "<img src='https://i.imgur.com/dNCuC5K.png'/> TT was treated with nystatin and oral fluconazole. What is one blood test you would order and why? (1 mark)",
         "official_answer": "Senior's answer: CBC/DC, for lymphocyte count. (why tho? HIV?)",
         "ai_answer": {
             "agreement": "Agree",
@@ -208309,7 +208310,7 @@
         "topic": "Pediatrics",
         "subtopic": "5 Respirology",
         "type": "SAQ",
-        "question": "Explain the findings on CXR. (3 marks)",
+        "question": "<img src='https://i.imgur.com/RqApqZC.png'/>7 month old TT presented with 2 months history of poor appetite, low grade fever, perianal and oral candidiasis. Explain the findings on CXR. (3 marks)",
         "official_answer": "CXR of baby (can't tell for mom??) finds diffuse bilateral miliary deposits (1-3 mm) pulmonary nodules that are uniform in size and distribution, this is compatible with miliary TB. Mom's X-ray showed Rt pleural effusion suggesting potential lung infection. Mom likely infected baby for this.",
         "ai_answer": {
             "agreement": "Agree",
@@ -208323,7 +208324,7 @@
         "topic": "Pediatrics",
         "subtopic": "5 Respirology",
         "type": "SAQ",
-        "question": "Mantoux test induration 11mm. What additional microbiological investigation would you perform? (1 mark)",
+        "question": "<img src='https://i.imgur.com/RqApqZC.png'/> Mantoux test induration 11mm. What additional microbiological investigation would you perform? (1 mark)",
         "official_answer": "Senior's answer: Early morning gastric aspirate for ZN stain, smear, C/St, TB PCR.",
         "ai_answer": {
             "agreement": "Agree",
@@ -208337,7 +208338,7 @@
         "topic": "Pediatrics",
         "subtopic": "5 Respirology",
         "type": "SAQ",
-        "question": "What 4 medications would you prescribe and for how long? (2 marks)",
+        "question": "<img src='https://i.imgur.com/RqApqZC.png'/> What 4 medications would you prescribe and for how long? (2 marks)",
         "official_answer": "Senior's answer: 3HREZ/9HR (longer for miliary TB!)\nOversimplified: RIPES Rifampicin Isoniazid Pyrazinamide Ethambutol Streptomycin, for 1 year.",
         "ai_answer": {
             "agreement": "Agree",
@@ -208477,7 +208478,7 @@
         "topic": "Pediatrics",
         "subtopic": "1 General Pediatrics",
         "type": "SAQ",
-        "question": "Describe the abnormality (2 marks)",
+        "question": "<img src='https://i.imgur.com/7CNRPgs.png'/>Describe the abnormality (2 marks)",
         "official_answer": "Cleft lip / palate",
         "ai_answer": {
             "agreement": "Agree",
@@ -208491,7 +208492,7 @@
         "topic": "Pediatrics",
         "subtopic": "1 General Pediatrics",
         "type": "SAQ",
-        "question": "List two possible aetiologies that causes the defect. (2 marks)",
+        "question": "<img src='https://i.imgur.com/7CNRPgs.png'/> List two possible aetiologies that causes the defect. (2 marks)",
         "official_answer": "Genetics (Non-syndromal / polygenics, syndromal e.g. DiGeorge syndrome, Pierre-robin sequence). Drugs e.g. maternal anticonvulsant therapy.",
         "ai_answer": {
             "agreement": "Agree",
@@ -208505,7 +208506,7 @@
         "topic": "Pediatrics",
         "subtopic": "1 General Pediatrics",
         "type": "SAQ",
-        "question": "Apart from feeding problem, name two long term complications in this child.",
+        "question": "<img src='https://i.imgur.com/7CNRPgs.png'/> Apart from feeding problem, name two long term complications in this child.",
         "official_answer": "Velopharyngeal incompetence with hypernasality\nOtitis media with effusion, hearing problem\nResidual fistula\nMidface growth restriction\nDental problems\nCosmetic/psychological problems",
         "ai_answer": {
             "agreement": "Agree",
@@ -208519,7 +208520,7 @@
         "topic": "Pediatrics",
         "subtopic": "6 Cardiology",
         "type": "SAQ",
-        "question": "(CXR given, not provided here.) Name the abnormalities in the chest x-ray.",
+        "question": "<img src='https://i.imgur.com/xzUhVXU.png'/>(CXR given, not provided here.) Name the abnormalities in the chest x-ray.",
         "official_answer": "Absence of thymus, plethoric lung fields, cardiomegaly",
         "ai_answer": {
             "agreement": "Agree",
@@ -208533,7 +208534,7 @@
         "topic": "Pediatrics",
         "subtopic": "6 Cardiology",
         "type": "SAQ",
-        "question": "This child is found to have a large VSD with severe shunting. (Arterial blood gas and electrolytes shown) Name the abnormalities in the arterial blood gas and electrolytes.",
+        "question": "<img src='https://i.imgur.com/xzUhVXU.png'/> This child is found to have a large VSD with severe shunting. (Arterial blood gas and electrolytes shown) Name the abnormalities in the arterial blood gas and electrolytes.",
         "official_answer": "Compensated respiratory acidosis (PaCO2 H indicates inadequate respiration, however pH is within range due to metabolic compensation, as reflected by BE -4 → prolly should be +4), hyponatraemia",
         "ai_answer": {
             "agreement": "Agree",
