@@ -1,6 +1,14 @@
 {
-  "currentVersion": "4.3.7",
+  "currentVersion": "4.3.8",
   "history": [
+    {
+      "version": "4.3.8",
+      "date": "2026-1-24",
+      "title": "Added questions",
+      "changes": [
+        "Questions: Added questions"
+      ]
+    },
     {
       "version": "4.3.7",
       "date": "2026-1-20",
