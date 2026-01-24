@@ -214828,7 +214828,7 @@
         "topic": "Pediatrics",
         "subtopic": "12 Dermatology",
         "type": "SAQ",
-        "question": "A 2-year-old girl presented with intermittent itchy skin rash. Her elder brother has similar conditions. *Photo of feet with ezcema*\n1. What is the diagnosis? (1 mark)\n2. What further information would you like to obtain in the history? (4 marks)\n3. What further examination would you do? (3 marks)\n4. How would you manage the patient? (2 marks)",
+        "question": "A 2-year-old girl presented with intermittent itchy skin rash. Her elder brother has similar conditions.<img src='https://i.imgur.com/9b8ypO1.png'/>\n1. What is the diagnosis? (1 mark)\n2. What further information would you like to obtain in the history? (4 marks)\n3. What further examination would you do? (3 marks)\n4. How would you manage the patient? (2 marks)",
         "official_answer": "1. Atopic dermatitis\n2. History of atopic march – allergic airway, food allergy, allergic rhinitis, allergic conjunctivitis. Family history of atopy e.g. eczema. Progression, onset, distribution of rash. Any fever.\n3. Distribution of eczema over flexural surfaces (popliteal fossa, elbow, groin). Rhinoscopy for allergic rhinitis. Respiratory exam for allergic airway? Wheeze? Eye exam for conjunctivitis.\n4. Wet wrap. Topical Emollient - Steroid / AH? /Tacrolimus? /Dupilumab?",
         "ai_answer": {
             "agreement": "Agree",
@@ -214842,7 +214842,7 @@
         "topic": "Pediatrics",
         "subtopic": "13 Musculoskeletal",
         "type": "SAQ",
-        "question": "A 9-year-old girl presented with 5 days of knee pain and fever. Picture: Swollen right knee\n1. Describe the abnormal findings on the picture. (1 mark)\n2. What are some possible differential diagnoses? (3 marks)\n3. What other information would you like to obtain from history taking (3 marks)\n4. The girl now complains of pain also in the left knee, bilateral wrist and elbow. How would you manage this girl now? (3 marks)",
+        "question": "A 9-year-old girl presented with 5 days of knee pain and fever. <img src='https://i.imgur.com/r9lOweM.png'/>\n1. Describe the abnormal findings on the picture. (1 mark)\n2. What are some possible differential diagnoses? (3 marks)\n3. What other information would you like to obtain from history taking (3 marks)\n4. The girl now complains of pain also in the left knee, bilateral wrist and elbow. How would you manage this girl now? (3 marks)",
         "official_answer": "1. Right knee swelling\n2. Trauma, Hemarthrosis, septic arthritis, JIA\n3. Any history of trauma. Any family history of / known bleeding tendency. Fever pattern and degree. Any pain on walking or knee joint movement / reduction in locomotion.\n4. Investigations e.g. CBC, ESR/ CRP, RF, HLA-B27. Analgesics, steroid, MTX, biologics (anti-IL1/6, anti-TNF alpha)",
         "ai_answer": {
             "agreement": "Agree",
@@ -214856,7 +214856,7 @@
         "topic": "Pediatrics",
         "subtopic": "3 Growth & development",
         "type": "SAQ",
-        "question": "Yan Yan is a 3-year-old referred for speech delay, with global developmental delay across gross motor, fine motor, language, and social domains. She exhibits repetitive behaviors and sensory sensitivities.\n1. Aside from global developmental delay, what other developmental diagnosis does this girl likely have? (1 mark)\n2. From the clinical information given, what are the domains of development affected? (2 marks)\n3. There are two clinical photos of Yan Yan, first one taken in infancy and second one taken recently. Describe the abnormalities in each photo. (2 marks)\n4. What is the diagnosis (1 mark)\n5. What investigation would you like to perform to confirm your diagnosis? and what abnormalities do you expect? (2 marks)\n6. What further imaging would you perform in other organs? Explain why. (2 marks)",
+        "question": "Yan Yan is a 3-year-old referred for speech delay, with global developmental delay across gross motor, fine motor, language, and social domains. She exhibits repetitive behaviors and sensory sensitivities.\n1. Aside from global developmental delay, what other developmental diagnosis does this girl likely have? (1 mark)\n2. From the clinical information given, what are the domains of development affected? (2 marks)<img src='https://i.imgur.com/Crwbtsd.png'/>\n3. There are two clinical photos of Yan Yan, first one taken in infancy and second one taken recently. Describe the abnormalities in each photo. (2 marks)\n4. What is the diagnosis (1 mark)\n5. What investigation would you like to perform to confirm your diagnosis? and what abnormalities do you expect? (2 marks)\n6. What further imaging would you perform in other organs? Explain why. (2 marks)",
         "official_answer": "1. Autism spectrum disorder\n2. Gross motor, Fine motor, Language, Social\n3. Facial angiofibroma (Adenoma sebaceum), ash-leaf spot\n4. Tuberous sclerosis\n5. Genetic study for TSC mutation / MRI brain for SEGA (sub-ependymal giant cell astrocytoma)\n6. Echocardiogram for rhabdomyoma, USG for renal angiomyolipoma",
         "ai_answer": {
             "agreement": "Agree",
@@ -214870,7 +214870,7 @@
         "topic": "Pediatrics",
         "subtopic": "5 Respirology",
         "type": "SAQ",
-        "question": "Yumi, a 9-year-old girl, presents with SOB and fever for 1 day. Vitals: HR 130, RR 38, SpO2 93% on room air, Temp 39 degrees. A CXR is provided.\n1. Describe abnormalities on CXR. (2 marks)\n2. Name TWO most important ddx. (2 marks)\n3. What are some common causative organisms? (2 marks)\n4. Investigations? Why (2 marks)\n5. Management (2 marks)",
+        "question": "Yumi, a 9-year-old girl, presents with SOB and fever for 1 day. Vitals: HR 130, RR 38, SpO2 93% on room air, Temp 39 degrees. <img src='https://i.imgur.com/vZLhsfM.png'/>\n1. Describe abnormalities on CXR. (2 marks)\n2. Name TWO most important ddx. (2 marks)\n3. What are some common causative organisms? (2 marks)\n4. Investigations? Why (2 marks)\n5. Management (2 marks)",
         "official_answer": "1. Diffuse opaque intiltrates, blunted R costophrenic angle? Cardiomegaly??\n2. Pneumonia? Acute respiratory distress syndrome? Heart failure? Empyema thoracis/parapneumonic effusion?? TB?\n3. Pneumococci? E coli? Mycoplasma? Influenza?\n4. Cbc with differentials, blood culture, sputum culture and sensitivity for causative organism\n5. High-flow O2 nasal cannula, Augmentin",
         "ai_answer": {
             "agreement": "Agree",
