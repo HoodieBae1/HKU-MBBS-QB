@@ -214822,5 +214822,89 @@
         },
         "_source_file": "Processed\\M25\\Psy\\M25 Final MB Psy Written .docx - Google Docs_P1.pdf",
         "unique_id": 10410
+    },
+    {
+        "id": "M25-01-SAQ",
+        "topic": "Pediatrics",
+        "subtopic": "12 Dermatology",
+        "type": "SAQ",
+        "question": "A 2-year-old girl presented with intermittent itchy skin rash. Her elder brother has similar conditions. *Photo of feet with ezcema*\n1. What is the diagnosis? (1 mark)\n2. What further information would you like to obtain in the history? (4 marks)\n3. What further examination would you do? (3 marks)\n4. How would you manage the patient? (2 marks)",
+        "official_answer": "1. Atopic dermatitis\n2. History of atopic march – allergic airway, food allergy, allergic rhinitis, allergic conjunctivitis. Family history of atopy e.g. eczema. Progression, onset, distribution of rash. Any fever.\n3. Distribution of eczema over flexural surfaces (popliteal fossa, elbow, groin). Rhinoscopy for allergic rhinitis. Respiratory exam for allergic airway? Wheeze? Eye exam for conjunctivitis.\n4. Wet wrap. Topical Emollient - Steroid / AH? /Tacrolimus? /Dupilumab?",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "The presentation of an itchy rash in a young child with a positive family history is classic for atopic dermatitis, and management follows a stepwise approach from emollients to topical steroids and immunomodulators."
+        },
+        "_source_file": "Processed\\M25\\Paed\\M25 Final MB Paed Written .docx - Google Docs_P2.pdf",
+        "unique_id": 10411
+    },
+    {
+        "id": "M25-02-SAQ",
+        "topic": "Pediatrics",
+        "subtopic": "13 Musculoskeletal",
+        "type": "SAQ",
+        "question": "A 9-year-old girl presented with 5 days of knee pain and fever. Picture: Swollen right knee\n1. Describe the abnormal findings on the picture. (1 mark)\n2. What are some possible differential diagnoses? (3 marks)\n3. What other information would you like to obtain from history taking (3 marks)\n4. The girl now complains of pain also in the left knee, bilateral wrist and elbow. How would you manage this girl now? (3 marks)",
+        "official_answer": "1. Right knee swelling\n2. Trauma, Hemarthrosis, septic arthritis, JIA\n3. Any history of trauma. Any family history of / known bleeding tendency. Fever pattern and degree. Any pain on walking or knee joint movement / reduction in locomotion.\n4. Investigations e.g. CBC, ESR/ CRP, RF, HLA-B27. Analgesics, steroid, MTX, biologics (anti-IL1/6, anti-TNF alpha)",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "The progression from monoarthritis to polyarthritis in a child with fever strongly suggests Juvenile Idiopathic Arthritis (JIA), necessitating investigations for inflammatory markers and autoimmune profiles, followed by immunosuppressive therapy."
+        },
+        "_source_file": "Processed\\M25\\Paed\\M25 Final MB Paed Written .docx - Google Docs_P2.pdf",
+        "unique_id": 10412
+    },
+    {
+        "id": "M25-03-SAQ",
+        "topic": "Pediatrics",
+        "subtopic": "3 Growth & development",
+        "type": "SAQ",
+        "question": "Yan Yan is a 3-year-old referred for speech delay, with global developmental delay across gross motor, fine motor, language, and social domains. She exhibits repetitive behaviors and sensory sensitivities.\n1. Aside from global developmental delay, what other developmental diagnosis does this girl likely have? (1 mark)\n2. From the clinical information given, what are the domains of development affected? (2 marks)\n3. There are two clinical photos of Yan Yan, first one taken in infancy and second one taken recently. Describe the abnormalities in each photo. (2 marks)\n4. What is the diagnosis (1 mark)\n5. What investigation would you like to perform to confirm your diagnosis? and what abnormalities do you expect? (2 marks)\n6. What further imaging would you perform in other organs? Explain why. (2 marks)",
+        "official_answer": "1. Autism spectrum disorder\n2. Gross motor, Fine motor, Language, Social\n3. Facial angiofibroma (Adenoma sebaceum), ash-leaf spot\n4. Tuberous sclerosis\n5. Genetic study for TSC mutation / MRI brain for SEGA (sub-ependymal giant cell astrocytoma)\n6. Echocardiogram for rhabdomyoma, USG for renal angiomyolipoma",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "The combination of global developmental delay, autistic features, and characteristic skin lesions (ash-leaf spots, facial angiofibromas) is pathognomonic for Tuberous Sclerosis Complex (TSC), a multi-system genetic disorder."
+        },
+        "_source_file": "Processed\\M25\\Paed\\M25 Final MB Paed Written .docx - Google Docs_P2.pdf",
+        "unique_id": 10413
+    },
+    {
+        "id": "M25-04-SAQ",
+        "topic": "Pediatrics",
+        "subtopic": "5 Respirology",
+        "type": "SAQ",
+        "question": "Yumi, a 9-year-old girl, presents with SOB and fever for 1 day. Vitals: HR 130, RR 38, SpO2 93% on room air, Temp 39 degrees. A CXR is provided.\n1. Describe abnormalities on CXR. (2 marks)\n2. Name TWO most important ddx. (2 marks)\n3. What are some common causative organisms? (2 marks)\n4. Investigations? Why (2 marks)\n5. Management (2 marks)",
+        "official_answer": "1. Diffuse opaque intiltrates, blunted R costophrenic angle? Cardiomegaly??\n2. Pneumonia? Acute respiratory distress syndrome? Heart failure? Empyema thoracis/parapneumonic effusion?? TB?\n3. Pneumococci? E coli? Mycoplasma? Influenza?\n4. Cbc with differentials, blood culture, sputum culture and sensitivity for causative organism\n5. High-flow O2 nasal cannula, Augmentin",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "The clinical picture of fever, tachypnea, and hypoxia with CXR showing infiltrates and a possible effusion points towards community-acquired pneumonia, requiring oxygen support, empirical antibiotics, and investigations to identify the causative organism."
+        },
+        "_source_file": "Processed\\M25\\Paed\\M25 Final MB Paed Written .docx - Google Docs_P2.pdf",
+        "unique_id": 10414
+    },
+    {
+        "id": "M25-05-SAQ",
+        "topic": "Pediatrics",
+        "subtopic": "7 Gastroenterology and Hepatology",
+        "type": "SAQ",
+        "question": "A 5-week-old boy with G6PD deficiency is referred for intermittent yellowish discolouration. He is formula-fed and otherwise well. Blood results show a conjugated hyperbilirubinemia with deranged LFTs (elevated AST, ALT, GGT) and low albumin.\n1. Review and interpret blood results (3 marks)\n2. Additional info to enquire in Hx (2 marks)\n3. 3 most important Ddx (3 marks)\n4. What investigation to perform for underlying cause (2 marks)",
+        "official_answer": "1. Elevated total and conjugated bilirubin. Derange liver function test (AST, ALP, GGT).\n2. Pale/Clay colour stool. Steatorrhea. Tea-coloured urine.\n3. Biliary atresia, choledochal cyst, ?pigmented gallstone acute cholangitis from G6PD, TORCH infection, Dubin johnson syndrome.\n4. USG abdomen, MRI abdomen, MRCP",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "Conjugated hyperbilirubinemia in a neonate is a medical emergency, with biliary atresia being the most critical diagnosis to exclude, warranting urgent investigation starting with an abdominal ultrasound."
+        },
+        "_source_file": "Processed\\M25\\Paed\\M25 Final MB Paed Written .docx - Google Docs_P2.pdf",
+        "unique_id": 10415
+    },
+    {
+        "id": "M25-06-SAQ",
+        "topic": "Pediatrics",
+        "subtopic": "6 Cardiology",
+        "type": "SAQ",
+        "question": "A 3-week-old boy presents with a 1-week history of feeding difficulty, increased sweating on feeding, and shortness of breath. He is tired and tachypnoeic. ECG shows tachycardia (210 bpm), ST depression, and RVH. CXR images are provided.\n1. ECG findings and diagnosis (2 marks)\n2. CXR abnormalities (2 marks)\n3. What to look for on physical examination (2 marks)\n4. Investigations + explain why (2 marks)\n5. 2 acute management (2 marks)",
+        "official_answer": "1. ECG findings include tachycardia, ST depression, R axis deviation and RVH.\n2. Cardiomegaly, ?absent thymus, pulmonary plethora.\n3. Cyanosis, tachycardia, tachypnea, edema, TOF sings.\n4. Echocardiography for heart defect. ?Hyperoxia test, cyanosis persists despite O2 if right to left shunt.\n5. O2, Diuretics, Adenosine, Cardioversion. Other possibilities include Metoprolol, CCB, Dronadarone, Vagal manoeuvre (done by doctor).",
+        "ai_answer": {
+            "agreement": "Agree",
+            "explanation": "The presentation of a neonate with feeding difficulties, tachypnea, and signs of heart failure on ECG and CXR strongly suggests a congenital heart defect, requiring immediate stabilization and an urgent echocardiogram for definitive diagnosis."
+        },
+        "_source_file": "Processed\\M25\\Paed\\M25 Final MB Paed Written .docx - Google Docs_P2.pdf",
+        "unique_id": 10416
     }
 ]
