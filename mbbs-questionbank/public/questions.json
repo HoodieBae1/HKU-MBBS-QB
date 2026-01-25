@@ -24467,13 +24467,11 @@
         "unique_id": 1226
     },
     {
-        "id": "M03-19-MCQ",
+        "id": "M03-19-SAQ",
         "topic": "Pediatrics",
         "subtopic": "5 Respirology",
-        "type": "MCQ",
+        "type": "SAQ",
         "question": "A 2-year-old girl presents with fever, coryzal symptoms, barking cough and difficulty in breathing. Physical examination reveals stridor, increased respiratory rate, nasal flaring and suprasternal retraction. On auscultation, the child has good air entry with noisy transmitted sounds and a few rhonchi. What is the likely diagnosis?",
-        "options": [],
-        "correctAnswerIndex": null,
         "official_answer": "Croup.",
         "ai_answer": {
             "agreement": "Agree",
@@ -136401,8 +136399,8 @@
         "type": "MCQ",
         "question": "Which characteristic of SGA might explain less EPSE?",
         "options": [
-            "5HT-1A agonism",
-            "5HT-2A agonism",
+            "D2 agonism",
+            "D3 agonism",
             "5HT-1A agonism",
             "5HT-2A agonism",
             "Alpha 1 agonism"
@@ -139468,7 +139466,7 @@
             "Flight of health"
         ],
         "official_answer": "D. Resistance. Resistance is defined as an unwillingness to engage in psychotherapy.",
-        "correctAnswerIndex": 4,
+        "correctAnswerIndex": 3,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "Forgetting appointments is a classic example of resistance, where the patient unconsciously avoids engaging with the therapeutic process."
@@ -140338,6 +140336,7 @@
             "J. Mild cognitive impairment"
         ],
         "official_answer": "E. Fronto-temporal dementia. Likely behavioural variant of FTD.",
+        "correctAnswerIndex": 4,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "Prominent early changes in personality, behavior, and social conduct, such as disinhibition and apathy, are the hallmark features of the behavioral variant of Frontotemporal Dementia."
@@ -173525,7 +173524,7 @@
         "topic": "Surgery",
         "subtopic": "10 Neurosurgery (NS)",
         "type": "SAQ",
-        "question": "A 45-year-old male who drank alcohol got into a bar fight and was hit by a hammer. He obeys commands, eyes open spontaneously, and has confused speech. A CT brain was performed.\n1. What is his GCS now? (1 mark)\n2. Describe ONE most important finding from the CT brain. (1 mark)\n3. What is the underlying mechanism for the finding? (2 marks)\n4. What treatment should be provided for the above condition? (1 mark)\n5. He is found to be on warfarin for DVT. What 3 medications should be given in relation? (3 marks)\n6. Later, his eyes open only to pain, he makes incomprehensible sounds, and has abnormal flexion on painful stimuli. What is his GCS now? (1 mark)\n7. What is the immediate treatment? (1 mark)",
+        "question": "A 45-year-old male who drank alcohol got into a bar fight and was hit by a hammer. He obeys commands, eyes open spontaneously, and has confused speech. A CT brain was performed.<img src='https://i.imgur.com/eSfCarn.png'/>\n1. What is his GCS now? (1 mark)\n2. Describe ONE most important finding from the CT brain. (1 mark)\n3. What is the underlying mechanism for the finding? (2 marks)\n4. What treatment should be provided for the above condition? (1 mark)\n5. He is found to be on warfarin for DVT. What 3 medications should be given in relation? (3 marks)\n6. Later, his eyes open only to pain, he makes incomprehensible sounds, and has abnormal flexion on painful stimuli. What is his GCS now? (1 mark)\n7. What is the immediate treatment? (1 mark)",
         "official_answer": "1. E4V4M6 = 14.\n2. Right parietal acute epidural hematoma with mass effect (obliteration of right lateral ventricle).\n3. Skull fracture (temporal bone) leading to tearing of the middle meningeal artery.\n4. Craniotomy and evacuation of haematoma.\n5. Vitamin K, Fresh Frozen Plasma (FFP), Prothrombin Complex Concentrate (PCC).\n6. E2V2M3 = 7.\n7. Prophylactic intubation (for GCS <8).",
         "ai_answer": {
             "agreement": "Agree",
@@ -181690,10 +181689,10 @@
             "Right cn3 palsy",
             "Right cn4 palsy"
         ],
-        "correctAnswerIndex": 3,
-        "official_answer": "Discussion between B and D. 'B?+1+1+1+1' vs 'D?+1+1 (right head tilt)'.",
+        "correctAnswerIndex": 1,
+        "official_answer": "Discussion between B and D. 'B?+1+1+1+1' vs 'D?+1+1 (right head tilt)'. Should be B because left CN4 palsy cause ipsilateral SO problems",
         "ai_answer": {
-            "agreement": "Agree",
+            "agreement": "Disagree",
             "explanation": "A right CN4 (trochlear nerve) palsy causes vertical diplopia worse on looking down and to the left, which the patient compensates for by tilting their head to the left (away from the lesion)."
         },
         "_source_file": "Processed\\M24\\FMCC\\M24 Final MB FMCC .docx - Google Docs_P1.pdf",
@@ -181896,7 +181895,7 @@
             "High serum urate",
             "High AST and ALT + low GGT"
         ],
-        "correctAnswerIndex": 3,
+        "correctAnswerIndex": 0,
         "official_answer": "A",
         "ai_answer": {
             "agreement": "Disagree",
