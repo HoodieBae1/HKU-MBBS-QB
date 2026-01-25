@@ -4,9 +4,10 @@
     {
       "version": "4.4.0",
       "date": "2026-1-25",
-      "title": "Added export notes feature. Questions from FMCC god disk is now an individual topic.",
+      "title": "Added export notes feature. Questions from FMCC god disk is now an individual topic. Added user stats by question type.",
       "changes": [
         "Feature: Added export by notes and sub topic. Export like flagged questions.",
+        "Feature: Display accuracy by question type for each sub topic in stats panel. Checkmark is MCQ+EMQ accuracy and text icon is SAQ accuracy.",
         "Questions: Seperated questions from FMCC god disk into its own topic as requested",
         "Questions: Fixed reported questions"
       ]
