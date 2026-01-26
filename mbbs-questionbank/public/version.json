@@ -2,6 +2,14 @@
   "currentVersion": "4.4.0",
   "history": [
     {
+      "version": "4.4.1",
+      "date": "2026-1-26",
+      "title": "Fixed reported questions.",
+      "changes": [
+        "Questions: Fixed reported questions"
+      ]
+    },
+    {
       "version": "4.4.0",
       "date": "2026-1-25",
       "title": "Added export notes feature. Questions from FMCC god disk is now an individual topic. Added user stats by question type.",
