@@ -1180,6 +1180,14 @@ const App = () => {
 	};
 
 	const handleConfirmCompletion = async (modalData) => {
+		const MAX_LENGTH = 20000; // 20k characters is generous for text, but too small for images
+    
+		// Check User Response
+		if (modalData.user_response && modalData.user_response.length > MAX_LENGTH) {
+			alert("Your answer is too long. Please use upload image with imgur or resize your image.");
+			return; // Stop the save
+		}
+
         if (impersonatedUser) return; // Block
 		if (!session || !pendingQuestion) return;
 
