@@ -139520,6 +139520,7 @@
             "Flight of health"
         ],
         "official_answer": "G. Dissociation. Dissociation is a detachment from reality, losing track of time or themselves and their usual thought processes and memories.",
+        "correctAnswerIndex": 6,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "Forgetting a traumatic event like harming one's child is a profound example of dissociation, a defense mechanism to cope with overwhelming psychological distress."
@@ -139546,6 +139547,7 @@
             "Flight of health"
         ],
         "official_answer": "I. Conversion. Conversion is when emotional conflicts are converted into physical symptoms that have no organic basis.",
+        "correctAnswerIndex": 8,
         "ai_answer": {
             "agreement": "Agree",
             "explanation": "The development of medically unexplained physical symptoms, such as arm pain, in the context of psychological distress is characteristic of a conversion disorder."
