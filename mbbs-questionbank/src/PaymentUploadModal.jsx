@@ -9,9 +9,9 @@ const PaymentUploadModal = ({ user, planName, price, onClose }) => {
   const [success, setSuccess] = useState(false);
 
   // YOUR FPS INFO
-  const FPS_ID = "107937971"; 
-  const BANK_NAME = "BOCHK";
-  const ACC_NAME = "Chan Hxx Yxx";
+  const FPS_ID = "-"; 
+  const BANK_NAME = "-";
+  const ACC_NAME = "-";
 
   const handleFileSelect = (e) => {
     const selected = e.target.files[0];
